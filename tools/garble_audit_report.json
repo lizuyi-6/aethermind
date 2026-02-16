@@ -1,0 +1,670 @@
+{
+  "files": [
+    {
+      "path": "index_new.html",
+      "bad_line_count": 41,
+      "bad_lines": [
+        {
+          "line": 37,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "    <!-- 楠岃瘉鐮佽緭鍏ユā鎬佹 -->"
+        },
+        {
+          "line": 45,
+          "marker_count": 4,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                <p class=\"modal-description\">璇疯緭鍏ユ偍鐨勯獙璇佺爜浠ヨ幏寰椾娇鐢ㄦ鏁?/p>"
+        },
+        {
+          "line": 66,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                    <h2 class=\"hero-title\">涓撲笟鐨勯」鐩彲琛屾€ф姤鍛?/h2>"
+        },
+        {
+          "line": 69,
+          "marker_count": 11,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                        鍩轰簬浜哄伐鏅鸿兘鎶€鏈紝涓烘偍鐨勯」鐩彁渚涘叏鏂逛綅鐨勫彲琛屾€у垎鏋愶紝鍖呮嫭甯傚満璇勪及銆佽储鍔″垎鏋愩€侀闄╄瘎浼板拰涓撲笟寤鸿"
+        },
+        {
+          "line": 76,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "                        寮€濮嬪垱寤烘姤鍛?                    </button>"
+        },
+        {
+          "line": 98,
+          "marker_count": 4,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                        <p>璇嗗埆娼滃湪椋庨櫓鐐癸紝鎻愪緵涓撲笟鐨勯闄╁簲瀵圭瓥鐣ュ拰寤鸿</p>"
+        },
+        {
+          "line": 107,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                        <h3>蹇€熺敓鎴愭姤鍛?/h3>"
+        },
+        {
+          "line": 108,
+          "marker_count": 4,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "                        <p>鍑犲垎閽熷唴鑾峰緱涓撲笟瀹屾暣鐨勫彲琛屾€ф姤鍛婏紝鑺傜渷鏃堕棿鎴愭湰</p>"
+        },
+        {
+          "line": 117,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                            <h4>濉啓椤圭洰淇℃伅</h4>"
+        },
+        {
+          "line": 118,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                            <p>鎻愪緵鍩烘湰鐨勯」鐩鎯?/p>"
+        },
+        {
+          "line": 123,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                            <p>绯荤粺鑷姩杩涜娣卞害鍒嗘瀽</p>"
+        },
+        {
+          "line": 128,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                            <p>鑾峰緱瀹屾暣鍙鎬ф姤鍛?/p>"
+        },
+        {
+          "line": 133,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                            <p>涓嬭浇鎴栧垎浜粰鍥㈤槦</p>"
+        },
+        {
+          "line": 145,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                        <h2>椤圭洰淇℃伅濉啓</h2>"
+        },
+        {
+          "line": 146,
+          "marker_count": 3,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                        <p>璇疯缁嗗～鍐欓」鐩俊鎭紝浠ヤ究 AI 涓烘偍鐢熸垚鏇村噯纭殑鍙鎬ф姤鍛?/p>"
+        },
+        {
+          "line": 153,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                <input type=\"text\" id=\"projectName\" name=\"projectName\" placeholder=\"渚嬪锛氭櫤鎱у煄甯傜鐞嗗钩鍙? required>"
+        },
+        {
+          "line": 157,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                <label>寤鸿鍗曚綅 <span class=\"required\">*</span></label>"
+        },
+        {
+          "line": 158,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                <input type=\"text\" id=\"constructionUnit\" name=\"constructionUnit\" placeholder=\"渚嬪锛歑X绉戞妧鏈夐檺鍏徃\" required>"
+        },
+        {
+          "line": 164,
+          "marker_count": 2,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "                                    <option value=\"\">璇烽€夋嫨</option>"
+        },
+        {
+          "line": 169,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                    <option value=\"鎭㈠椤圭洰\">鎭㈠椤圭洰</option>"
+        },
+        {
+          "line": 174,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                                <label>鎵€灞炶涓?<span class=\"required\">*</span></label>"
+        },
+        {
+          "line": 176,
+          "marker_count": 2,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "                                    <option value=\"\">璇烽€夋嫨</option>"
+        },
+        {
+          "line": 181,
+          "marker_count": 2,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "                                    <option value=\"鍒堕€犱笟\">鍒堕€犱笟</option>"
+        },
+        {
+          "line": 184,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                    <option value=\"鑳芥簮鐜繚\">鑳芥簮鐜繚</option>"
+        },
+        {
+          "line": 190,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                <label>棰勮棰勭畻 <span class=\"required\">*</span></label>"
+        },
+        {
+          "line": 192,
+          "marker_count": 2,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "                                    <option value=\"\">璇烽€夋嫨</option>"
+        },
+        {
+          "line": 205,
+          "marker_count": 2,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "                                    <option value=\"\">璇烽€夋嫨</option>"
+        },
+        {
+          "line": 206,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                    <option value=\"3涓湀浠ュ唴\">3涓湀浠ュ唴</option>"
+        },
+        {
+          "line": 207,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                    <option value=\"3-6涓湀\">3-6涓湀</option>"
+        },
+        {
+          "line": 208,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                    <option value=\"6-12涓湀\">6-12涓湀</option>"
+        },
+        {
+          "line": 217,
+          "marker_count": 2,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "                                    <option value=\"\">璇烽€夋嫨</option>"
+        },
+        {
+          "line": 228,
+          "marker_count": 0,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                            <label>鐩爣甯傚満 <span class=\"required\">*</span></label>"
+        },
+        {
+          "line": 229,
+          "marker_count": 3,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                            <input type=\"text\" id=\"targetMarket\" name=\"targetMarket\" placeholder=\"渚嬪锛氫竴绾垮煄甯傜殑涓皬浼佷笟銆佸勾杞绘秷璐圭兢浣撶瓑\" required>"
+        },
+        {
+          "line": 234,
+          "marker_count": 5,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                            <textarea id=\"description\" name=\"description\" rows=\"4\" placeholder=\"璇疯缁嗘弿杩版偍鐨勯」鐩唴瀹广€佺洰鏍囥€佹牳蹇冧环鍊肩瓑...\" required></textarea>"
+        },
+        {
+          "line": 238,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                            <label>闄勪欢涓婁紶 <span class=\"optional\">(鍙€?</span></label>"
+        },
+        {
+          "line": 239,
+          "marker_count": 5,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                            <p class=\"field-hint\">涓婁紶椤圭洰鐩稿叧鏂囨。锛屽鍟嗕笟璁″垝涔︺€佸競鍦鸿皟鐮旀姤鍛娿€佽储鍔￠娴嬬瓑</p>"
+        },
+        {
+          "line": 249,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                    <span class=\"file-upload-hint\">鏀寔 PDF, Word, Excel, PowerPoint, TXT 鏍煎紡</span>"
+        },
+        {
+          "line": 258,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                                鍏戞崲鐮?<span class=\"optional\" style=\"color: #6b7280; font-weight: normal;\">(鍙€?</span>"
+        },
+        {
+          "line": 261,
+          "marker_count": 6,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                                杈撳叆鍏戞崲鐮佸彲鑾峰緱浣跨敤娆℃暟锛屾瘡娆′娇鐢ㄤ細娑堣€?娆′娇鐢ㄦ鏁?                            </p>"
+        },
+        {
+          "line": 296,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                <span id=\"submitBtnText\">鐢熸垚鍙鎬ф姤鍛?/span>"
+        },
+        {
+          "line": 319,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "        // 鍒濆鍖?Mermaid"
+        }
+      ]
+    },
+    {
+      "path": "app.py",
+      "bad_line_count": 31,
+      "bad_lines": [
+        {
+          "line": 2,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "Flask Web搴旂敤涓荤▼搴?鎻愪緵Web API鎺ュ彛鍜屽墠绔〉闈?\"\"\""
+        },
+        {
+          "line": 36,
+          "marker_count": 7,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "# 寮€鍙戠幆澧冧笅寮哄埗妯℃澘鐑洿鏂帮紝閬垮厤椤甸潰鏂囨淇敼鍚庝笉鐢熸晥"
+        },
+        {
+          "line": 39,
+          "marker_count": 5,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "# 閰嶇疆CORS锛屽厑璁搁€氳繃鐜鍙橀噺鎺у埗鏉ユ簮"
+        },
+        {
+          "line": 110,
+          "marker_count": 5,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "    # 濡傛灉閮戒笉瀛樺湪锛屼娇鐢ㄩ」鐩洰褰曚笅鐨勮矾寰勶紙浼氬湪淇濆瓨鏃跺垱寤猴級"
+        },
+        {
+          "line": 114,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "logger.info(\"楠岃瘉鐮佹枃浠惰矾寰? %s\", code_manager.codes_file)"
+        },
+        {
+          "line": 372,
+          "marker_count": 5,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "    \"\"\"鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟\"\"\""
+        },
+        {
+          "line": 378,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "    \"\"\"鍑忓皯鐢ㄦ埛浣跨敤娆℃暟\"\"\""
+        },
+        {
+          "line": 388,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "    \"\"\"澧炲姞鐢ㄦ埛浣跨敤娆℃暟\"\"\""
+        },
+        {
+          "line": 424,
+          "marker_count": 1,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "            return jsonify({'error': '闇€瑕佺鐞嗗憳鐧诲綍'}), 401"
+        },
+        {
+          "line": 437,
+          "marker_count": 1,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "            return jsonify({'error': '闇€瑕佺鐞嗗憳鐧诲綍'}), 401"
+        },
+        {
+          "line": 566,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "        # 鍑忓皯浣跨敤娆℃暟"
+        },
+        {
+          "line": 793,
+          "marker_count": 9,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "        # 澶勭悊鏂囦欢骞惰幏鍙栨牸寮忓寲鐨勬枃浠舵彁绀鸿瘝锛堝寘鍚枃浠跺唴瀹癸級"
+        },
+        {
+          "line": 809,
+          "marker_count": 8,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "            # 璋冪敤chat鏂规硶锛堣€屼笉鏄痗hat_with_file锛屼互渚挎枃浠跺唴瀹硅姝ｇ‘浼犻€掞級"
+        },
+        {
+          "line": 816,
+          "marker_count": 6,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "            # 濡傛灉澶勭悊澶辫触锛屽洖閫€鍒板師鏉ョ殑鏂规硶"
+        },
+        {
+          "line": 835,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "        # 鍑忓皯浣跨敤娆℃暟"
+        },
+        {
+          "line": 932,
+          "marker_count": 4,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "        # 鎸夋洿鏂版椂闂村€掑簭鎺掑垪"
+        },
+        {
+          "line": 1010,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "    \"\"\"鑾峰彇閰嶇疆淇℃伅\"\"\""
+        },
+        {
+          "line": 1027,
+          "marker_count": 7,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "    \"\"\"楠岃瘉楠岃瘉鐮佸苟澧炲姞鐢ㄦ埛浣跨敤娆℃暟\"\"\""
+        },
+        {
+          "line": 1064,
+          "marker_count": 5,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "    \"\"\"鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟\"\"\""
+        },
+        {
+          "line": 1070,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "        logger.info(\"[浣跨敤娆℃暟API] 鐢ㄦ埛ID: %s, 鍓╀綑娆℃暟: %s\", user_id, usage_count)"
+        },
+        {
+          "line": 1184,
+          "marker_count": 5,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "    \"\"\"鑾峰彇鎵€鏈夐獙璇佺爜鍒楄〃\"\"\""
+        },
+        {
+          "line": 1189,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "        # 杞崲涓哄垪琛ㄦ牸寮忥紝鏂逛究鍓嶇鏄剧ず"
+        },
+        {
+          "line": 1217,
+          "marker_count": 4,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "            return jsonify({'error': '浣跨敤娆℃暟蹇呴』澶т簬0'}), 400"
+        },
+        {
+          "line": 1285,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "        # 娣诲姞鐢ㄦ埛浣跨敤缁熻"
+        },
+        {
+          "line": 1709,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "        # 瑙ｇ爜URL缂栫爜鐨勬枃浠跺悕"
+        },
+        {
+          "line": 1712,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "        # 瀹夊叏妫€鏌ワ細鍙厑璁镐笅杞絩eports鐩綍涓嬬殑鏂囦欢"
+        },
+        {
+          "line": 1718,
+          "marker_count": 2,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "        # 妫€鏌ユ枃浠舵墿灞曞悕"
+        },
+        {
+          "line": 1721,
+          "marker_count": 5,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "        # 娓呯悊鏂囦欢鍚嶄腑鐨凥TML鏍囩锛堥槻姝㈣В鏋愰敊璇級"
+        },
+        {
+          "line": 1789,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "                'message': 'PDF涓嶅瓨鍦紝鍙噸鏂拌浆鎹㈡垨涓嬭浇Markdown',"
+        },
+        {
+          "line": 1837,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "    # 浠庣幆澧冨彉閲忔垨鍛戒护琛屽弬鏁拌幏鍙栫鍙?    import sys"
+        },
+        {
+          "line": 1841,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "    # 妫€鏌ュ懡浠よ鍙傛暟"
+        }
+      ]
+    },
+    {
+      "path": "tools\\garble_fix_dryrun.json",
+      "bad_line_count": 11,
+      "bad_lines": [
+        {
+          "line": 8,
+          "marker_count": 5,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"    \\\"\\\"\\\"鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟\\\"\\\"\\\"\","
+        },
+        {
+          "line": 13,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"    \\\"\\\"\\\"鍑忓皯鐢ㄦ埛浣跨敤娆℃暟\\\"\\\"\\\"\","
+        },
+        {
+          "line": 18,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"    \\\"\\\"\\\"澧炲姞鐢ㄦ埛浣跨敤娆℃暟\\\"\\\"\\\"\","
+        },
+        {
+          "line": 23,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"        # 鍑忓皯浣跨敤娆℃暟\","
+        },
+        {
+          "line": 28,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"        # 鍑忓皯浣跨敤娆℃暟\","
+        },
+        {
+          "line": 33,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"    \\\"\\\"\\\"鑾峰彇閰嶇疆淇℃伅\\\"\\\"\\\"\","
+        },
+        {
+          "line": 38,
+          "marker_count": 7,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"    \\\"\\\"\\\"楠岃瘉楠岃瘉鐮佸苟澧炲姞鐢ㄦ埛浣跨敤娆℃暟\\\"\\\"\\\"\","
+        },
+        {
+          "line": 43,
+          "marker_count": 5,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"    \\\"\\\"\\\"鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟\\\"\\\"\\\"\","
+        },
+        {
+          "line": 48,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"        logger.info(\\\"[浣跨敤娆℃暟API] 鐢ㄦ埛ID: %s, 鍓╀綑娆℃暟: %s\\\", user_id, usage_count)\","
+        },
+        {
+          "line": 53,
+          "marker_count": 4,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"            return jsonify({'error': '浣跨敤娆℃暟蹇呴』澶т簬0'}), 400\","
+        },
+        {
+          "line": 58,
+          "marker_count": 3,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "          \"before\": \"        # 瑙ｇ爜URL缂栫爜鐨勬枃浠跺悕\","
+        }
+      ]
+    },
+    {
+      "path": "tools\\garble_fix_apply.py",
+      "bad_line_count": 4,
+      "bad_lines": [
+        {
+          "line": 12,
+          "marker_count": 41,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "GARBLE_MARKERS = set('鍙鏄鐨绗浠鏈寮閰楠鑾濡璇鏂澶勬洿绔犺妭銆锛寤娴嬭瘉瀛楀彇浣跨敤鏍鍖犲壊鎺掕穭鐣坓€')"
+        },
+        {
+          "line": 43,
+          "marker_count": 1,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "    o_bad = o_mark + (5 if has_private_use(original) else 0) + (2 if '€' in original else 0)"
+        },
+        {
+          "line": 44,
+          "marker_count": 1,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "    c_bad = c_mark + (5 if has_private_use(candidate) else 0) + (2 if '€' in candidate else 0)"
+        },
+        {
+          "line": 51,
+          "marker_count": 1,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "    if (o_mark >= 3 or has_private_use(original) or '€' in original) and c_bad < o_bad and c_mark <= 1:"
+        }
+      ]
+    },
+    {
+      "path": "tools\\garble_audit.py",
+      "bad_line_count": 2,
+      "bad_lines": [
+        {
+          "line": 15,
+          "marker_count": 41,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "GARBLE_MARKERS = set('鍙鏄鐨绗浠鏈寮閰楠鑾濡璇鏂澶勬洿绔犺妭銆锛寤娴嬭瘉瀛楀彇浣跨敤鏍鍖犲壊鎺掕穭鐣坓€')"
+        },
+        {
+          "line": 46,
+          "marker_count": 1,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "            euro = '€' in line"
+        }
+      ]
+    },
+    {
+      "path": "runtime_state.json",
+      "bad_line_count": 1,
+      "bad_lines": [
+        {
+          "line": 1,
+          "marker_count": 20,
+          "has_private_use": false,
+          "has_euro": false,
+          "snippet": "{\"conversation_histories\": {\"db6634cc-f61a-41b7-9261-1e0d3535c79f:session_1771205354522_p1nyscbpg\": [{\"role\": \"user\", \"content\": \"请为以下项目生成一份详细的可行性研究报告：\\n\\n项目名称：基于2B企业端生成可行性分析报告的智能体\\n建设单位：qq\\n公司成立时间：AS\\n项目负责人：流量\\n建设地址：廊坊师"
+        }
+      ]
+    }
+  ]
+}

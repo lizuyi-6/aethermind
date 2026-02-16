@@ -1,0 +1,32 @@
+[Unit]
+Description=Flask Web Application - 超智引擎
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/test_2
+Environment="PATH=/usr/local/bin:/usr/bin:/bin"
+# 环境变量配置（根据需要修改）
+# 通义千问配置（已配置）
+Environment="MODEL_PROVIDER=tongyi"
+Environment="API_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1"
+Environment="MODEL_NAME=qwen3-max"
+Environment="DASHSCOPE_API_KEY=sk-a05fb9f14d734998a8d0a7af05503058"
+# 自定义模型配置（注释掉）
+# Environment="MODEL_PROVIDER=custom"
+# Environment="API_BASE_URL=http://60.10.230.156:1025/v1"
+# Environment="MODEL_NAME=qwen3-32b"
+# Environment="OPENAI_API_KEY=your-key-here"
+# 或使用环境文件（推荐）
+# EnvironmentFile=/etc/flask-app.env
+# 使用系统Python（自动检测）
+ExecStart=/usr/bin/python3 /root/test_2/app.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+

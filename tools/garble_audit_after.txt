@@ -1,0 +1,10 @@
+Root: X:\test_2
+Files with suspected mojibake: 2
+
+   3  index_new.html
+      L158: markers=2 euro=False pua=True |                                 <input type="text" id="constructionUnit" name="constructionUnit" placeholder="渚嬪锛歑X绉戞妧鏈夐檺鍏徃" required>
+      L174: markers=1 euro=True pua=True |                                 <label>鎵€灞炶涓?<span class="required">*</span></label>
+      L258: markers=2 euro=True pua=True |                                 鍏戞崲鐮?<span class="optional" style="color: #6b7280; font-weight: normal;">(鍙€?</span>
+
+   1  app.py
+      L809: markers=8 euro=True pua=False |             # 璋冪敤chat鏂规硶锛堣€屼笉鏄痗hat_with_file锛屼互渚挎枃浠跺唴瀹硅姝ｇ‘浼犻€掞級

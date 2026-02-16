@@ -1,0 +1,48 @@
+Root: X:\test_2
+Files with suspected mojibake: 6
+
+  41  index_new.html
+      L37: markers=2 euro=False pua=True |     <!-- 楠岃瘉鐮佽緭鍏ユā鎬佹 -->
+      L45: markers=4 euro=False pua=True |                 <p class="modal-description">璇疯緭鍏ユ偍鐨勯獙璇佺爜浠ヨ幏寰椾娇鐢ㄦ鏁?/p>
+      L66: markers=2 euro=True pua=True |                     <h2 class="hero-title">涓撲笟鐨勯」鐩彲琛屾€ф姤鍛?/h2>
+      L69: markers=11 euro=True pua=True |                         鍩轰簬浜哄伐鏅鸿兘鎶€鏈紝涓烘偍鐨勯」鐩彁渚涘叏鏂逛綅鐨勫彲琛屾€у垎鏋愶紝鍖呮嫭甯傚満璇勪及銆佽储鍔″垎鏋愩€侀闄╄瘎浼板拰涓撲笟寤鸿
+      L76: markers=3 euro=True pua=False |                         寮€濮嬪垱寤烘姤鍛?                    </button>
+      L98: markers=4 euro=False pua=True |                         <p>璇嗗埆娼滃湪椋庨櫓鐐癸紝鎻愪緵涓撲笟鐨勯闄╁簲瀵圭瓥鐣ュ拰寤鸿</p>
+      L107: markers=1 euro=True pua=True |                         <h3>蹇€熺敓鎴愭姤鍛?/h3>
+      L108: markers=4 euro=True pua=False |                         <p>鍑犲垎閽熷唴鑾峰緱涓撲笟瀹屾暣鐨勫彲琛屾€ф姤鍛婏紝鑺傜渷鏃堕棿鎴愭湰</p>
+      ... 33 more lines
+
+  31  app.py
+      L2: markers=3 euro=False pua=False | Flask Web搴旂敤涓荤▼搴?鎻愪緵Web API鎺ュ彛鍜屽墠绔〉闈?"""
+      L36: markers=7 euro=True pua=False | # 寮€鍙戠幆澧冧笅寮哄埗妯℃澘鐑洿鏂帮紝閬垮厤椤甸潰鏂囨淇敼鍚庝笉鐢熸晥
+      L39: markers=5 euro=True pua=False | # 閰嶇疆CORS锛屽厑璁搁€氳繃鐜鍙橀噺鎺у埗鏉ユ簮
+      L110: markers=5 euro=False pua=False |     # 濡傛灉閮戒笉瀛樺湪锛屼娇鐢ㄩ」鐩洰褰曚笅鐨勮矾寰勶紙浼氬湪淇濆瓨鏃跺垱寤猴級
+      L114: markers=3 euro=False pua=False | logger.info("楠岃瘉鐮佹枃浠惰矾寰? %s", code_manager.codes_file)
+      L372: markers=5 euro=False pua=False |     """鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟"""
+      L378: markers=3 euro=False pua=False |     """鍑忓皯鐢ㄦ埛浣跨敤娆℃暟"""
+      L388: markers=3 euro=False pua=False |     """澧炲姞鐢ㄦ埛浣跨敤娆℃暟"""
+      ... 23 more lines
+
+  11  tools\garble_fix_dryrun.json
+      L8: markers=5 euro=False pua=False |           "before": "    \"\"\"鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟\"\"\"",
+      L13: markers=3 euro=False pua=False |           "before": "    \"\"\"鍑忓皯鐢ㄦ埛浣跨敤娆℃暟\"\"\"",
+      L18: markers=3 euro=False pua=False |           "before": "    \"\"\"澧炲姞鐢ㄦ埛浣跨敤娆℃暟\"\"\"",
+      L23: markers=3 euro=False pua=False |           "before": "        # 鍑忓皯浣跨敤娆℃暟",
+      L28: markers=3 euro=False pua=False |           "before": "        # 鍑忓皯浣跨敤娆℃暟",
+      L33: markers=3 euro=False pua=False |           "before": "    \"\"\"鑾峰彇閰嶇疆淇℃伅\"\"\"",
+      L38: markers=7 euro=False pua=False |           "before": "    \"\"\"楠岃瘉楠岃瘉鐮佸苟澧炲姞鐢ㄦ埛浣跨敤娆℃暟\"\"\"",
+      L43: markers=5 euro=False pua=False |           "before": "    \"\"\"鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟\"\"\"",
+      ... 3 more lines
+
+   4  tools\garble_fix_apply.py
+      L12: markers=41 euro=True pua=False | GARBLE_MARKERS = set('鍙鏄鐨绗浠鏈寮閰楠鑾濡璇鏂澶勬洿绔犺妭銆锛寤娴嬭瘉瀛楀彇浣跨敤鏍鍖犲壊鎺掕穭鐣坓€')
+      L43: markers=1 euro=True pua=False |     o_bad = o_mark + (5 if has_private_use(original) else 0) + (2 if '€' in original else 0)
+      L44: markers=1 euro=True pua=False |     c_bad = c_mark + (5 if has_private_use(candidate) else 0) + (2 if '€' in candidate else 0)
+      L51: markers=1 euro=True pua=False |     if (o_mark >= 3 or has_private_use(original) or '€' in original) and c_bad < o_bad and c_mark <= 1:
+
+   2  tools\garble_audit.py
+      L15: markers=41 euro=True pua=False | GARBLE_MARKERS = set('鍙鏄鐨绗浠鏈寮閰楠鑾濡璇鏂澶勬洿绔犺妭銆锛寤娴嬭瘉瀛楀彇浣跨敤鏍鍖犲壊鎺掕穭鐣坓€')
+      L46: markers=1 euro=True pua=False |             euro = '€' in line
+
+   1  runtime_state.json
+      L1: markers=20 euro=False pua=False | {"conversation_histories": {"db6634cc-f61a-41b7-9261-1e0d3535c79f:session_1771205354522_p1nyscbpg": [{"role": "user", "content": "请为以下项目生成一份详细的可行性研究报告：\n\n项目名称：基于2B企业端生成可行性分析报告的智能体\n建设单位：qq\n公司成立时间：AS\n项目负责人：流量\n建设地址：廊坊师

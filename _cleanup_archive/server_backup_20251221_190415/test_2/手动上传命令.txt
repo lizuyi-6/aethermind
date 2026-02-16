@@ -1,0 +1,44 @@
+# 手动上传后台运行文件到服务器
+
+# 在本地Windows PowerShell中执行以下命令：
+
+# 1. 进入项目目录
+cd C:\Users\Abraham\Desktop\挑战杯\test--1\test_2
+
+# 2. 设置变量
+$KEY_FILE = "C:\Users\Abraham\Downloads\KeyPair-6418.pem"
+$PORT = 2950
+$SERVER = "root@60.10.230.156"
+$REMOTE_DIR = "/var/www/html"
+
+# 3. 上传文件（逐个执行）
+
+# 上传systemd服务文件
+scp -i $KEY_FILE -P $PORT flask-app.service ${SERVER}:${REMOTE_DIR}/
+
+# 上传安装脚本
+scp -i $KEY_FILE -P $PORT install_service.sh ${SERVER}:${REMOTE_DIR}/
+
+# 上传检查脚本
+scp -i $KEY_FILE -P $PORT check_service.sh ${SERVER}:${REMOTE_DIR}/
+
+# 上传screen启动脚本
+scp -i $KEY_FILE -P $PORT start_flask_screen.sh ${SERVER}:${REMOTE_DIR}/
+
+# 上传nohup启动脚本
+scp -i $KEY_FILE -P $PORT start_flask_nohup.sh ${SERVER}:${REMOTE_DIR}/
+
+# 上传使用指南（可选）
+scp -i $KEY_FILE -P $PORT "服务器后台运行指南.md" ${SERVER}:${REMOTE_DIR}/
+scp -i $KEY_FILE -P $PORT "服务器后台运行快速参考.md" ${SERVER}:${REMOTE_DIR}/
+
+# 4. 设置执行权限（在服务器上执行，或通过SSH执行）
+ssh -i $KEY_FILE -p $PORT $SERVER "cd $REMOTE_DIR && chmod +x install_service.sh check_service.sh start_flask_screen.sh start_flask_nohup.sh"
+
+# 或者使用完整路径（如果变量不工作）：
+# scp -i "C:\Users\Abraham\Downloads\KeyPair-6418.pem" -P 2950 install_service.sh root@60.10.230.156:/var/www/html/
+# scp -i "C:\Users\Abraham\Downloads\KeyPair-6418.pem" -P 2950 check_service.sh root@60.10.230.156:/var/www/html/
+# scp -i "C:\Users\Abraham\Downloads\KeyPair-6418.pem" -P 2950 flask-app.service root@60.10.230.156:/var/www/html/
+# scp -i "C:\Users\Abraham\Downloads\KeyPair-6418.pem" -P 2950 start_flask_screen.sh root@60.10.230.156:/var/www/html/
+# scp -i "C:\Users\Abraham\Downloads\KeyPair-6418.pem" -P 2950 start_flask_nohup.sh root@60.10.230.156:/var/www/html/
+

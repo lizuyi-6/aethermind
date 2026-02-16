@@ -1,0 +1,217 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>超智引擎工作台</title>
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}?v=10" />
+    <link rel="shortcut icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}?v=10" />
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.jpg') }}?v=10" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style_workspace.css') }}?v=2" />
+</head>
+<body class="ws-body h-screen overflow-hidden">
+    <div class="h-full flex flex-col">
+        <header class="h-10 ws-header flex items-center justify-between px-3 shrink-0">
+            <div class="flex items-center gap-3 min-w-0">
+                <button class="ws-menu-btn" id="menuBtn" title="菜单">☰</button>
+                <div class="ws-brand">超智引擎工作台</div>
+                <div class="ws-split"></div>
+                <div class="ws-breadcrumb truncate" id="wsBreadcrumb">项目 &gt; 会话</div>
+            </div>
+            <div class="flex items-center gap-3 text-xs">
+                <a href="tel:18031609069" class="ws-link">180-3160-9069</a>
+                <a href="/admin" class="ws-link">管理</a>
+                <a href="/rag" class="ws-link" target="_blank">RAG</a>
+            </div>
+        </header>
+
+        <div class="flex-1 flex min-h-0">
+            <aside class="w-64 ws-left border-r" id="sidebar">
+                <div class="p-2 border-b ws-border">
+                    <button id="newChatBtn" class="ws-btn w-full">+ 新对话</button>
+                </div>
+                <div class="p-2 text-xs ws-mono ws-muted border-b ws-border">资源面板</div>
+                <div class="px-2 py-2 text-sm ws-tree border-b ws-border">
+                    <div class="ws-tree-title">已上传文件</div>
+                    <div id="explorerUploads">
+                        <div class="ws-tree-item">暂无上传文件</div>
+                    </div>
+                    <div class="ws-tree-title mt-3">RAG 知识库</div>
+                    <div id="explorerRagDocs">
+                        <div class="ws-tree-item">暂无知识库文档</div>
+                    </div>
+                    <a href="/rag" target="_blank" class="ws-tree-link">打开知识库管理</a>
+                </div>
+                <div class="p-2 text-xs ws-mono ws-muted border-b ws-border">会话列表</div>
+                <div class="chat-history" id="chatHistory"></div>
+                <div class="mt-auto p-2 border-t ws-border">
+                    <button id="clearHistoryBtn" class="ws-btn w-full">清空历史</button>
+                </div>
+            </aside>
+
+            <main class="flex-1 min-w-0 flex flex-col">
+                <div class="h-8 ws-panel-head flex items-center justify-between px-3 border-b ws-border">
+                    <div class="flex items-center gap-2">
+                        <span class="ws-dot"></span>
+                        <span class="text-xs font-semibold ws-mono">智能分析助手</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-[10px] ws-mono">
+                        <span class="ws-tag" id="runtimeModelName">模型: -</span>
+                        <span class="ws-tag-gray" id="runtimeContextTokens">上下文: 未知</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 min-h-0 flex flex-col">
+                    <div class="chat-container flex-1 min-h-0 overflow-auto" id="chatContainer">
+                        <div class="welcome-message">
+                            <div class="welcome-icon">
+                                <svg width="34" height="34" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <rect x="10" y="16" width="44" height="32" rx="10" fill="#ffffff" fill-opacity="0.16"/>
+                                    <rect x="16" y="22" width="32" height="20" rx="8" fill="#ffffff"/>
+                                    <circle cx="26" cy="32" r="3" fill="#1c6b61"/>
+                                    <circle cx="38" cy="32" r="3" fill="#1c6b61"/>
+                                    <rect x="24" y="38" width="16" height="2.8" rx="1.4" fill="#1c6b61"/>
+                                    <line x1="32" y1="12" x2="32" y2="18" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
+                                    <circle cx="32" cy="9" r="2.6" fill="#ffffff"/>
+                                </svg>
+                            </div>
+                            <h2>欢迎使用超智引擎</h2>
+                            <p>我是您的专业智能体助手，可以协助您：</p>
+                            <div class="welcome-suggestions">
+                                <button class="suggestion-btn">撰写可行性研究报告</button>
+                                <button class="suggestion-btn">申报政策项目</button>
+                                <button class="suggestion-btn">分析行业数据</button>
+                                <button class="suggestion-btn">解读政策细则</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-container">
+                        <div class="input-wrapper">
+                            <div class="input-box">
+                                <button class="attach-btn" id="attachBtn" title="上传文件" aria-label="上传文件">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path d="M16.5 6.5l-6.9 7a2.5 2.5 0 103.5 3.5l7.1-7.2a4.5 4.5 0 10-6.4-6.4L6.4 10.8a6.5 6.5 0 109.2 9.2l6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                                <textarea id="messageInput" placeholder="请输入问题或指令..." rows="1"></textarea>
+                                <button id="sendBtn" class="send-btn" title="发送" disabled>↑</button>
+                            </div>
+                            <div class="input-footer">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="streamMode" checked />
+                                    <span>流式输出</span>
+                                </label>
+                                <div class="token-info" id="tokenInfo" style="display:none;">
+                                    <span class="token-label">Token:</span>
+                                    <span class="token-value" id="tokenValue">0</span>
+                                </div>
+                                <div class="download-actions" id="downloadActions">
+                                    <button type="button" class="download-btn" id="downloadPdfBtn" disabled>下载PDF</button>
+                                    <button type="button" class="download-btn" id="downloadMdBtn" disabled>下载Markdown</button>
+                                </div>
+                                <span class="status-indicator" id="statusIndicator">在线</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <section class="rag-sources ws-evidence" id="ragSources">
+                        <div class="ws-evidence-head rag-sources-header">
+                            <span>RAG 检索上下文 / 证据来源</span>
+                            <button class="rag-sources-close" id="ragSourcesClose">×</button>
+                        </div>
+                        <div class="rag-sources-list" id="ragSourcesList"></div>
+                    </section>
+                </div>
+            </main>
+
+            <aside class="w-80 ws-right border-l ws-border hidden xl:flex flex-col">
+                <div class="p-4 border-b ws-border">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold ws-mono ws-muted">系统指标</span>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mb-3">
+                        <div class="ws-card">
+                            <div class="ws-card-label">每输出Token耗时</div>
+                            <div class="ws-card-value"><span id="metricLatency">-</span> <span>s/token</span></div>
+                        </div>
+                        <div class="ws-card">
+                            <div class="ws-card-label">检索综合分</div>
+                            <div class="ws-card-value" id="metricPrecision">-</div>
+                        </div>
+                    </div>
+                    <div class="text-xs ws-mono ws-muted flex justify-between">
+                        <span id="metricTokens">Token 总量: 0</span>
+                        <span id="metricCost">输入: 0 | 输出: 0</span>
+                    </div>
+                </div>
+                <div class="p-4 border-b ws-border flex-1 min-h-0">
+                    <div class="text-xs font-bold ws-mono ws-muted mb-2">流程图</div>
+                    <div class="ws-flow-box" id="processFlowBox">暂无后端流程图</div>
+                </div>
+                <div class="p-4">
+                    <div class="text-xs font-bold ws-mono ws-muted mb-2">关联实体</div>
+                    <div class="flex flex-wrap gap-2" id="relatedEntities">
+                        <span class="ws-chip">暂无后端实体结果</span>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <footer class="h-6 ws-footer px-3 text-[10px] ws-mono flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <span class="text-emerald-500">● 在线</span>
+                <span>环境: Production-V3</span>
+                <span>连接: 安全 (TLS 1.3)</span>
+            </div>
+            <div id="pdfFooterStatus">PDF 生成状态: 待处理</div>
+        </footer>
+    </div>
+
+    <button class="sidebar-toggle" id="sidebarToggle" title="切换侧边栏">☰</button>
+
+    <div class="modal-overlay" id="verifyCodeModal" style="display:none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
+        <div class="modal-content" style="background:white; border-radius:12px; padding:24px; max-width:400px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.3);">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2 style="margin:0; font-size:20px;">输入验证码</h2>
+                <button class="modal-close" onclick="hideVerifyCodeModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#666;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="color:#666; margin-bottom:16px;">请输入您的验证码以获得使用次数</p>
+                <input type="text" id="verifyCodeInput" class="verify-code-input" placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX" maxlength="27" style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:8px; font-size:16px; font-family:monospace; margin-bottom:12px;">
+                <div class="modal-error" id="verifyCodeError" style="display:none; color:#dc3545; font-size:14px; margin-bottom:12px;"></div>
+                <button class="modal-submit-btn" onclick="submitVerifyCode()" style="width:100%; padding:12px; background:#2f9d8f; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer; font-weight:600;">验证</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="fileModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>上传文件</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>文件: <span id="selectedFileName"></span></p>
+                <textarea id="fileQueryInput" placeholder="可：输入您想对文件提出的问题..." rows="3"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button id="cancelFileBtn" class="btn-secondary">取消</button>
+                <button id="confirmFileBtn" class="btn-primary">上传并分析</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" style="display:none;" accept=".pdf,.docx,.doc,.txt,.md,.xlsx,.xls,.csv,.json,.py,.js,.java,.cpp,.c,.html,.css" />
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='pdf-progress.css') }}" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script src="{{ url_for('static', filename='report-display.js') }}"></script>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

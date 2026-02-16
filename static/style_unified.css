@@ -1,0 +1,88 @@
+﻿@font-face {
+    font-family: 'HarmonyOS Sans';
+    src: url('/static/fonts/HarmonyOS_Sans_Regular.ttf') format('truetype');
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+:root {
+    --u-bg: #f4f8f6;
+    --u-surface: #ffffff;
+    --u-border: #cfe0d8;
+    --u-text: #1f2b2a;
+    --u-muted: #637b74;
+    --u-brand: #2f9d8f;
+    --u-brand-dark: #1f7b70;
+}
+
+body {
+    font-family: 'HarmonyOS Sans', 'Microsoft YaHei', 'PingFang SC', sans-serif !important;
+    background-color: var(--u-bg);
+    color: var(--u-text);
+}
+
+/* index_new */
+.app-header {
+    background: linear-gradient(135deg, #1f7b70 0%, #2f9d8f 70%, #48b6a7 100%) !important;
+}
+
+.hero-cta-btn,
+.modal-submit-btn,
+.submit-btn,
+.btn-primary {
+    background: linear-gradient(135deg, #1f7b70 0%, #2f9d8f 100%) !important;
+    border-color: #2f9d8f !important;
+}
+
+.feature-card,
+.report-card,
+.form-container,
+.modal-content {
+    border: 1px solid var(--u-border) !important;
+    box-shadow: 0 8px 24px rgba(31, 123, 112, 0.08) !important;
+}
+
+/* admin_login */
+.login-container {
+    border: 1px solid var(--u-border);
+    box-shadow: 0 18px 44px rgba(31, 123, 112, 0.18) !important;
+}
+
+.login-btn {
+    background: linear-gradient(135deg, #1f7b70 0%, #2f9d8f 100%) !important;
+}
+
+.form-group input:focus {
+    border-color: #2f9d8f !important;
+}
+
+/* admin_dashboard */
+.header {
+    background: linear-gradient(135deg, #1f7b70 0%, #2f9d8f 100%) !important;
+}
+
+.stat-card,
+.actions-bar,
+.codes-table-container {
+    border: 1px solid var(--u-border);
+    box-shadow: 0 8px 24px rgba(31, 123, 112, 0.08) !important;
+}
+
+.stat-card .value {
+    color: #1f7b70 !important;
+}
+
+.btn-rag,
+.btn-success {
+    background: linear-gradient(135deg, #1f7b70 0%, #2f9d8f 100%) !important;
+}
+
+/* rag_admin */
+.shell {
+    border-color: var(--u-border) !important;
+}
+
+.hero {
+    background: linear-gradient(110deg, #1f7b70 0%, #2f9d8f 62%, #48b6a7 100%) !important;
+}

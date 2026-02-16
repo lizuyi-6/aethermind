@@ -1,0 +1,399 @@
+{
+  "changed_files": [
+    {
+      "path": "app.py",
+      "changes": [
+        {
+          "line": 2,
+          "before": "Flask Web搴旂敤涓荤▼搴?鎻愪緵Web API鎺ュ彛鍜屽墠绔〉闈?\"\"\"",
+          "after": "Flask Web应用主程?提供Web API接口和前竡?\"\"\""
+        },
+        {
+          "line": 36,
+          "before": "# 寮€鍙戠幆澧冧笅寮哄埗妯℃澘鐑洿鏂帮紝閬垮厤椤甸潰鏂囨淇敼鍚庝笉鐢熸晥",
+          "after": "# 发环境下强制模板烛新，避免页面文俔后不生效"
+        },
+        {
+          "line": 39,
+          "before": "# 閰嶇疆CORS锛屽厑璁搁€氳繃鐜鍙橀噺鎺у埗鏉ユ簮",
+          "after": "# 配置CORS，允许过变量控制来源"
+        },
+        {
+          "line": 86,
+          "before": "# 鍒濆鍖栨櫤鑳戒綋鍜屾枃浠跺鐞嗗櫒",
+          "after": "# 初化智能体和文件理器"
+        },
+        {
+          "line": 110,
+          "before": "    # 濡傛灉閮戒笉瀛樺湪锛屼娇鐢ㄩ」鐩洰褰曚笅鐨勮矾寰勶紙浼氬湪淇濆瓨鏃跺垱寤猴級",
+          "after": "    # 如果都不存在，使用项盛录下的路径（会在保存时创建）"
+        },
+        {
+          "line": 114,
+          "before": "logger.info(\"楠岃瘉鐮佹枃浠惰矾寰? %s\", code_manager.codes_file)",
+          "after": "logger.info(\"验证码文件路? %s\", code_manager.codes_file)"
+        },
+        {
+          "line": 372,
+          "before": "    \"\"\"鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟\"\"\"",
+          "after": "    \"\"\"获取用户剩余使用次数\"\"\""
+        },
+        {
+          "line": 378,
+          "before": "    \"\"\"鍑忓皯鐢ㄦ埛浣跨敤娆℃暟\"\"\"",
+          "after": "    \"\"\"减少用户使用次数\"\"\""
+        },
+        {
+          "line": 388,
+          "before": "    \"\"\"澧炲姞鐢ㄦ埛浣跨敤娆℃暟\"\"\"",
+          "after": "    \"\"\"增加用户使用次数\"\"\""
+        },
+        {
+          "line": 424,
+          "before": "            return jsonify({'error': '闇€瑕佺鐞嗗憳鐧诲綍'}), 401",
+          "after": "            return jsonify({'error': '要理员登录'}), 401"
+        },
+        {
+          "line": 437,
+          "before": "            return jsonify({'error': '闇€瑕佺鐞嗗憳鐧诲綍'}), 401",
+          "after": "            return jsonify({'error': '要理员登录'}), 401"
+        },
+        {
+          "line": 566,
+          "before": "        # 鍑忓皯浣跨敤娆℃暟",
+          "after": "        # 减少使用次数"
+        },
+        {
+          "line": 586,
+          "before": "        # 濡傛灉鏈夋姤鍛婁笅杞戒俊鎭紝娣诲姞鍒板搷搴斾腑",
+          "after": "        # 如果有报告下载信恼添加到响应中"
+        },
+        {
+          "line": 768,
+          "before": "            return jsonify({'error': '娌℃湁涓婁紶鏂囦欢'}), 400",
+          "after": "            return jsonify({'error': '没有上传文件'}), 400"
+        },
+        {
+          "line": 781,
+          "before": "            return jsonify({'error': f'涓嶆敮鎸佺殑鏂囦欢绫诲瀷: {ext}'}), 400",
+          "after": "            return jsonify({'error': f'不支持的文件类型: {ext}'}), 400"
+        },
+        {
+          "line": 793,
+          "before": "        # 澶勭悊鏂囦欢骞惰幏鍙栨牸寮忓寲鐨勬枃浠舵彁绀鸿瘝锛堝寘鍚枃浠跺唴瀹癸級",
+          "after": "        # 处理文件并获取格式化的文件提示词（包吖件内容）"
+        },
+        {
+          "line": 816,
+          "before": "            # 濡傛灉澶勭悊澶辫触锛屽洖閫€鍒板師鏉ョ殑鏂规硶",
+          "after": "            # 如果处理失败，回到原来的方法"
+        },
+        {
+          "line": 835,
+          "before": "        # 鍑忓皯浣跨敤娆℃暟",
+          "after": "        # 减少使用次数"
+        },
+        {
+          "line": 932,
+          "before": "        # 鎸夋洿鏂版椂闂村€掑簭鎺掑垪",
+          "after": "        # 按更新时间序排列"
+        },
+        {
+          "line": 1010,
+          "before": "    \"\"\"鑾峰彇閰嶇疆淇℃伅\"\"\"",
+          "after": "    \"\"\"获取配置信息\"\"\""
+        },
+        {
+          "line": 1027,
+          "before": "    \"\"\"楠岃瘉楠岃瘉鐮佸苟澧炲姞鐢ㄦ埛浣跨敤娆℃暟\"\"\"",
+          "after": "    \"\"\"验证验证码并增加用户使用次数\"\"\""
+        },
+        {
+          "line": 1064,
+          "before": "    \"\"\"鑾峰彇鐢ㄦ埛鍓╀綑浣跨敤娆℃暟\"\"\"",
+          "after": "    \"\"\"获取用户剩余使用次数\"\"\""
+        },
+        {
+          "line": 1070,
+          "before": "        logger.info(\"[浣跨敤娆℃暟API] 鐢ㄦ埛ID: %s, 鍓╀綑娆℃暟: %s\", user_id, usage_count)",
+          "after": "        logger.info(\"[使用次数API] 用户ID: %s, 剩余次数: %s\", user_id, usage_count)"
+        },
+        {
+          "line": 1184,
+          "before": "    \"\"\"鑾峰彇鎵€鏈夐獙璇佺爜鍒楄〃\"\"\"",
+          "after": "    \"\"\"获取有验证码列表\"\"\""
+        },
+        {
+          "line": 1189,
+          "before": "        # 杞崲涓哄垪琛ㄦ牸寮忥紝鏂逛究鍓嶇鏄剧ず",
+          "after": "        # 轍为列表格式，方便前显示"
+        },
+        {
+          "line": 1217,
+          "before": "            return jsonify({'error': '浣跨敤娆℃暟蹇呴』澶т簬0'}), 400",
+          "after": "            return jsonify({'error': '使用次数必须大于0'}), 400"
+        },
+        {
+          "line": 1285,
+          "before": "        # 娣诲姞鐢ㄦ埛浣跨敤缁熻",
+          "after": "        # 添加用户使用统"
+        },
+        {
+          "line": 1709,
+          "before": "        # 瑙ｇ爜URL缂栫爜鐨勬枃浠跺悕",
+          "after": "        # 解码URL编码的文件名"
+        },
+        {
+          "line": 1712,
+          "before": "        # 瀹夊叏妫€鏌ワ細鍙厑璁镐笅杞絩eports鐩綍涓嬬殑鏂囦欢",
+          "after": "        # 安全查：叅许下载reports盽下的文件"
+        },
+        {
+          "line": 1718,
+          "before": "        # 妫€鏌ユ枃浠舵墿灞曞悕",
+          "after": "        # 查文件扩展名"
+        },
+        {
+          "line": 1721,
+          "before": "        # 娓呯悊鏂囦欢鍚嶄腑鐨凥TML鏍囩锛堥槻姝㈣В鏋愰敊璇級",
+          "after": "        # 清理文件名中的HTML标（防止解析错诼"
+        },
+        {
+          "line": 1789,
+          "before": "                'message': 'PDF涓嶅瓨鍦紝鍙噸鏂拌浆鎹㈡垨涓嬭浇Markdown',",
+          "after": "                'message': 'PDF不存圼叇新转换或下载Markdown',"
+        },
+        {
+          "line": 1837,
+          "before": "    # 浠庣幆澧冨彉閲忔垨鍛戒护琛屽弬鏁拌幏鍙栫鍙?    import sys",
+          "after": "    # 从环境变量或命令行参数获取?    import sys"
+        },
+        {
+          "line": 1841,
+          "before": "    # 妫€鏌ュ懡浠よ鍙傛暟",
+          "after": "    # 查命令参数"
+        }
+      ]
+    },
+    {
+      "path": "index_new.html",
+      "changes": [
+        {
+          "line": 6,
+          "before": "    <title>瓒呮櫤寮曟搸 - 鏅鸿兘鐢熸垚涓撲笟椤圭洰鍒嗘瀽</title>",
+          "after": "    <title>超智引擎 - 智能生成专业项目分析</title>"
+        },
+        {
+          "line": 37,
+          "before": "    <!-- 楠岃瘉鐮佽緭鍏ユā鎬佹 -->",
+          "after": "    <!-- 验证码输入模态 -->"
+        },
+        {
+          "line": 45,
+          "before": "                <p class=\"modal-description\">璇疯緭鍏ユ偍鐨勯獙璇佺爜浠ヨ幏寰椾娇鐢ㄦ鏁?/p>",
+          "after": "                <p class=\"modal-description\">请输入您的验证码以获得使用?/p>"
+        },
+        {
+          "line": 63,
+          "before": "                        <span>AI 椹卞姩鐨勬櫤鑳藉垎鏋?/span>",
+          "after": "                        <span>AI 驱动的智能分?/span>"
+        },
+        {
+          "line": 66,
+          "before": "                    <h2 class=\"hero-title\">涓撲笟鐨勯」鐩彲琛屾€ф姤鍛?/h2>",
+          "after": "                    <h2 class=\"hero-title\">专业的项盏行报?/h2>"
+        },
+        {
+          "line": 69,
+          "before": "                        鍩轰簬浜哄伐鏅鸿兘鎶€鏈紝涓烘偍鐨勯」鐩彁渚涘叏鏂逛綅鐨勫彲琛屾€у垎鏋愶紝鍖呮嫭甯傚満璇勪及銆佽储鍔″垎鏋愩€侀闄╄瘎浼板拰涓撲笟寤鸿",
+          "after": "                        基于人工智能朼为您的项盏供全方位的可行分析，包括市场评估、财务分析险评估和专业建"
+        },
+        {
+          "line": 76,
+          "before": "                        寮€濮嬪垱寤烘姤鍛?                    </button>",
+          "after": "                        始创建报?                    </button>"
+        },
+        {
+          "line": 88,
+          "before": "                        <p>AI 鍒嗘瀽琛屼笟瓒嬪娍鍜屽競鍦烘満浼氾紝涓烘偍鎻愪緵鏁版嵁椹卞姩鐨勬礊瀵?/p>",
+          "after": "                        <p>AI 分析行业趋势和市场机会，为您提供数据驱动的洞?/p>"
+        },
+        {
+          "line": 98,
+          "before": "                        <p>璇嗗埆娼滃湪椋庨櫓鐐癸紝鎻愪緵涓撲笟鐨勯闄╁簲瀵圭瓥鐣ュ拰寤鸿</p>",
+          "after": "                        <p>识别潜在风险点，提供专业的险应对策略和建</p>"
+        },
+        {
+          "line": 107,
+          "before": "                        <h3>蹇€熺敓鎴愭姤鍛?/h3>",
+          "after": "                        <h3>忟生成报?/h3>"
+        },
+        {
+          "line": 108,
+          "before": "                        <p>鍑犲垎閽熷唴鑾峰緱涓撲笟瀹屾暣鐨勫彲琛屾€ф姤鍛婏紝鑺傜渷鏃堕棿鎴愭湰</p>",
+          "after": "                        <p>几分钟内获得专业完整的可行报告，节省时间成本</p>"
+        },
+        {
+          "line": 117,
+          "before": "                            <h4>濉啓椤圭洰淇℃伅</h4>",
+          "after": "                            <h4>塆项目信息</h4>"
+        },
+        {
+          "line": 118,
+          "before": "                            <p>鎻愪緵鍩烘湰鐨勯」鐩鎯?/p>",
+          "after": "                            <p>提供基本的项?/p>"
+        },
+        {
+          "line": 123,
+          "before": "                            <p>绯荤粺鑷姩杩涜娣卞害鍒嗘瀽</p>",
+          "after": "                            <p>系统臊进深度分析</p>"
+        },
+        {
+          "line": 128,
+          "before": "                            <p>鑾峰緱瀹屾暣鍙鎬ф姤鍛?/p>",
+          "after": "                            <p>获得完整性报?/p>"
+        },
+        {
+          "line": 133,
+          "before": "                            <p>涓嬭浇鎴栧垎浜粰鍥㈤槦</p>",
+          "after": "                            <p>下载或分亻团队</p>"
+        },
+        {
+          "line": 145,
+          "before": "                        <h2>椤圭洰淇℃伅濉啓</h2>",
+          "after": "                        <h2>项目信息塆</h2>"
+        },
+        {
+          "line": 146,
+          "before": "                        <p>璇疯缁嗗～鍐欓」鐩俊鎭紝浠ヤ究 AI 涓烘偍鐢熸垚鏇村噯纭殑鍙鎬ф姤鍛?/p>",
+          "after": "                        <p>请细填写项盿恼以便 AI 为您生成更准硚性报?/p>"
+        },
+        {
+          "line": 153,
+          "before": "                                <input type=\"text\" id=\"projectName\" name=\"projectName\" placeholder=\"渚嬪锛氭櫤鎱у煄甯傜鐞嗗钩鍙? required>",
+          "after": "                                <input type=\"text\" id=\"projectName\" name=\"projectName\" placeholder=\"例：智慧城市理平? required>"
+        },
+        {
+          "line": 157,
+          "before": "                                <label>寤鸿鍗曚綅 <span class=\"required\">*</span></label>",
+          "after": "                                <label>建单位 <span class=\"required\">*</span></label>"
+        },
+        {
+          "line": 164,
+          "before": "                                    <option value=\"\">璇烽€夋嫨</option>",
+          "after": "                                    <option value=\"\">请择</option>"
+        },
+        {
+          "line": 165,
+          "before": "                                    <option value=\"鏂板缓椤圭洰\">鏂板缓椤圭洰</option>",
+          "after": "                                    <option value=\"新建项目\">新建项目</option>"
+        },
+        {
+          "line": 169,
+          "before": "                                    <option value=\"鎭㈠椤圭洰\">鎭㈠椤圭洰</option>",
+          "after": "                                    <option value=\"恢项目\">恢项目</option>"
+        },
+        {
+          "line": 176,
+          "before": "                                    <option value=\"\">璇烽€夋嫨</option>",
+          "after": "                                    <option value=\"\">请择</option>"
+        },
+        {
+          "line": 181,
+          "before": "                                    <option value=\"鍒堕€犱笟\">鍒堕€犱笟</option>",
+          "after": "                                    <option value=\"制业\">制业</option>"
+        },
+        {
+          "line": 184,
+          "before": "                                    <option value=\"鑳芥簮鐜繚\">鑳芥簮鐜繚</option>",
+          "after": "                                    <option value=\"能源玿\">能源玿</option>"
+        },
+        {
+          "line": 190,
+          "before": "                                <label>棰勮棰勭畻 <span class=\"required\">*</span></label>",
+          "after": "                                <label>预预算 <span class=\"required\">*</span></label>"
+        },
+        {
+          "line": 192,
+          "before": "                                    <option value=\"\">璇烽€夋嫨</option>",
+          "after": "                                    <option value=\"\">请择</option>"
+        },
+        {
+          "line": 205,
+          "before": "                                    <option value=\"\">璇烽€夋嫨</option>",
+          "after": "                                    <option value=\"\">请择</option>"
+        },
+        {
+          "line": 206,
+          "before": "                                    <option value=\"3涓湀浠ュ唴\">3涓湀浠ュ唴</option>",
+          "after": "                                    <option value=\"3东以内\">3东以内</option>"
+        },
+        {
+          "line": 207,
+          "before": "                                    <option value=\"3-6涓湀\">3-6涓湀</option>",
+          "after": "                                    <option value=\"3-6东\">3-6东</option>"
+        },
+        {
+          "line": 208,
+          "before": "                                    <option value=\"6-12涓湀\">6-12涓湀</option>",
+          "after": "                                    <option value=\"6-12东\">6-12东</option>"
+        },
+        {
+          "line": 217,
+          "before": "                                    <option value=\"\">璇烽€夋嫨</option>",
+          "after": "                                    <option value=\"\">请择</option>"
+        },
+        {
+          "line": 228,
+          "before": "                            <label>鐩爣甯傚満 <span class=\"required\">*</span></label>",
+          "after": "                            <label>盠市场 <span class=\"required\">*</span></label>"
+        },
+        {
+          "line": 229,
+          "before": "                            <input type=\"text\" id=\"targetMarket\" name=\"targetMarket\" placeholder=\"渚嬪锛氫竴绾垮煄甯傜殑涓皬浼佷笟銆佸勾杞绘秷璐圭兢浣撶瓑\" required>",
+          "after": "                            <input type=\"text\" id=\"targetMarket\" name=\"targetMarket\" placeholder=\"例：一线城市的丰企业、年轻消费群体等\" required>"
+        },
+        {
+          "line": 234,
+          "before": "                            <textarea id=\"description\" name=\"description\" rows=\"4\" placeholder=\"璇疯缁嗘弿杩版偍鐨勯」鐩唴瀹广€佺洰鏍囥€佹牳蹇冧环鍊肩瓑...\" required></textarea>",
+          "after": "                            <textarea id=\"description\" name=\"description\" rows=\"4\" placeholder=\"请细描述您的项盆容目标核心价值等...\" required></textarea>"
+        },
+        {
+          "line": 238,
+          "before": "                            <label>闄勪欢涓婁紶 <span class=\"optional\">(鍙€?</span></label>",
+          "after": "                            <label>附件上传 <span class=\"optional\">(?</span></label>"
+        },
+        {
+          "line": 239,
+          "before": "                            <p class=\"field-hint\">涓婁紶椤圭洰鐩稿叧鏂囨。锛屽鍟嗕笟璁″垝涔︺€佸競鍦鸿皟鐮旀姤鍛娿€佽储鍔￠娴嬬瓑</p>",
+          "after": "                            <p class=\"field-hint\">上传项目相关文档，商业计划书市场调研报告财务测等</p>"
+        },
+        {
+          "line": 248,
+          "before": "                                    <span>鐐瑰嚮涓婁紶鏂囦欢鎴栨嫋鎷藉埌杩欓噷</span>",
+          "after": "                                    <span>点击上传文件或拖拽到这里</span>"
+        },
+        {
+          "line": 249,
+          "before": "                                    <span class=\"file-upload-hint\">鏀寔 PDF, Word, Excel, PowerPoint, TXT 鏍煎紡</span>",
+          "after": "                                    <span class=\"file-upload-hint\">攌 PDF, Word, Excel, PowerPoint, TXT 格式</span>"
+        },
+        {
+          "line": 261,
+          "before": "                                杈撳叆鍏戞崲鐮佸彲鑾峰緱浣跨敤娆℃暟锛屾瘡娆′娇鐢ㄤ細娑堣€?娆′娇鐢ㄦ鏁?                            </p>",
+          "after": "                                输入兑换码可获得使用次数，每次使用会消?次使用?                            </p>"
+        },
+        {
+          "line": 296,
+          "before": "                                <span id=\"submitBtnText\">鐢熸垚鍙鎬ф姤鍛?/span>",
+          "after": "                                <span id=\"submitBtnText\">生成性报?/span>"
+        },
+        {
+          "line": 319,
+          "before": "        // 鍒濆鍖?Mermaid",
+          "after": "        // 初?Mermaid"
+        }
+      ]
+    }
+  ]
+}

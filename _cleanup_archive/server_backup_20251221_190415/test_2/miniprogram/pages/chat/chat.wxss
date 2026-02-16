@@ -1,0 +1,263 @@
+/* pages/chat/chat.wxss */
+.container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: #1a1a1a;
+}
+
+.chat-scroll {
+  flex: 1;
+  height: 0;
+}
+
+.messages-container {
+  padding: 20px 16px;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.message-item {
+  display: flex;
+  margin-bottom: 20px;
+  animation: fadeIn 0.3s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-item.user {
+  flex-direction: row-reverse;
+}
+
+.message-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  flex-shrink: 0;
+  margin: 0 12px;
+}
+
+.message-item.user .message-avatar {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.message-item.assistant .message-avatar {
+  background-color: #333333;
+  color: #4CAF50;
+}
+
+.message-content {
+  max-width: 70%;
+  min-width: 100px;
+}
+
+.message-text {
+  background-color: #2a2a2a;
+  padding: 12px 16px;
+  border-radius: 12px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.message-item.user .message-text {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.message-item.assistant .message-text {
+  color: #ffffff;
+}
+
+/* Markdown样式 */
+.message-text h1,
+.message-text h2,
+.message-text h3,
+.message-text h4,
+.message-text h5,
+.message-text h6 {
+  margin: 16px 0 8px 0;
+  font-weight: bold;
+  color: inherit;
+}
+
+.message-item.assistant .message-text h1,
+.message-item.assistant .message-text h2,
+.message-item.assistant .message-text h3 {
+  color: #4CAF50;
+}
+
+.message-text p {
+  margin: 8px 0;
+  line-height: 1.6;
+}
+
+.message-text code {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+.message-text pre {
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 12px 0;
+}
+
+.message-text pre code {
+  background: none;
+  padding: 0;
+}
+
+.message-text strong {
+  font-weight: bold;
+}
+
+.message-text em {
+  font-style: italic;
+}
+
+.message-text a {
+  color: #4CAF50;
+  text-decoration: underline;
+}
+
+.message-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+.message-text hr {
+  border: none;
+  border-top: 1px solid #444444;
+  margin: 16px 0;
+}
+
+/* 加载中 */
+.loading-message {
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 20px;
+  padding-left: 52px;
+}
+
+.loading-dots {
+  display: flex;
+  gap: 4px;
+  color: #999999;
+  font-size: 24px;
+  animation: blink 1.4s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+/* 输入区域 */
+.input-container {
+  background-color: #2a2a2a;
+  border-top: 1px solid #333333;
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+}
+
+.input-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 12px;
+  color: #999999;
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-text {
+  font-size: 12px;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: #999999;
+  font-size: 16px;
+  padding: 4px 8px;
+  line-height: 1;
+}
+
+.icon-btn:active {
+  color: #4CAF50;
+}
+
+.input-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #1a1a1a;
+  border-radius: 24px;
+  padding: 8px 16px;
+}
+
+.input-field {
+  flex: 1;
+  font-size: 16px;
+  color: #ffffff;
+  background: none;
+  border: none;
+}
+
+.input-field::placeholder {
+  color: #666666;
+}
+
+.send-btn {
+  background-color: #333333;
+  color: #999999;
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.send-btn.active {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.send-btn[disabled] {
+  opacity: 0.5;
+}
+

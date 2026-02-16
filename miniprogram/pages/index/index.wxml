@@ -1,0 +1,31 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <view class="welcome-section">
+    <view class="welcome-icon">🤖</view>
+    <view class="welcome-title">欢迎使用超智引擎</view>
+    <view class="welcome-desc">我是您的专业智能体助手，可以协助您：</view>
+  </view>
+
+  <view class="suggestions-section">
+    <view class="suggestions-title">快速开始</view>
+    <view class="suggestions-list">
+      <view 
+        class="suggestion-item" 
+        wx:for="{{suggestions}}" 
+        wx:key="index"
+        data-text="{{item}}"
+        bindtap="onSuggestionTap"
+      >
+        <text class="suggestion-icon">💡</text>
+        <text class="suggestion-text">{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="action-section">
+    <button class="btn-primary start-btn" bindtap="startNewChat">
+      开始新对话
+    </button>
+  </view>
+</view>
+

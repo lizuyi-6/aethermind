@@ -1,0 +1,26 @@
+--- Starting Server-Side RAG Test ---
+[1] Initializing IntelligentAgent...
+[信息] API配置: provider=tongyi, base_url=https://dashscope.aliyuncs.com/compatible-mode/v1, model=qwen3-max
+[2] Verifying Lazy Loading...
+PASS: RAG is not initialized immediately (Lazy Loading working).
+[3] Triggering _init_rag()...
+[RAG] 正在初始化RAG系统...
+[RAG配置] 使用Chroma本地存储: ./chroma_db
+[RAG配置] 嵌入模型: tongyi-embedding, 维度: 1024
+[RAG配置] 检索配置: top_k=5, 阈值=0.5
+[Chroma] 成功初始化本地存储: ./chroma_db
+[通义千问嵌入] 初始化成功: text-embedding-v3
+[Chroma] 集合已存在: knowledge_base
+[RAG] RAG系统初始化成功
+PASS: RAG initialized successfully.
+[4] Testing RAG Retrieval...
+  Searching for: 安全
+  Error searching for 安全: 'RAGAugmenter' object has no attribute 'retrieve'
+  Searching for: 管理
+  Error searching for 管理: 'RAGAugmenter' object has no attribute 'retrieve'
+  Searching for: 规定
+  Error searching for 规定: 'RAGAugmenter' object has no attribute 'retrieve'
+  Searching for: 法律
+  Error searching for 法律: 'RAGAugmenter' object has no attribute 'retrieve'
+WARNING: Retrieval ran but found no results (Knowledge base might be empty or query mismatch).
+--- Test Complete ---

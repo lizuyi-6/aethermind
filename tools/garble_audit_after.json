@@ -1,0 +1,44 @@
+{
+  "files": [
+    {
+      "path": "index_new.html",
+      "bad_line_count": 3,
+      "bad_lines": [
+        {
+          "line": 158,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": false,
+          "snippet": "                                <input type=\"text\" id=\"constructionUnit\" name=\"constructionUnit\" placeholder=\"渚嬪锛歑X绉戞妧鏈夐檺鍏徃\" required>"
+        },
+        {
+          "line": 174,
+          "marker_count": 1,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                                <label>鎵€灞炶涓?<span class=\"required\">*</span></label>"
+        },
+        {
+          "line": 258,
+          "marker_count": 2,
+          "has_private_use": true,
+          "has_euro": true,
+          "snippet": "                                鍏戞崲鐮?<span class=\"optional\" style=\"color: #6b7280; font-weight: normal;\">(鍙€?</span>"
+        }
+      ]
+    },
+    {
+      "path": "app.py",
+      "bad_line_count": 1,
+      "bad_lines": [
+        {
+          "line": 809,
+          "marker_count": 8,
+          "has_private_use": false,
+          "has_euro": true,
+          "snippet": "            # 璋冪敤chat鏂规硶锛堣€屼笉鏄痗hat_with_file锛屼互渚挎枃浠跺唴瀹硅姝ｇ‘浼犻€掞級"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+==========================================
+  切换到通义千问 - 服务器执行命令
+==========================================
+
+在服务器上直接执行以下命令（已包含你的API密钥）：
+
+cd /var/www/html && \
+cat > .env << 'EOF'
+MODEL_PROVIDER=tongyi
+DASHSCOPE_API_KEY=sk-a05fb9f14d734998a8d0a7af05503058
+MODEL_NAME=qwen3-max
+TEMPERATURE=0.7
+MAX_TOKENS=32000
+EOF
+&& \
+pkill -f "python3 app.py" && \
+python3 app.py
+
+==========================================
+  或者使用脚本方式
+==========================================
+
+1. 上传脚本到服务器（在本地执行）：
+   scp -i "C:\Users\Abraham\Downloads\KeyPair-6418.pem" -P 2950 切换到通义千问_直接执行.sh root@60.10.230.156:/var/www/html/
+
+2. 在服务器上执行：
+   chmod +x /var/www/html/切换到通义千问_直接执行.sh
+   /var/www/html/切换到通义千问_直接执行.sh
+
+==========================================
+  验证切换成功
+==========================================
+
+启动后应该看到：
+[信息] API配置: provider=tongyi, base_url=https://dashscope.aliyuncs.com/compatible-mode/v1, model=qwen3-max
+
+然后在网页上测试对话，如果能够正常回复，说明切换成功。
+
