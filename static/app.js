@@ -95,7 +95,7 @@ class ChatApp {
                 return;
             }
             this.devErrorDedupe.set(dedupeKey, now);
-            fetch('/api/dev/errors/report', {
+            fetch('/api/v1/dev/errors/report', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -264,7 +264,7 @@ class ChatApp {
 
     async loadHistory() {
         try {
-            const response = await fetch(`/api/history?session_id=${this.sessionId}`);
+            const response = await fetch(`/api/v1/sessions/history?session_id=${this.sessionId}`);
             const data = await response.json();
             
             if (data.history && data.history.length > 0) {
@@ -302,7 +302,7 @@ class ChatApp {
 
     async loadSessions() {
         try {
-            const response = await fetch('/api/sessions');
+            const response = await fetch('/api/v1/sessions');
             const data = await response.json();
             
             if (data.sessions && data.sessions.length > 0) {
@@ -321,7 +321,7 @@ class ChatApp {
             return;
         }
         try {
-            const response = await fetch('/api/workspace/explorer?limit=20');
+            const response = await fetch('/api/v1/workspace/explorer?limit=20');
             if (!response.ok) {
                 return;
             }
@@ -460,7 +460,7 @@ class ChatApp {
     
     async checkUsageBeforeSend() {
         try {
-            const response = await fetch('/api/user/usage');
+            const response = await fetch('/api/v1/user/usage');
             if (response.ok) {
                 const data = await response.json();
                 if (data.remaining_uses <= 0) {
@@ -484,7 +484,7 @@ class ChatApp {
         this.startRealtimeUsageTracking(message);
 
         try {
-            const response = await fetch('/api/chat', {
+            const response = await fetch('/api/v1/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -511,9 +511,9 @@ class ChatApp {
                 this.applyReportStatus(data.report_status || 'none', data.report_quality || null);
                 if (data.report_download) {
                     this.applyReportDownloadMeta(data.report_download);
-                    const pdfFilename = data.report_download.pdf_filename;
-                    if (pdfFilename) {
-                        setTimeout(() => this.showPdfProgressBar(pdfFilename), 300);
+                    const reportToken = data.report_download.pdf_file_id || data.report_download.md_file_id || data.report_download.file_id || data.report_download.pdf_filename;
+                    if (reportToken) {
+                        setTimeout(() => this.showPdfProgressBar(reportToken), 300);
                     }
                 }
                 const serverLatencyMs = Number(data.model_latency_ms || data.total_latency_ms || 0);
@@ -583,7 +583,7 @@ class ChatApp {
         };
 
         try {
-            const response = await fetch('/api/chat/stream', {
+            const response = await fetch('/api/v1/chat/stream', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -688,15 +688,15 @@ class ChatApp {
                             if (data.report_download) {
                                 console.log('[PDF进度条] 收到report_download数据:', data.report_download);
                                 this.applyReportDownloadMeta(data.report_download);
-                                const pdfFilename = data.report_download.pdf_filename;
-                                if (pdfFilename) {
-                                    console.log('[PDF进度条] PDF文件名:', pdfFilename);
+                                const reportToken = data.report_download.pdf_file_id || data.report_download.md_file_id || data.report_download.file_id || data.report_download.pdf_filename;
+                                if (reportToken) {
+                                    console.log('[PDF进度条] 报告标识:', reportToken);
                                     // 延迟一下显示进度条，确保DOM已更新
                                     setTimeout(() => {
-                                        this.showPdfProgressBar(pdfFilename);
+                                        this.showPdfProgressBar(reportToken);
                                     }, 500);
                                 } else {
-                                    console.warn('[PDF进度条] report_download中没有pdf_filename字段');
+                                    console.warn('[PDF进度条] report_download中没有可用标识');
                                 }
                             }
                             if (Object.prototype.hasOwnProperty.call(data, 'report_status')) {
@@ -1476,7 +1476,7 @@ class ChatApp {
         this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
     }
 
-    showPdfProgressBar(pdfFilename) {
+    showPdfProgressBar(reportToken) {
         console.log('[PDF进度条] 显示进度条，文件名:', pdfFilename);
         if (this.pdfFooterStatus) {
             this.pdfFooterStatus.textContent = 'PDF 生成状态: 处理中';
@@ -1527,10 +1527,10 @@ class ChatApp {
         this.scrollToBottom();
 
         // 开始轮询PDF转换状态
-        this.startPdfProgressPolling(pdfFilename);
+        this.startPdfProgressPolling(reportToken);
     }
 
-    startPdfProgressPolling(pdfFilename) {
+    startPdfProgressPolling(reportToken) {
         // 清除之前的轮询
         if (this.pdfProgressInterval) {
             clearInterval(this.pdfProgressInterval);
@@ -1543,8 +1543,14 @@ class ChatApp {
         // 轮询函数
         const pollStatus = async () => {
             try {
-                const encodedFilename = encodeURIComponent(pdfFilename);
-                const response = await fetch(`/api/pdf/status/${encodedFilename}`);
+                const token = String(reportToken || '').trim();
+                if (!token) {
+                    return;
+                }
+                const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(token);
+                const response = isUlid
+                    ? await fetch(`/api/v1/reports/${encodeURIComponent(token)}/pdf-status`)
+                    : await fetch(`/api/v1/pdf/status/${encodeURIComponent(token)}`);
                 
                 if (response.ok) {
                     const status = await response.json();
@@ -1665,7 +1671,7 @@ class ChatApp {
             formData.append('query', query);
             formData.append('session_id', this.sessionId);
 
-            const response = await fetch('/api/upload', {
+            const response = await fetch('/api/v1/files/upload', {
                 method: 'POST',
                 body: formData
             });
@@ -1709,7 +1715,7 @@ class ChatApp {
         }
 
         try {
-            const response = await fetch('/api/history/clear', {
+            const response = await fetch('/api/v1/sessions/clear', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1846,7 +1852,11 @@ class ChatApp {
             if (raw.startsWith('http://') || raw.startsWith('https://')) {
                 return raw;
             }
-            return `/api/download/report/${encodeURIComponent(raw)}`;
+            const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/i.test(raw);
+            if (isUlid) {
+                return `/api/v1/files/${encodeURIComponent(raw)}/download`;
+            }
+            return `/api/v1/download/report/${encodeURIComponent(raw)}`;
         };
 
         const pdfFilename = String(reportDownload.pdf_filename || next.pdfFilename || '').trim();
@@ -2360,7 +2370,7 @@ async function submitVerifyCode() {
     error.style.display = 'none';
     
     try {
-        const response = await fetch('/api/verify-code', {
+        const response = await fetch('/api/v1/verify-code', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -2393,7 +2403,7 @@ async function submitVerifyCode() {
 // 加载用户使用次数
 async function loadUserUsage() {
     try {
-        const response = await fetch('/api/user/usage');
+        const response = await fetch('/api/v1/user/usage');
         if (response.ok) {
             const data = await response.json();
             updateUsageDisplay(data.remaining_uses);

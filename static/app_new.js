@@ -1159,7 +1159,7 @@ class FeasibilityReportApp {
         // 链接 - 特殊处理下载链接，阻止默认行为，使用客户端PDF生成
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
             // 如果是报告下载链接，使用客户端PDF生成而不是跳转
-            if (url.includes('/api/download/report/') || text.includes('下载报告') || text.includes('下载')) {
+            if (url.includes('/api/v1/files/') || url.includes('/api/v1/download/report/') || text.includes('下载报告') || text.includes('下载')) {
                 return `<a href="#" onclick="event.preventDefault(); if(typeof app !== 'undefined' && app.handleDownload) { app.handleDownload(); } else { alert('请使用页面上的\"导出报告\"按钮下载PDF文件'); } return false;" class="download-link">${this.escapeHtml(text)}</a>`;
             }
             const safeUrl = this.sanitizeUrl(url);
@@ -1614,7 +1614,7 @@ async function submitVerifyCode() {
     error.style.display = 'none';
     
     try {
-        const response = await fetch('/api/verify-code', {
+        const response = await fetch('/api/v1/verify-code', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1649,7 +1649,7 @@ async function loadUserUsage() {
     try {
         // 添加时间戳防止缓存
         const timestamp = new Date().getTime();
-        const response = await fetch(`/api/user/usage?t=${timestamp}`, {
+        const response = await fetch(`/api/v1/user/usage?t=${timestamp}`, {
             method: 'GET',
             cache: 'no-cache',
             headers: {
@@ -1686,7 +1686,7 @@ function updateUsageDisplay(count) {
 // 检查使用次数（在提交表单前）
 async function checkUsageBeforeSubmit() {
     try {
-        const response = await fetch('/api/user/usage');
+        const response = await fetch('/api/v1/user/usage');
         if (response.ok) {
             const data = await response.json();
             // 更新显示
@@ -1743,8 +1743,8 @@ async function redeemCode() {
     error.style.display = 'none';
     
     try {
-        console.log('[兑换码] 发送请求到 /api/verify-code');
-        const response = await fetch('/api/verify-code', {
+        console.log('[兑换码] 发送请求到 /api/v1/verify-code');
+        const response = await fetch('/api/v1/verify-code', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

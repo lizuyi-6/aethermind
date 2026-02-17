@@ -28,6 +28,7 @@ from config import Config
 from agent import IntelligentAgent
 from file_processor import FileProcessor
 from code_manager import CodeManager
+from file_registry_service import FileRegistry
 import uuid
 import secrets
 
@@ -77,6 +78,7 @@ REPORT_PRE_FINAL_BACKFILL_ENABLED = os.getenv('REPORT_PRE_FINAL_BACKFILL_ENABLED
 MAX_SESSION_ID_LEN = 64
 DEFAULT_SESSION_ID = 'default'
 SESSION_KEY_SEP = ':'
+API_V1_PREFIX = '/api/v1'
 STATE_FILE = os.getenv('APP_STATE_FILE', os.path.join(BASE_DIR, 'runtime_state.json'))
 STATE_LOCK = threading.RLock()
 APP_DEV_MODE = os.getenv('APP_DEV_MODE', '').lower() in ('1', 'true', 'yes') or os.getenv('FLASK_DEBUG', '').lower() == 'true'
@@ -130,6 +132,9 @@ else:
 
 code_manager = CodeManager(codes_file=codes_file)
 logger.info("Verification code file path: %s", code_manager.codes_file)
+FILE_REGISTRY_DB_PATH = os.getenv('FILE_REGISTRY_DB_PATH', os.path.join(BASE_DIR, 'db', 'app_meta.db'))
+file_registry = FileRegistry(FILE_REGISTRY_DB_PATH)
+logger.info("File registry DB path: %s", FILE_REGISTRY_DB_PATH)
 
 # 存储对话历史（key: session_id）
 conversation_histories = {}
@@ -174,6 +179,88 @@ def save_runtime_state():
 
 
 load_runtime_state()
+
+
+@app.before_request
+def reject_legacy_api_routes():
+    path = request.path or ''
+    if path.startswith('/api/') and not path.startswith(f'{API_V1_PREFIX}/'):
+        return jsonify({
+            'error': {
+                'code': 'API_VERSION_MIGRATED',
+                'message': 'Use /api/v1/* endpoints',
+            }
+        }), 410
+
+
+def _safe_extra_json(raw):
+    if not raw:
+        return {}
+    try:
+        return json.loads(raw)
+    except Exception:
+        return {}
+
+
+def register_and_annotate_file(path, kind, origin_name='', source_ref='', extra=None):
+    rec = file_registry.register_file(
+        stored_path=path,
+        kind=kind,
+        origin_name=origin_name,
+        source_ref=source_ref or '',
+        extra=extra or {},
+    )
+    return rec
+
+
+def build_file_download_url(file_id):
+    return f'{API_V1_PREFIX}/files/{quote(file_id, safe="")}/download'
+
+
+def annotate_report_save_info(save_info, source_ref=''):
+    if not isinstance(save_info, dict):
+        return save_info
+    reports_dir = 'reports'
+    md_filename = save_info.get('md_filename') or ''
+    pdf_filename = save_info.get('pdf_filename') or ''
+    md_file_id = ''
+    pdf_file_id = ''
+
+    if md_filename:
+        md_path = os.path.join(reports_dir, md_filename)
+        if os.path.exists(md_path):
+            md_rec = register_and_annotate_file(
+                md_path,
+                kind='report_md',
+                origin_name=md_filename,
+                source_ref=source_ref,
+                extra={'paired_pdf_filename': pdf_filename or ''},
+            )
+            md_file_id = md_rec.get('file_id', '')
+
+    if pdf_filename:
+        pdf_path = os.path.join(reports_dir, pdf_filename)
+        if os.path.exists(pdf_path):
+            pdf_rec = register_and_annotate_file(
+                pdf_path,
+                kind='report_pdf',
+                origin_name=pdf_filename,
+                source_ref=source_ref,
+                extra={'paired_md_filename': md_filename or ''},
+            )
+            pdf_file_id = pdf_rec.get('file_id', '')
+
+    preferred_file_id = pdf_file_id or md_file_id
+    if preferred_file_id:
+        save_info['download_url'] = build_file_download_url(preferred_file_id)
+    save_info['file_id'] = preferred_file_id
+    save_info['pdf_file_id'] = pdf_file_id
+    save_info['md_file_id'] = md_file_id
+    if pdf_file_id:
+        save_info['pdf_url'] = build_file_download_url(pdf_file_id)
+    if md_file_id:
+        save_info['md_url'] = build_file_download_url(md_file_id)
+    return save_info
 
 
 def get_or_create_session(session_id):
@@ -595,6 +682,7 @@ def chat_page():
 
 
 @app.route('/api/chat', methods=['POST'])
+@app.route('/api/v1/chat', methods=['POST'])
 def chat():
     """Handle non-stream chat request."""
     try:
@@ -659,18 +747,22 @@ def chat():
                 )
                 save_info = emergency_save_report_markdown(reply, user_input)
             if save_info:
+                save_info = annotate_report_save_info(save_info, source_ref=scoped_session_id)
                 download_url = save_info.get('download_url', '')
                 filename = save_info.get('filename', '')
                 pdf_filename = save_info.get('pdf_filename')
                 md_filename = save_info.get('md_filename')
                 file_format = save_info.get('format', 'pdf')
                 format_text = 'PDF' if file_format == 'pdf' else 'Markdown'
-                pdf_url = f"/api/download/report/{quote(pdf_filename, safe='')}" if pdf_filename else ''
-                md_url = f"/api/download/report/{quote(md_filename, safe='')}" if md_filename else ''
+                pdf_url = save_info.get('pdf_url', '')
+                md_url = save_info.get('md_url', '')
                 report_download = {
                     'url': download_url,
                     'filename': filename,
                     'format': file_format,
+                    'file_id': save_info.get('file_id', ''),
+                    'pdf_file_id': save_info.get('pdf_file_id', ''),
+                    'md_file_id': save_info.get('md_file_id', ''),
                     'pdf_filename': pdf_filename,
                     'md_filename': md_filename,
                     'pdf_url': pdf_url,
@@ -726,6 +818,7 @@ def chat():
 
 
 @app.route('/api/chat/stream', methods=['POST'])
+@app.route('/api/v1/chat/stream', methods=['POST'])
 def chat_stream():
     """Handle streaming chat request."""
     try:
@@ -829,20 +922,21 @@ def chat_stream():
                             )
                             save_info = emergency_save_report_markdown(full_reply, user_input)
                         if save_info:
+                            save_info = annotate_report_save_info(save_info, source_ref=scoped_session_id)
                             download_url = save_info.get('download_url', '')
                             filename = save_info.get('filename', '')
                             pdf_filename = save_info.get('pdf_filename')
                             md_filename = save_info.get('md_filename')
                             file_format = save_info.get('format', 'pdf')
                             format_text = 'PDF' if file_format == 'pdf' else 'Markdown'
-                            pdf_url = f"/api/download/report/{quote(pdf_filename, safe='')}" if pdf_filename else ''
-                            md_url = f"/api/download/report/{quote(md_filename, safe='')}" if md_filename else ''
+                            pdf_url = save_info.get('pdf_url', '')
+                            md_url = save_info.get('md_url', '')
                             save_msg = (
                                 f"\n\n---\n✅ **报告已生成并保存**\n📁 文件名: `{filename}` ({format_text}格式)\n"
                                 f"🔗 [点击下载报告]({download_url})"
                             )
                             full_reply += save_msg
-                            yield f"data: {json.dumps({'content': save_msg, 'done': False, 'report_download': {'url': download_url, 'filename': filename, 'format': file_format, 'pdf_filename': pdf_filename, 'md_filename': md_filename, 'pdf_url': pdf_url, 'md_url': md_url}}, ensure_ascii=False)}\n\n"
+                            yield f"data: {json.dumps({'content': save_msg, 'done': False, 'report_download': {'url': download_url, 'filename': filename, 'format': file_format, 'file_id': save_info.get('file_id', ''), 'pdf_file_id': save_info.get('pdf_file_id', ''), 'md_file_id': save_info.get('md_file_id', ''), 'pdf_filename': pdf_filename, 'md_filename': md_filename, 'pdf_url': pdf_url, 'md_url': md_url}}, ensure_ascii=False)}\n\n"
                     else:
                         missing = report_quality.get('missing_sections', []) if isinstance(report_quality, dict) else []
                         missing_text = "、".join(missing) if missing else "结构未达完整标准"
@@ -903,6 +997,7 @@ def chat_stream():
     except Exception as e:
         return fail_response(exc=e)
 @app.route('/api/upload', methods=['POST'])
+@app.route('/api/v1/files/upload', methods=['POST'])
 def upload_file():
     """Handle file upload and query."""
     try:
@@ -936,6 +1031,13 @@ def upload_file():
         unique_filename = f"{uuid.uuid4().hex}_{filename}"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
         file.save(filepath)
+        file_record = register_and_annotate_file(
+            filepath,
+            kind='upload',
+            origin_name=filename,
+            source_ref=scoped_session_id,
+            extra={'user_id': user_id},
+        )
         
         # 获取会话历史
         conversation_history = get_or_create_session(scoped_session_id)
@@ -988,6 +1090,8 @@ def upload_file():
         response = jsonify({
             'reply': reply,
             'filename': filename,
+            'file_id': file_record.get('file_id', ''),
+            'stored_name': unique_filename,
             'session_id': session_id,
             'remaining_uses': get_user_usage_count(user_id),
             'rag_sources': getattr(agent, '_last_rag_sources', []) or [],
@@ -1003,6 +1107,7 @@ def upload_file():
 
 
 @app.route('/api/history/clear', methods=['POST'])
+@app.route('/api/v1/sessions/clear', methods=['POST'])
 def clear_history():
     """Clear conversation history for a session."""
     try:
@@ -1028,6 +1133,7 @@ def clear_history():
 
 
 @app.route('/api/history', methods=['GET'])
+@app.route('/api/v1/sessions/history', methods=['GET'])
 def get_history():
     """获取对话历史"""
     try:
@@ -1056,6 +1162,7 @@ def get_history():
 
 
 @app.route('/api/sessions', methods=['GET'])
+@app.route('/api/v1/sessions', methods=['GET'])
 def get_sessions():
     """Get all sessions for current user."""
     try:
@@ -1093,6 +1200,7 @@ def get_sessions():
 
 
 @app.route('/api/workspace/explorer', methods=['GET'])
+@app.route('/api/v1/workspace/explorer', methods=['GET'])
 def workspace_explorer():
     """Return real explorer data for frontend workspace panel."""
     try:
@@ -1156,6 +1264,7 @@ def workspace_explorer():
 
 
 @app.route('/api/config', methods=['GET'])
+@app.route('/api/v1/config', methods=['GET'])
 def get_config():
     """获取配置信息"""
     try:
@@ -1181,6 +1290,7 @@ def _can_access_dev_error_feed():
 
 
 @app.route('/api/dev/errors/report', methods=['POST'])
+@app.route('/api/v1/dev/errors/report', methods=['POST'])
 def report_client_error():
     """Frontend -> backend dev error sink."""
     if not DEV_ERROR_PIPELINE_ENABLED:
@@ -1224,16 +1334,17 @@ def emergency_save_report_markdown(report_content: str, user_input: str = "") ->
     return {
         'filename': md_filename,
         'filepath': md_path,
-        'download_url': f'/api/download/report/{encoded}',
+        'download_url': f'/api/v1/download/report/{encoded}',
         'format': 'md',
         'pdf_filename': '',
         'md_filename': md_filename,
         'pdf_url': '',
-        'md_url': f'/api/download/report/{encoded}',
+        'md_url': f'/api/v1/download/report/{encoded}',
     }
 
 
 @app.route('/api/dev/errors', methods=['GET'])
+@app.route('/api/v1/dev/errors', methods=['GET'])
 def get_dev_errors():
     """Read recent dev error events for troubleshooting."""
     if not _can_access_dev_error_feed():
@@ -1257,6 +1368,7 @@ def get_dev_errors():
 # ==================== 验证码相关 API ====================
 
 @app.route('/api/verify-code', methods=['POST'])
+@app.route('/api/v1/verify-code', methods=['POST'])
 def verify_code():
     """验证验证码并增加用户使用次数"""
     try:
@@ -1294,6 +1406,7 @@ def verify_code():
 
 
 @app.route('/api/user/usage', methods=['GET'])
+@app.route('/api/v1/user/usage', methods=['GET'])
 def get_user_usage():
     """获取用户剩余使用次数"""
     try:
@@ -1334,6 +1447,7 @@ def admin_dashboard():
 
 
 @app.route('/api/admin/login', methods=['POST'])
+@app.route('/api/v1/admin/login', methods=['POST'])
 def admin_login():
     """Admin login API."""
     try:
@@ -1380,6 +1494,7 @@ def admin_login():
 
 
 @app.route('/api/admin/logout', methods=['POST'])
+@app.route('/api/v1/admin/logout', methods=['POST'])
 @require_admin_login
 @require_admin_csrf
 def admin_logout():
@@ -1400,6 +1515,7 @@ def admin_logout():
 
 
 @app.route('/api/admin/check', methods=['GET'])
+@app.route('/api/v1/admin/check', methods=['GET'])
 def admin_check():
     """Check admin login status."""
     try:
@@ -1413,6 +1529,7 @@ def admin_check():
 
 
 @app.route('/api/admin/codes', methods=['GET'])
+@app.route('/api/v1/admin/codes', methods=['GET'])
 @require_admin_login
 def admin_get_codes():
     """获取有验证码列表"""
@@ -1435,6 +1552,7 @@ def admin_get_codes():
 
 
 @app.route('/api/admin/codes/generate', methods=['POST'])
+@app.route('/api/v1/admin/codes/generate', methods=['POST'])
 @require_admin_login
 @require_admin_csrf
 def admin_generate_codes():
@@ -1463,6 +1581,7 @@ def admin_generate_codes():
 
 
 @app.route('/api/admin/codes/update', methods=['POST'])
+@app.route('/api/v1/admin/codes/update', methods=['POST'])
 @require_admin_login
 @require_admin_csrf
 def admin_update_code():
@@ -1489,6 +1608,7 @@ def admin_update_code():
 
 
 @app.route('/api/admin/codes/delete', methods=['POST'])
+@app.route('/api/v1/admin/codes/delete', methods=['POST'])
 @require_admin_login
 @require_admin_csrf
 def admin_delete_code():
@@ -1511,6 +1631,7 @@ def admin_delete_code():
 
 
 @app.route('/api/admin/statistics', methods=['GET'])
+@app.route('/api/v1/admin/statistics', methods=['GET'])
 @require_admin_login
 def admin_statistics():
     """获取统计信息"""
@@ -1633,6 +1754,17 @@ def rag_insert_document(title, content, source_path='', filename=''):
             )
 
         conn.commit()
+        try:
+            if source_path and os.path.isfile(source_path):
+                register_and_annotate_file(
+                    source_path,
+                    kind='rag_source',
+                    origin_name=(filename or os.path.basename(source_path)),
+                    source_ref=f"rag_document:{document_id}",
+                    extra={'title': title},
+                )
+        except Exception:
+            logger.exception("Failed to register rag source file: %s", source_path)
         return int(document_id)
     finally:
         conn.close()
@@ -1653,6 +1785,7 @@ def rag_admin_page():
 
 
 @app.route('/api/rag/stats', methods=['GET'])
+@app.route('/api/v1/rag/stats', methods=['GET'])
 @require_admin_login
 def rag_stats():
     try:
@@ -1691,6 +1824,7 @@ def rag_stats():
 
 
 @app.route('/api/rag/search', methods=['POST'])
+@app.route('/api/v1/rag/search', methods=['POST'])
 @require_admin_login
 def rag_search():
     try:
@@ -1725,6 +1859,7 @@ def rag_search():
 
 
 @app.route('/api/rag/add', methods=['POST'])
+@app.route('/api/v1/rag/add', methods=['POST'])
 @require_admin_login
 def rag_add():
     try:
@@ -1761,6 +1896,7 @@ def rag_add():
 
 
 @app.route('/api/rag/add/url', methods=['POST'])
+@app.route('/api/v1/rag/add/url', methods=['POST'])
 @require_admin_login
 def rag_add_url():
     try:
@@ -1801,6 +1937,7 @@ def rag_add_url():
 
 
 @app.route('/api/rag/add/directory', methods=['POST'])
+@app.route('/api/v1/rag/add/directory', methods=['POST'])
 @require_admin_login
 def rag_add_directory():
     try:
@@ -1848,6 +1985,7 @@ def rag_add_directory():
 
 
 @app.route('/api/rag/clear', methods=['POST'])
+@app.route('/api/v1/rag/clear', methods=['POST'])
 @require_admin_login
 def rag_clear():
     try:
@@ -1871,6 +2009,7 @@ def rag_clear():
 
 
 @app.route('/api/rag/export', methods=['GET'])
+@app.route('/api/v1/rag/export', methods=['GET'])
 @require_admin_login
 def rag_export():
     try:
@@ -1936,7 +2075,49 @@ def rag_export():
         return fail_response(exc=e)
 
 
+@app.route('/api/v1/files/<string:file_id>', methods=['GET'])
+def file_detail(file_id):
+    try:
+        record = file_registry.get_file(file_id)
+        if not record or record.get('status') != 'active':
+            return jsonify({'error': 'file not found'}), 404
+        return jsonify({
+            'file_id': record.get('file_id', ''),
+            'kind': record.get('kind', ''),
+            'origin_name': record.get('origin_name', ''),
+            'stored_name': record.get('stored_name', ''),
+            'mime_type': record.get('mime_type', ''),
+            'size_bytes': int(record.get('size_bytes', 0) or 0),
+            'created_at': record.get('created_at', ''),
+            'updated_at': record.get('updated_at', ''),
+            'source_ref': record.get('source_ref', ''),
+            'extra': _safe_extra_json(record.get('extra_json', '{}')),
+        })
+    except Exception as e:
+        return fail_response(exc=e)
+
+
+@app.route('/api/v1/files/<string:file_id>/download', methods=['GET'])
+def download_file_by_id(file_id):
+    try:
+        record = file_registry.get_file(file_id)
+        if not record or record.get('status') != 'active':
+            return jsonify({'error': 'file not found'}), 404
+        filepath = record.get('stored_path', '')
+        if not filepath or not os.path.exists(filepath):
+            return jsonify({'error': 'file is missing on server'}), 404
+        return send_file(
+            filepath,
+            mimetype=(record.get('mime_type') or 'application/octet-stream'),
+            as_attachment=True,
+            download_name=record.get('origin_name') or record.get('stored_name') or os.path.basename(filepath),
+        )
+    except Exception as e:
+        return fail_response(exc=e)
+
+
 @app.route('/api/download/report/<path:filename>', methods=['GET'])
+@app.route('/api/v1/download/report/<path:filename>', methods=['GET'])
 def download_report(filename):
     """Download generated report files (PDF/MD)."""
     try:
@@ -1991,7 +2172,74 @@ def download_report(filename):
         return fail_response(exc=e)
 
 
+@app.route('/api/v1/reports/<string:file_id>/pdf-status', methods=['GET'])
+def pdf_status_by_file_id(file_id):
+    try:
+        record = file_registry.get_file(file_id)
+        if not record or record.get('status') != 'active':
+            return jsonify({'error': 'file not found'}), 404
+
+        kind = record.get('kind', '')
+        base_name = os.path.splitext(record.get('stored_name', '') or '')[0]
+        report_id = record.get('source_ref', '')
+
+        if kind == 'report_pdf':
+            return jsonify({
+                'status': 'completed',
+                'progress': 100,
+                'message': 'PDF转换完成',
+                'download_url': build_file_download_url(file_id),
+                'file_id': file_id,
+            })
+
+        if kind != 'report_md':
+            return jsonify({'error': 'only report file status is supported'}), 400
+
+        # Locate paired PDF by source_ref then fallback filename pairing.
+        pdf_candidate = None
+        if report_id:
+            with sqlite3.connect(FILE_REGISTRY_DB_PATH) as conn:
+                conn.row_factory = sqlite3.Row
+                pdf_candidate = conn.execute(
+                    """
+                    SELECT * FROM file_registry
+                    WHERE source_ref = ? AND kind = 'report_pdf' AND status = 'active'
+                    ORDER BY created_at DESC LIMIT 1
+                    """,
+                    (report_id,),
+                ).fetchone()
+        if not pdf_candidate:
+            with sqlite3.connect(FILE_REGISTRY_DB_PATH) as conn:
+                conn.row_factory = sqlite3.Row
+                pdf_candidate = conn.execute(
+                    """
+                    SELECT * FROM file_registry
+                    WHERE kind = 'report_pdf' AND status = 'active' AND stored_name LIKE ?
+                    ORDER BY created_at DESC LIMIT 1
+                    """,
+                    (f"{base_name}.pdf",),
+                ).fetchone()
+        if pdf_candidate:
+            pdf_file_id = dict(pdf_candidate).get('file_id', '')
+            return jsonify({
+                'status': 'completed',
+                'progress': 100,
+                'message': 'PDF转换完成',
+                'download_url': build_file_download_url(pdf_file_id),
+                'file_id': pdf_file_id,
+            })
+        return jsonify({
+            'status': 'failed',
+            'progress': 100,
+            'message': 'PDF不存在，可重新转换或下载Markdown',
+            'file_id': file_id,
+        })
+    except Exception as e:
+        return fail_response(exc=e)
+
+
 @app.route('/api/pdf/status/<path:filename>', methods=['GET'])
+@app.route('/api/v1/pdf/status/<path:filename>', methods=['GET'])
 def pdf_status(filename):
     """Query server-side PDF conversion status by filename."""
     try:
@@ -2009,7 +2257,7 @@ def pdf_status(filename):
                 'status': 'completed',
                 'progress': 100,
                 'message': 'PDF杞崲瀹屾垚',
-                'download_url': f'/api/download/report/{encoded}',
+                'download_url': f'/api/v1/download/report/{encoded}',
             })
 
         # If PDF is missing but markdown exists, return failed status for clear UX.
@@ -2029,7 +2277,49 @@ def pdf_status(filename):
         return fail_response(exc=e)
 
 
+@app.route('/api/v1/reports/<string:file_id>/convert-pdf', methods=['POST'])
+def convert_pdf_by_file_id(file_id):
+    try:
+        md_record = file_registry.get_file(file_id)
+        if not md_record or md_record.get('status') != 'active':
+            return jsonify({'error': 'file not found'}), 404
+        if md_record.get('kind') != 'report_md':
+            return jsonify({'error': 'only markdown report can be converted'}), 400
+
+        md_path = md_record.get('stored_path', '')
+        if not md_path or not os.path.exists(md_path):
+            return jsonify({'error': 'markdown file not found'}), 404
+        with open(md_path, 'r', encoding='utf-8') as f:
+            markdown_content = f.read()
+
+        reports_dir = 'reports'
+        os.makedirs(reports_dir, exist_ok=True)
+        base_name = os.path.splitext(md_record.get('stored_name') or '')[0]
+        pdf_name = f"{base_name}.pdf"
+        pdf_path = os.path.join(reports_dir, pdf_name)
+        agent._convert_markdown_to_pdf(markdown_content, pdf_path)
+        pdf_rec = register_and_annotate_file(
+            pdf_path,
+            kind='report_pdf',
+            origin_name=os.path.basename(pdf_name),
+            source_ref=md_record.get('source_ref', ''),
+            extra={'paired_md_file_id': file_id},
+        )
+        pdf_file_id = pdf_rec.get('file_id', '')
+        return jsonify({
+            'success': True,
+            'file_id': pdf_file_id,
+            'download_url': build_file_download_url(pdf_file_id),
+            'status': 'completed',
+            'progress': 100,
+            'message': 'PDF转换完成',
+        })
+    except Exception as e:
+        return fail_response(exc=e)
+
+
 @app.route('/api/pdf/convert/<path:filename>', methods=['POST'])
+@app.route('/api/v1/pdf/convert/<path:filename>', methods=['POST'])
 def convert_pdf(filename):
     """Convert an existing markdown report file to PDF on demand."""
     try:
@@ -2055,7 +2345,7 @@ def convert_pdf(filename):
         return jsonify({
             'success': True,
             'filename': pdf_name,
-            'download_url': f'/api/download/report/{encoded}',
+            'download_url': f'/api/v1/download/report/{encoded}',
             'status': 'completed',
             'progress': 100,
             'message': 'PDF杞崲瀹屾垚',

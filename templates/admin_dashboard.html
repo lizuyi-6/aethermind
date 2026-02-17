@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理员后台 - 验证码管理</title>
+    <title>绠＄悊鍛樺悗鍙?- 楠岃瘉鐮佺鐞?/title>
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}?v=8">
     <link rel="shortcut icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}?v=8">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.jpg') }}?v=8">
@@ -279,11 +279,11 @@
 <body>
     <div class="header">
         <div class="header-content">
-            <h1>验证码管理系统</h1>
+            <h1>楠岃瘉鐮佺鐞嗙郴缁?/h1>
             <div class="header-actions">
-                <a href="/rag" class="btn btn-rag" target="_blank">📚 RAG知识库</a>
-                <button class="btn btn-primary" onclick="refreshCodes()">刷新</button>
-                <button class="btn btn-primary" onclick="logout()">退出登录</button>
+                <a href="/rag" class="btn btn-rag" target="_blank">馃摎 RAG鐭ヨ瘑搴?/a>
+                <button class="btn btn-primary" onclick="refreshCodes()">鍒锋柊</button>
+                <button class="btn btn-primary" onclick="logout()">閫€鍑虹櫥褰?/button>
             </div>
         </div>
     </div>
@@ -293,46 +293,46 @@
         
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
-                <h3>总验证码数</h3>
+                <h3>鎬婚獙璇佺爜鏁?/h3>
                 <div class="value" id="totalCodes">-</div>
             </div>
             <div class="stat-card">
-                <h3>可用验证码</h3>
+                <h3>鍙敤楠岃瘉鐮?/h3>
                 <div class="value" id="availableCodes">-</div>
             </div>
             <div class="stat-card">
-                <h3>总剩余次数</h3>
+                <h3>鎬诲墿浣欐鏁?/h3>
                 <div class="value" id="totalUses">-</div>
             </div>
             <div class="stat-card">
-                <h3>活跃用户</h3>
+                <h3>娲昏穬鐢ㄦ埛</h3>
                 <div class="value" id="activeUsers">-</div>
             </div>
         </div>
         
         <div class="actions-bar">
-            <h2>生成新验证码</h2>
+            <h2>鐢熸垚鏂伴獙璇佺爜</h2>
             <div class="form-row">
                 <div class="form-group">
-                    <label>生成数量</label>
+                    <label>鐢熸垚鏁伴噺</label>
                     <input type="number" id="generateCount" value="1" min="1" max="100">
                 </div>
                 <div class="form-group">
-                    <label>每个验证码使用次数</label>
+                    <label>姣忎釜楠岃瘉鐮佷娇鐢ㄦ鏁?/label>
                     <input type="number" id="generateUses" value="1" min="1">
                 </div>
-                <button class="btn btn-success" onclick="generateCodes()">生成</button>
+                <button class="btn btn-success" onclick="generateCodes()">鐢熸垚</button>
             </div>
         </div>
         
         <div class="codes-table-container">
-            <div class="loading" id="loading">加载中...</div>
+            <div class="loading" id="loading">鍔犺浇涓?..</div>
             <table class="codes-table" id="codesTable" style="display: none;">
                 <thead>
                     <tr>
-                        <th>验证码</th>
-                        <th>剩余使用次数</th>
-                        <th>操作</th>
+                        <th>楠岃瘉鐮?/th>
+                        <th>鍓╀綑浣跨敤娆℃暟</th>
+                        <th>鎿嶄綔</th>
                     </tr>
                 </thead>
                 <tbody id="codesTableBody">
@@ -366,10 +366,10 @@
             return fetch(url, { ...options, headers, credentials: 'same-origin' });
         }
 
-        // 检查登录状态
+        // 妫€鏌ョ櫥褰曠姸鎬?
         async function checkLogin() {
             try {
-                const response = await fetch('/api/admin/check');
+                const response = await fetch('/api/v1/admin/check');
                 if (!response.ok) {
                     window.location.href = '/admin';
                     return false;
@@ -381,34 +381,34 @@
             }
         }
         
-        // 加载验证码列表
+        // 鍔犺浇楠岃瘉鐮佸垪琛?
         async function loadCodes() {
             try {
-                const response = await fetch('/api/admin/codes');
+                const response = await fetch('/api/v1/admin/codes');
                 if (!response.ok) {
                     if (response.status === 401) {
                         window.location.href = '/admin';
                         return;
                     }
-                    throw new Error('加载失败');
+                    throw new Error('鍔犺浇澶辫触');
                 }
                 
                 const data = await response.json();
                 displayCodes(data.codes);
                 updateStatistics(data.statistics);
             } catch (error) {
-                showMessage('加载验证码失败: ' + error.message, 'error');
+                showMessage('鍔犺浇楠岃瘉鐮佸け璐? ' + error.message, 'error');
             }
         }
         
-        // 显示验证码列表
+        // 鏄剧ず楠岃瘉鐮佸垪琛?
         function displayCodes(codes) {
             const tbody = document.getElementById('codesTableBody');
             const table = document.getElementById('codesTable');
             const loading = document.getElementById('loading');
             
             if (codes.length === 0) {
-                loading.innerHTML = '<div class="empty-state"><p>暂无验证码</p></div>';
+                loading.innerHTML = '<div class="empty-state"><p>鏆傛棤楠岃瘉鐮?/p></div>';
                 table.style.display = 'none';
                 return;
             }
@@ -426,18 +426,18 @@
                         <div class="uses-cell">
                             <input type="number" class="uses-input" value="${item.uses}" 
                                    id="uses-${index}" min="0" data-code="${safeCode}">
-                            <button class="btn btn-sm btn-warning" onclick="updateCode('${encodedCode}', ${index})">更新</button>
+                            <button class="btn btn-sm btn-warning" onclick="updateCode('${encodedCode}', ${index})">鏇存柊</button>
                         </div>
                     </td>
                     <td>
-                        <button class="btn btn-sm btn-danger" onclick="deleteCode('${encodedCode}')">删除</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCode('${encodedCode}')">鍒犻櫎</button>
                     </td>
                 </tr>
             `;
             }).join('');
         }
         
-        // 更新统计信息
+        // 鏇存柊缁熻淇℃伅
         async function updateStatistics(stats) {
             document.getElementById('totalCodes').textContent = stats.total_codes || 0;
             document.getElementById('availableCodes').textContent = stats.available_codes || 0;
@@ -445,23 +445,23 @@
             document.getElementById('activeUsers').textContent = stats.active_users || 0;
         }
         
-        // 生成验证码
+        // 鐢熸垚楠岃瘉鐮?
         async function generateCodes() {
             const count = parseInt(document.getElementById('generateCount').value);
             const uses = parseInt(document.getElementById('generateUses').value);
             
             if (count < 1 || count > 100) {
-                showMessage('生成数量必须在1-100之间', 'error');
+                showMessage('鐢熸垚鏁伴噺蹇呴』鍦?-100涔嬮棿', 'error');
                 return;
             }
             
             if (uses < 1) {
-                showMessage('使用次数必须大于0', 'error');
+                showMessage('浣跨敤娆℃暟蹇呴』澶т簬0', 'error');
                 return;
             }
             
             try {
-                const response = await csrfFetch('/api/admin/codes/generate', {
+                const response = await csrfFetch('/api/v1/admin/codes/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -472,30 +472,30 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showMessage(`成功生成 ${data.count} 个验证码`, 'success');
+                    showMessage(`鎴愬姛鐢熸垚 ${data.count} 涓獙璇佺爜`, 'success');
                     await loadCodes();
                     await loadStatistics();
                 } else {
-                    showMessage(data.error || '生成失败', 'error');
+                    showMessage(data.error || '鐢熸垚澶辫触', 'error');
                 }
             } catch (error) {
-                showMessage('生成验证码失败: ' + error.message, 'error');
+                showMessage('鐢熸垚楠岃瘉鐮佸け璐? ' + error.message, 'error');
             }
         }
         
-        // 更新验证码使用次数
+        // 鏇存柊楠岃瘉鐮佷娇鐢ㄦ鏁?
         async function updateCode(encodedCode, index) {
             const code = decodeURIComponent(encodedCode);
             const usesInput = document.getElementById(`uses-${index}`);
             const uses = parseInt(usesInput.value);
             
             if (uses < 0) {
-                showMessage('使用次数不能为负数', 'error');
+                showMessage('浣跨敤娆℃暟涓嶈兘涓鸿礋鏁?, 'error');
                 return;
             }
             
             try {
-                const response = await csrfFetch('/api/admin/codes/update', {
+                const response = await csrfFetch('/api/v1/admin/codes/update', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -506,26 +506,26 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showMessage('更新成功', 'success');
+                    showMessage('鏇存柊鎴愬姛', 'success');
                     await loadCodes();
                     await loadStatistics();
                 } else {
-                    showMessage(data.error || '更新失败', 'error');
+                    showMessage(data.error || '鏇存柊澶辫触', 'error');
                 }
             } catch (error) {
-                showMessage('更新失败: ' + error.message, 'error');
+                showMessage('鏇存柊澶辫触: ' + error.message, 'error');
             }
         }
         
-        // 删除验证码
+        // 鍒犻櫎楠岃瘉鐮?
         async function deleteCode(encodedCode) {
             const code = decodeURIComponent(encodedCode);
-            if (!confirm(`确定要删除验证码 ${code} 吗？`)) {
+            if (!confirm(`纭畾瑕佸垹闄ら獙璇佺爜 ${code} 鍚楋紵`)) {
                 return;
             }
             
             try {
-                const response = await csrfFetch('/api/admin/codes/delete', {
+                const response = await csrfFetch('/api/v1/admin/codes/delete', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -536,48 +536,48 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showMessage('删除成功', 'success');
+                    showMessage('鍒犻櫎鎴愬姛', 'success');
                     await loadCodes();
                     await loadStatistics();
                 } else {
-                    showMessage(data.error || '删除失败', 'error');
+                    showMessage(data.error || '鍒犻櫎澶辫触', 'error');
                 }
             } catch (error) {
-                showMessage('删除失败: ' + error.message, 'error');
+                showMessage('鍒犻櫎澶辫触: ' + error.message, 'error');
             }
         }
         
-        // 加载统计信息
+        // 鍔犺浇缁熻淇℃伅
         async function loadStatistics() {
             try {
-                const response = await fetch('/api/admin/statistics');
+                const response = await fetch('/api/v1/admin/statistics');
                 if (response.ok) {
                     const stats = await response.json();
                     updateStatistics(stats);
                 }
             } catch (error) {
-                console.error('加载统计信息失败:', error);
+                console.error('鍔犺浇缁熻淇℃伅澶辫触:', error);
             }
         }
         
-        // 刷新
+        // 鍒锋柊
         async function refreshCodes() {
             await loadCodes();
             await loadStatistics();
-            showMessage('已刷新', 'success');
+            showMessage('宸插埛鏂?, 'success');
         }
         
-        // 退出登录
+        // 閫€鍑虹櫥褰?
         async function logout() {
             try {
-                await csrfFetch('/api/admin/logout', { method: 'POST' });
+                await csrfFetch('/api/v1/admin/logout', { method: 'POST' });
                 window.location.href = '/admin';
             } catch (error) {
                 window.location.href = '/admin';
             }
         }
         
-        // 显示消息
+        // 鏄剧ず娑堟伅
         function showMessage(message, type) {
             const messageEl = document.getElementById('message');
             messageEl.textContent = message;
@@ -588,17 +588,18 @@
             }, 3000);
         }
         
-        // 初始化
+        // 鍒濆鍖?
         (async () => {
             if (await checkLogin()) {
                 await loadCodes();
                 await loadStatistics();
-                // 每30秒自动刷新统计信息
+                // 姣?0绉掕嚜鍔ㄥ埛鏂扮粺璁′俊鎭?
                 setInterval(loadStatistics, 30000);
             }
         })();
     </script>
 </body>
 </html>
+
 
 

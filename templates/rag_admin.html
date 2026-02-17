@@ -641,7 +641,7 @@
 
         async function loadStats() {
             try {
-                const response = await fetch('/api/rag/stats');
+                const response = await fetch('/api/v1/rag/stats');
                 const data = await response.json();
 
                 if (!data.success) {
@@ -674,7 +674,7 @@
             setButtonBusy(btn, true, text, '添加中');
 
             try {
-                const response = await fetch('/api/rag/add', {
+                const response = await fetch('/api/v1/rag/add', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -715,7 +715,7 @@
             resultEl.innerHTML = '<div class="hint">检索中，请稍候...</div>';
 
             try {
-                const response = await fetch('/api/rag/search', {
+                const response = await fetch('/api/v1/rag/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ query, strategy, category })
@@ -780,7 +780,7 @@
             if (!confirm('请再次确认：是否继续清空全部文档？')) return;
 
             try {
-                const response = await fetch('/api/rag/clear', { method: 'POST' });
+                const response = await fetch('/api/v1/rag/clear', { method: 'POST' });
                 const data = await response.json();
                 if (!data.success) {
                     showToast('error', data.error || '清空失败');
@@ -795,7 +795,7 @@
 
         async function exportKnowledgeBase() {
             try {
-                const response = await fetch('/api/rag/export');
+                const response = await fetch('/api/v1/rag/export');
                 const data = await response.json();
                 if (!data.success) {
                     showToast('error', data.error || '导出失败');
@@ -813,7 +813,7 @@
             const category = $('docCategory').value;
 
             try {
-                const response = await fetch('/api/rag/add/url', {
+                const response = await fetch('/api/v1/rag/add/url', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ url, category })
@@ -838,7 +838,7 @@
             progressDiv.innerHTML = '<div class="progress"><div class="progress-bar">处理中...</div></div>';
 
             try {
-                const response = await fetch('/api/rag/add/directory', {
+                const response = await fetch('/api/v1/rag/add/directory', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ directory, category })
@@ -883,3 +883,4 @@
     </script>
 </body>
 </html>
+

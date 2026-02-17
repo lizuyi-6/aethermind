@@ -48,3 +48,15 @@ Thumbs.db
 
 # Runtime state
 runtime_state.json
+_cleanup_archive/
+*.bak
+*.backup
+*.backup_*
+*.log
+logs/*.jsonl
+reports/*.pdf
+reports/*.md
+db/*.db
+.vite/
+nul
+.pytest_cache/
