@@ -162,7 +162,7 @@ class FeasibilityReportApp {
 
     validateForm() {
         const formData = new FormData(this.projectForm);
-        const requiredFields = ['projectName', 'constructionUnit', 'companyFoundDate', 'projectManager', 'constructionAddress', 'projectType', 'industry', 'budget', 'timeline', 'teamSize', 'targetMarket', 'description'];
+        const requiredFields = ['projectName', 'constructionUnit', 'projectType', 'industry', 'budget', 'timeline', 'teamSize', 'targetMarket', 'description'];
         
         const isValid = requiredFields.every(field => {
             const value = formData.get(field);
@@ -179,9 +179,6 @@ class FeasibilityReportApp {
         this.projectData = {
             projectName: formData.get('projectName'),
             constructionUnit: formData.get('constructionUnit'),
-            companyFoundDate: formData.get('companyFoundDate'),
-            projectManager: formData.get('projectManager'),
-            constructionAddress: formData.get('constructionAddress'),
             projectType: formData.get('projectType'),
             industry: formData.get('industry'),
             budget: formData.get('budget'),
@@ -224,9 +221,6 @@ class FeasibilityReportApp {
 
 项目名称：${projectData.projectName}
 建设单位：${projectData.constructionUnit}
-公司成立时间：${projectData.companyFoundDate}
-项目负责人：${projectData.projectManager}
-建设地址：${projectData.constructionAddress}
 项目类型：${projectData.projectType}
 所属行业：${projectData.industry}
 预计预算：${projectData.budget}
@@ -1054,20 +1048,27 @@ class FeasibilityReportApp {
             }
             const id = `CODE_BLOCK_${codeBlocks.length}`;
             const language = (lang || '').toLowerCase().trim();
-            // 增强的Mermaid图表类型识别
-            const isMermaidByLang = ['mermaid', 'graph', 'flowchart', 'gantt', 'pie', 'sequencediagram',
-                                     'classdiagram', 'statediagram', 'erdiagram', 'gitgraph',
-                                     'journey', 'xychart', 'quadrantchart', 'mindmap', 'timeline'].includes(language);
-            // 也检查代码内容是否包含Mermaid关键词
+            // 增强Mermaid检测：即使语言标记不是mermaid，如果代码内容包含Mermaid语法，也识别为Mermaid
             const codeContent = code.trim();
-            const isMermaidByContent = /^(graph|flowchart|pie|gantt|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gitgraph|xychart-beta|quadrantChart|mindmap|timeline|%%{init)/i.test(codeContent);
-
+            const isMermaidContent = codeContent.includes('xychart-beta') || 
+                                     codeContent.includes('pie title') || 
+                                     codeContent.includes('flowchart') || 
+                                     codeContent.includes('graph TD') || 
+                                     codeContent.includes('graph LR') ||
+                                     codeContent.includes('gantt') ||
+                                     codeContent.includes('sequenceDiagram') ||
+                                     codeContent.includes('classDiagram') ||
+                                     codeContent.includes('stateDiagram') ||
+                                     codeContent.includes('erDiagram') ||
+                                     codeContent.includes('gitgraph') ||
+                                     codeContent.includes('journey');
+            
             codeBlocks.push({
                 id: id,
                 lang: language,
                 code: codeContent,
-                isMermaid: isMermaidByLang || isMermaidByContent,
-                isChart: isMermaidByLang || isMermaidByContent || ['chart'].includes(language)
+                isMermaid: language === 'mermaid' || isMermaidContent,
+                isChart: ['mermaid', 'graph', 'chart'].includes(language) || isMermaidContent
             });
             return id;
         });
@@ -1098,19 +1099,26 @@ class FeasibilityReportApp {
             const id = `CODE_BLOCK_${codeBlocks.length}`;
             const language = (lastCodeBlockMatch[1] || '').toLowerCase().trim();
             const incompleteCode = lastCodeBlockMatch[2].trim();
-
-            // 增强的Mermaid图表类型识别（同上）
-            const isMermaidByLang = ['mermaid', 'graph', 'flowchart', 'gantt', 'pie', 'sequencediagram',
-                                     'classdiagram', 'statediagram', 'erdiagram', 'gitgraph',
-                                     'journey', 'xychart', 'quadrantchart', 'mindmap', 'timeline'].includes(language);
-            const isMermaidByContent = /^(graph|flowchart|pie|gantt|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gitgraph|xychart-beta|quadrantChart|mindmap|timeline|%%{init)/i.test(incompleteCode);
-
+            // 增强Mermaid检测：即使语言标记不是mermaid，如果代码内容包含Mermaid语法，也识别为Mermaid
+            const isMermaidContent = incompleteCode.includes('xychart-beta') || 
+                                     incompleteCode.includes('pie title') || 
+                                     incompleteCode.includes('flowchart') || 
+                                     incompleteCode.includes('graph TD') || 
+                                     incompleteCode.includes('graph LR') ||
+                                     incompleteCode.includes('gantt') ||
+                                     incompleteCode.includes('sequenceDiagram') ||
+                                     incompleteCode.includes('classDiagram') ||
+                                     incompleteCode.includes('stateDiagram') ||
+                                     incompleteCode.includes('erDiagram') ||
+                                     incompleteCode.includes('gitgraph') ||
+                                     incompleteCode.includes('journey');
+            
             codeBlocks.push({
                 id: id,
                 lang: language,
                 code: incompleteCode,
-                isMermaid: isMermaidByLang || isMermaidByContent,
-                isChart: isMermaidByLang || isMermaidByContent || ['chart'].includes(language),
+                isMermaid: language === 'mermaid' || isMermaidContent,
+                isChart: ['mermaid', 'graph', 'chart'].includes(language) || isMermaidContent,
                 incomplete: true
             });
             html = html.replace(incompletePattern, id);
@@ -1148,15 +1156,6 @@ class FeasibilityReportApp {
         // 删除线
         html = html.replace(/~~(.+?)~~/g, '<del>$1</del>');
 
-        // 图片
-        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
-            const safeUrl = this.sanitizeUrl(url);
-            if (!safeUrl) {
-                return '';
-            }
-            return `<img src="${safeUrl}" alt="${this.escapeHtml(alt)}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0;">`;
-        });
-
         // 链接 - 特殊处理下载链接，阻止默认行为，使用客户端PDF生成
         html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
             // 如果是报告下载链接，使用客户端PDF生成而不是跳转
@@ -1168,6 +1167,15 @@ class FeasibilityReportApp {
                 return this.escapeHtml(text);
             }
             return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer">${this.escapeHtml(text)}</a>`;
+        });
+
+        // 图片
+        html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, url) => {
+            const safeUrl = this.sanitizeUrl(url);
+            if (!safeUrl) {
+                return '';
+            }
+            return `<img src="${safeUrl}" alt="${this.escapeHtml(alt)}" style="max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0;">`;
         });
 
         // 表格处理（在列表处理之前，因为表格可能包含列表）
@@ -1202,7 +1210,7 @@ class FeasibilityReportApp {
                         inTable = true;
                         isFirstRow = true;
                     }
-                    const rowHtml = '<tr>' + cells.map(cell => `<td>${cell}</td>`).join('') + '</tr>';
+                    const rowHtml = '<tr>' + cells.map(cell => `<td>${this.escapeHtml(cell)}</td>`).join('') + '</tr>';
                     tableRows.push(rowHtml);
                     isFirstRow = false;
                 }
@@ -1250,8 +1258,8 @@ class FeasibilityReportApp {
                 continue;
             }
             
-            const unorderedMatch = line.match(/^\s*[\*\-\+]\s+(.+)$/);
-            const orderedMatch = line.match(/^\s*\d+\.\s+(.+)$/);
+            const unorderedMatch = line.match(/^[\*\-\+]\s+(.+)$/);
+            const orderedMatch = line.match(/^\d+\.\s+(.+)$/);
 
             if (unorderedMatch || orderedMatch) {
                 const content = unorderedMatch ? unorderedMatch[1] : orderedMatch[1];
@@ -1265,7 +1273,7 @@ class FeasibilityReportApp {
                     inList = true;
                     listType = currentType;
                 }
-                listProcessedLines.push(`<li>${content}</li>`);
+                listProcessedLines.push(`<li>${this.escapeHtml(content)}</li>`);
             } else {
                 if (inList) {
                     listProcessedLines.push(`</${listType}>`);
@@ -1397,7 +1405,7 @@ class FeasibilityReportApp {
             }
         }
         
-        let mermaidContainers = container.querySelectorAll('.mermaid-container');
+        const mermaidContainers = container.querySelectorAll('.mermaid-container');
         console.log(`[图表渲染] 找到 ${mermaidContainers.length} 个图表容器`);
         
         if (mermaidContainers.length === 0) {
@@ -1535,55 +1543,7 @@ class FeasibilityReportApp {
 
 // Initialize app
 let app;
-
-function installGlobalDevErrorHooksForReportPage() {
-    if (window.__devErrorHooksInstalledReportPage) {
-        return;
-    }
-    const isLocalDev = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
-    if (!isLocalDev) {
-        return;
-    }
-    window.__devErrorHooksInstalledReportPage = true;
-
-    const send = (payload) => {
-        try {
-            fetch('/api/dev/errors/report', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    component: 'report-page',
-                    url: location.href,
-                    ...payload
-                }),
-                keepalive: true
-            }).catch(() => {});
-        } catch (_) {}
-    };
-
-    window.addEventListener('error', (event) => {
-        send({
-            kind: 'window.error',
-            message: event?.message || 'window error',
-            source: event?.filename || '',
-            lineno: event?.lineno || 0,
-            colno: event?.colno || 0,
-            stack: event?.error?.stack || ''
-        });
-    });
-
-    window.addEventListener('unhandledrejection', (event) => {
-        const reason = event?.reason;
-        send({
-            kind: 'unhandledrejection',
-            message: typeof reason === 'string' ? reason : (reason?.message || 'unhandled rejection'),
-            stack: reason?.stack || ''
-        });
-    });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    installGlobalDevErrorHooksForReportPage();
     app = new FeasibilityReportApp();
     // 初始化验证码和使用次数功能
     initCodeVerification();

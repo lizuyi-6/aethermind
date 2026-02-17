@@ -5,22 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAG知识库控制台 - 超智引擎</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style_unified.css') }}?v=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='cosmic-theme.css') }}?v=1">
     <style>
         :root {
-            --bg: #f4f7f4;
-            --surface: #ffffff;
-            --surface-alt: #eef3ee;
-            --text: #183025;
-            --muted: #5f7467;
-            --line: #d7e1d8;
-            --brand: #157f5f;
-            --brand-2: #0f5f77;
-            --accent: #ff8a3d;
-            --danger: #c7382d;
-            --warn: #cc6b00;
-            --ok: #1f8f4f;
+            --bg: var(--cosmic-void);
+            --surface: var(--glass-bg-light);
+            --surface-alt: var(--glass-bg-dark);
+            --text: var(--text-primary);
+            --muted: var(--text-secondary);
+            --line: var(--glass-border);
+            --brand: var(--nebula-purple);
+            --brand-2: var(--nebula-pink);
+            --accent: var(--cosmic-cyan);
+            --danger: var(--black-hole-red);
+            --warn: var(--supernova-orange);
+            --ok: var(--comet-green);
             --radius: 14px;
-            --shadow: 0 12px 30px rgba(16, 44, 31, 0.12);
+            --shadow: var(--glass-shadow);
         }
 
         * { box-sizing: border-box; }
@@ -30,9 +31,7 @@
             font-family: "Noto Sans SC", "Source Han Sans SC", "IBM Plex Sans", "Segoe UI", sans-serif;
             color: var(--text);
             background:
-                radial-gradient(900px 420px at 100% -20%, #b8e6d7 0%, transparent 60%),
-                radial-gradient(700px 340px at -10% 0%, #ffe5cf 0%, transparent 65%),
-                var(--bg);
+                var(--cosmic-bg);
             min-height: 100vh;
             padding: 18px;
         }
@@ -48,7 +47,7 @@
         }
 
         .hero {
-            background: linear-gradient(110deg, #0f5f77 0%, #157f5f 62%, #32a77f 100%);
+            background: var(--aurora-gradient);
             color: #f7fffb;
             padding: 24px 26px;
             display: flex;

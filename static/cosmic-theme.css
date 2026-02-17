@@ -1,0 +1,156 @@
+/* 宇宙主题 - Cosmic Design System */
+
+:root {
+    /* 深空背景色系 */
+    --cosmic-void: #0a0a23;
+    --deep-space: #0f1029;
+    --midnight-blue: #141438;
+    --space-surface: rgba(20, 20, 56, 0.8);
+
+    /* 霓虹色系 */
+    --nebula-pink: #ff6ec7;
+    --nebula-purple: #c77dff;
+    --cosmic-cyan: #00d4ff;
+    --starlight-white: #e0e7ff;
+    --moonlight-silver: #b8c5e0;
+
+    /* 极光渐变 */
+    --aurora-start: #1a1a4e;
+    --aurora-mid: #2d1b69;
+    --aurora-end: #4a2c7a;
+    --aurora-gradient: linear-gradient(135deg, var(--aurora-start) 0%, var(--aurora-mid) 50%, var(--aurora-end) 100%);
+
+    /* 彗星与超新星色 */
+    --comet-green: #00ff9d;
+    --supernova-orange: #ff9500;
+    --black-hole-red: #ff4757;
+    --stardust-blue: #4dabf7;
+
+    /* 文字颜色 */
+    --text-primary: #ffffff;
+    --text-secondary: #b8c5e0;
+    --text-muted: #7a86a0;
+    --text-disabled: #4a5568;
+
+    /* 玻璃态效果 */
+    --glass-bg: rgba(20, 20, 56, 0.7);
+    --glass-bg-light: rgba(30, 30, 70, 0.6);
+    --glass-bg-dark: rgba(10, 10, 35, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+
+    /* 背景渐变 */
+    --cosmic-bg: radial-gradient(ellipse at top, var(--midnight-blue) 0%, var(--cosmic-void) 100%);
+    --nebula-gradient: radial-gradient(circle at 20% 50%, rgba(199, 125, 255, 0.15) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, rgba(0, 212, 255, 0.15) 0%, transparent 50%),
+                      radial-gradient(circle at 40% 20%, rgba(255, 110, 199, 0.1) 0%, transparent 40%);
+}
+
+/* 应用宇宙主题到body */
+body {
+    background: var(--cosmic-bg);
+    color: var(--text-primary);
+}
+
+/* 添加星云背景效果 */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--nebula-gradient);
+    pointer-events: none;
+    z-index: -1;
+}
+
+/* Header玻璃态效果 */
+.app-header {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+/* 卡片玻璃态效果 */
+.card,
+.glass-card {
+    background: var(--glass-bg-light);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+/* 按钮样式 */
+.btn-primary {
+    background: var(--aurora-gradient);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 0 20px rgba(199, 125, 255, 0.4);
+}
+
+/* 输入框样式 */
+input,
+textarea {
+    background: var(--glass-bg-dark);
+    color: var(--text-primary);
+    border: 1px solid var(--glass-border);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--text-muted);
+}
+
+/* 文字颜色 */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+}
+
+.text-secondary {
+    color: var(--text-secondary);
+}
+
+.text-muted {
+    color: var(--text-muted);
+}
+
+/* 霓虹发光效果 */
+.neon-glow {
+    text-shadow: 0 0 10px var(--nebula-purple),
+                 0 0 20px var(--nebula-pink);
+}
+
+/* 彗星动画 */
+@keyframes comet {
+    0% {
+        transform: translateX(-100%) translateY(-100%);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(100vw) translateY(100vh);
+        opacity: 0;
+    }
+}
+
+/* 星星闪烁动画 */
+@keyframes twinkle {
+    0%, 100% {
+        opacity: 0.3;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}

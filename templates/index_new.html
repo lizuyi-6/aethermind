@@ -375,8 +375,7 @@
                 // 确保使用绝对路径
                 let logoPath = logoImg.getAttribute('src') || logoImg.src;
                 if (!logoPath.startsWith('http')) {
-                    // 如果是相对路径，转换为绝对路径
-                    const baseUrl = window.location.origin;
+                    // 如果是相对路径，转换为绝对路径`r`n                    const baseUrl = window.location.origin;
                     logoPath = baseUrl + (logoPath.startsWith('/') ? logoPath : '/' + logoPath);
                 }
                 const separator = logoPath.includes('?') ? '&' : '?';
