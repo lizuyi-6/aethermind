@@ -4,7 +4,7 @@
     "pages/chat/chat"
   ],
   "window": {
-    "navigationBarTitleText": "超智引擎",
+    "navigationBarTitleText": "AetherMind",
     "navigationBarBackgroundColor": "#1a1a1a",
     "navigationBarTextStyle": "white",
     "backgroundColor": "#1a1a1a",

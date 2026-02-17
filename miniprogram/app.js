@@ -2,7 +2,7 @@
 App({
   onLaunch() {
     // 初始化小程序
-    console.log('超智引擎小程序启动');
+    console.log('AetherMind小程序启动');
     
     // 检查登录状态
     this.checkLogin();

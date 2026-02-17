@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul
-title 超智引擎智能体
+title AetherMind智能体
 color 0A
 
 echo ========================================
-echo    超智引擎智能体 - 启动脚本
+echo    AetherMind智能体 - 启动脚本
 echo ========================================
 echo.
 

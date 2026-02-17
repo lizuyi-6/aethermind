@@ -1732,7 +1732,7 @@ class ChatApp {
                 this.chatContainer.innerHTML = `
                     <div class="welcome-message">
                         <div class="welcome-icon">${this.getWelcomeIconSvg()}</div>
-                        <h2>欢迎使用超智引擎</h2>
+                        <h2>欢迎使用AetherMind</h2>
                         <p>我是您的专业智能体助手，可以协助您：</p>
                         <div class="welcome-suggestions">
                             <button class="suggestion-btn">撰写可行性研究报告</button>
@@ -2257,7 +2257,7 @@ class ChatApp {
         this.chatContainer.innerHTML = `
             <div class="welcome-message">
                 <div class="welcome-icon">${this.getWelcomeIconSvg()}</div>
-                <h2>欢迎使用超智引擎</h2>
+                <h2>欢迎使用AetherMind</h2>
                 <p>我是您的专业智能体助手，可以协助您：</p>
                 <div class="welcome-suggestions">
                     <button class="suggestion-btn">撰写可行性研究报告</button>

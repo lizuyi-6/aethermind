@@ -101,7 +101,7 @@ if [ "$CREATE_SERVICE" = "y" ]; then
     
     cat > "/tmp/${SERVICE_NAME}.service" << EOF
 [Unit]
-Description=Flask Web Application - 超智引擎 (Port $SELECTED_PORT)
+Description=Flask Web Application - AetherMind (Port $SELECTED_PORT)
 After=network.target
 
 [Service]

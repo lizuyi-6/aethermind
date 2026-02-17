@@ -1,10 +1,10 @@
 #!/bin/bash
-# 配置主域名指向超智引擎项目，保持 gaoyuzhan.top 不变
+# 配置主域名指向AetherMind项目，保持 gaoyuzhan.top 不变
 
 set -e
 
 echo "=========================================="
-echo "  配置主域名指向超智引擎项目"
+echo "  配置主域名指向AetherMind项目"
 echo "=========================================="
 echo ""
 
@@ -33,7 +33,7 @@ else
 fi
 echo ""
 
-# 3. 修改主域名配置指向超智引擎
+# 3. 修改主域名配置指向AetherMind
 echo "步骤 3: 修改主域名配置..."
 MAIN_CONFIG="/etc/nginx/sites-available/$DOMAIN"
 
@@ -42,7 +42,7 @@ cp "$MAIN_CONFIG" "$MAIN_CONFIG.backup"
 
 # 创建新配置（指向 Flask 应用）
 cat > "$MAIN_CONFIG" << EOF
-# 主域名配置 - $DOMAIN (超智引擎项目)
+# 主域名配置 - $DOMAIN (AetherMind项目)
 server {
     listen 80 default_server;
     server_name $DOMAIN www.$DOMAIN;
@@ -50,7 +50,7 @@ server {
     access_log /var/log/nginx/$DOMAIN-access.log;
     error_log /var/log/nginx/$DOMAIN-error.log;
 
-    # 代理到超智引擎 Flask 应用
+    # 代理到AetherMind Flask 应用
     location / {
         proxy_pass http://localhost:$APP_PORT;
         proxy_set_header Host \$host;
@@ -161,10 +161,10 @@ echo "  配置完成"
 echo "=========================================="
 echo ""
 echo "配置摘要:"
-echo "  主域名: http://$DOMAIN -> 超智引擎项目 (端口 $APP_PORT)"
+echo "  主域名: http://$DOMAIN -> AetherMind项目 (端口 $APP_PORT)"
 echo "  Blog: http://gaoyuzhan.top -> 保持不变"
 if [ "$KEEP_SUBDOMAIN" = "y" ]; then
-    echo "  子域名: http://app.$DOMAIN -> 超智引擎项目 (端口 $APP_PORT)"
+    echo "  子域名: http://app.$DOMAIN -> AetherMind项目 (端口 $APP_PORT)"
 fi
 echo ""
 echo "测试访问:"

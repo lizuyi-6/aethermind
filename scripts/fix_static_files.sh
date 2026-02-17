@@ -35,7 +35,7 @@ if [ -f "$APP_CONFIG" ]; then
     
     # 修复配置
     cat > "$APP_CONFIG" << EOF
-# 子域名配置 - app.chaozhiyinqing.top (超智引擎项目)
+# 子域名配置 - app.chaozhiyinqing.top (AetherMind项目)
 server {
     listen 80;
     server_name app.chaozhiyinqing.top;
@@ -59,7 +59,7 @@ server {
         allow all;
     }
 
-    # 代理到超智引擎 Flask 应用
+    # 代理到AetherMind Flask 应用
     location / {
         proxy_pass http://localhost:$APP_PORT;
         proxy_set_header Host \$host;
@@ -91,7 +91,7 @@ else
     echo "⚠️  子域名配置不存在，创建新配置..."
     
     cat > "$APP_CONFIG" << EOF
-# 子域名配置 - app.chaozhiyinqing.top (超智引擎项目)
+# 子域名配置 - app.chaozhiyinqing.top (AetherMind项目)
 server {
     listen 80;
     server_name app.chaozhiyinqing.top;

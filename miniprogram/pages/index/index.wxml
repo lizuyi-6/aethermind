@@ -2,7 +2,7 @@
 <view class="container">
   <view class="welcome-section">
     <view class="welcome-icon">🤖</view>
-    <view class="welcome-title">欢迎使用超智引擎</view>
+    <view class="welcome-title">欢迎使用AetherMind</view>
     <view class="welcome-desc">我是您的专业智能体助手，可以协助您：</view>
   </view>
 
