@@ -6,6 +6,9 @@
     <title>AetherMind - 驱动未来的工业级AI解决方案</title>
     <meta name="description" content="杭州视界奇点科技，致力于为政企提供卓越的AI技术、RPA自动化、智能推广及机器人解决方案。">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 全局主题加载器 -->
+    <script src="/static/theme-loader.js?v=4"></script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
     <script>
@@ -41,19 +44,47 @@
         }
     </script>
     <style>
+        /* ================================================
+           主题变量 - 深空暗色系 (Deep Space Dark)
+           通过 theme-loader.js 动态切换
+        ================================================ */
+        :root {
+            --ds-bg:          3 7 18;       /* #030712 */
+            --ds-bg-2:        15 23 42;     /* #0f172a */
+            --ds-bg-3:        30 41 59;     /* #1e293b */
+            --ds-border:      255 255 255;  /* white at low opacity */
+            --ds-text:        226 232 240;  /* #E2E8F0 */
+            --ds-text-muted:  100 116 139;  /* #64748B */
+            --ds-accent:      99 102 241;   /* #6366f1 indigo-500 */
+            --ds-accent-2:    56 189 248;   /* #38bdf8 sky-400 */
+            --ds-scrollbar:   51 65 85;     /* #334155 */
+        }
+        /* Cashmere & Chestnut 暖色主题覆盖 */
+        [data-theme="cashmere-chestnut"] {
+            --ds-bg:          35 25 20;
+            --ds-bg-2:        50 35 28;
+            --ds-bg-3:        70 50 40;
+            --ds-border:      255 220 200;
+            --ds-text:        240 230 220;
+            --ds-text-muted:  180 160 145;
+            --ds-accent:      160 80 55;
+            --ds-accent-2:    200 120 80;
+            --ds-scrollbar:   100 70 55;
+        }
+
         /* 自定义滚动条 */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-track {
-            background: #0f172a;
+            background: rgb(var(--ds-bg-2));
         }
         ::-webkit-scrollbar-thumb {
-            background: #334155;
+            background: rgb(var(--ds-scrollbar));
             border-radius: 4px;
         }
         ::-webkit-scrollbar-thumb:hover {
-            background: #475569;
+            background: rgb(var(--ds-scrollbar) / 0.8);
         }
 
         /* 玻璃拟态高级版 */
@@ -64,7 +95,7 @@
         }
         
         .dark-glass {
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(var(--ds-bg-2), 0.6);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
@@ -557,10 +588,6 @@
                             <span>河北省廊坊市三河市经开区科创园科创实践中心</span>
                         </li>
                         <li class="flex items-center gap-3">
-                            <i class="fas fa-phone-alt text-blue-500"></i>
-                            <span>180-3160-9069</span>
-                        </li>
-                        <li class="flex items-center gap-3">
                             <i class="fas fa-envelope text-blue-500"></i>
                             <span>136683886@qq.com</span>
                         </li>
@@ -744,5 +771,6 @@
             }
         }
     </script>
+    <script src="/static/theme-workshop.js?v=4"></script>
 </body>
 </html>

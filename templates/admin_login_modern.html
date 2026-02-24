@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>管理员登录 - AetherMind</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 全局主题加载器 -->
+    <script src="/static/theme-loader.js?v=4"></script>
+
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
+
+        /* ================================================
+           主题变量 - 通过 theme-loader.js 动态切换
+        ================================================ */
+        :root {
+            --ds-bg:          3 7 18;
+            --ds-bg-2:        15 23 42;
+            --ds-bg-3:        30 41 59;
+            --ds-text:        226 232 240;
+            --ds-text-muted:  100 116 139;
+            --ds-accent:      99 102 241;
+            --ds-accent-2:    56 189 248;
+            --ds-scrollbar:   51 65 85;
+        }
+        [data-theme="cashmere-chestnut"] {
+            --ds-bg:          35 25 20;
+            --ds-bg-2:        50 35 28;
+            --ds-bg-3:        70 50 40;
+            --ds-text:        240 230 220;
+            --ds-text-muted:  180 160 145;
+            --ds-accent:      160 80 55;
+            --ds-accent-2:    200 120 80;
+            --ds-scrollbar:   100 70 55;
+        }
+        [data-theme="default"] {
+            --ds-bg:          15 23 42;
+            --ds-bg-2:        30 41 59;
+            --ds-bg-3:        51 65 85;
+            --ds-text:        226 232 240;
+            --ds-text-muted:  148 163 184;
+            --ds-accent:      37 99 235;
+            --ds-accent-2:    96 165 250;
+            --ds-scrollbar:   100 116 139;
+        }
+        [data-theme="deep-space"] {
+            --ds-bg:          3 7 18;
+            --ds-bg-2:        15 23 42;
+            --ds-bg-3:        30 41 59;
+            --ds-text:        226 232 240;
+            --ds-text-muted:  100 116 139;
+            --ds-accent:      99 102 241;
+            --ds-accent-2:    56 189 248;
+            --ds-scrollbar:   51 65 85;
+        }
+
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background: rgb(var(--ds-bg));
+            background-image:
+                radial-gradient(circle at 20% 50%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+        }
+
+        .glass-card {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.6) 100%);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .input-modern {
+            background: rgba(20, 20, 22, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transition: all 0.3s;
+        }
+
+        .input-modern:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
+            box-shadow: 0 8px 25px -5px rgba(79, 70, 229, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .glow-slow {
+            animation: glow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+            }
+            to {
+                text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-500 to-sky-400 mb-4 shadow-lg shadow-indigo-500/25">
+                <img src="/static/logo.jpg" class="w-10 h-10 rounded-lg" alt="AetherMind Logo">
+            </div>
+            <h1 class="text-3xl font-semibold text-white mb-2 glow-slow">AetherMind</h1>
+            <p class="text-slate-400 text-sm">管理控制台</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="glass-card rounded-2xl p-8 shadow-2xl">
+            <div class="text-center mb-8">
+                <h2 class="text-xl font-semibold text-white mb-2">管理员登录</h2>
+                <p class="text-slate-400 text-sm">请输入您的凭据以访问管理面板</p>
+            </div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                <p class="text-red-400 text-sm flex items-center gap-2">
+                    <iconify-icon icon="solar:danger-triangle-linear" width="16"></iconify-icon>
+                    <span id="errorText"></span>
+                </p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-slate-300 mb-2">
+                        用户名
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <iconify-icon icon="solar:user-rounded-linear" class="text-slate-500" width="18"></iconify-icon>
+                        </div>
+                        <input type="text" id="username" name="username" required autocomplete="username"
+                            class="input-modern w-full rounded-lg pl-10 pr-4 py-3 text-sm"
+                            placeholder="输入用户名">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="password" class="block text-sm font-medium text-slate-300 mb-2">
+                        密码
+                    </label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <iconify-icon icon="solar:lock-linear" class="text-slate-500" width="18"></iconify-icon>
+                        </div>
+                        <input type="password" id="password" name="password" required autocomplete="current-password"
+                            class="input-modern w-full rounded-lg pl-10 pr-4 py-3 text-sm"
+                            placeholder="输入密码">
+                    </div>
+                </div>
+
+                <button type="submit" id="loginBtn"
+                    class="btn-primary w-full py-3 rounded-lg text-sm font-semibold text-white flex items-center justify-center gap-2">
+                    <iconify-icon icon="solar:login-3-linear" width="18"></iconify-icon>
+                    <span id="loginBtnText">登录</span>
+                </button>
+            </form>
+
+            <!-- Back Link -->
+            <div class="mt-6 text-center">
+                <a href="/" class="text-sm text-slate-400 hover:text-white transition-colors inline-flex items-center gap-1">
+                    <iconify-icon icon="solar:alt-arrow-left-linear" width="16"></iconify-icon>
+                    返回首页
+                </a>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-center">
+            <p class="text-xs text-slate-600">© 2024 AetherMind Platform. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const errorText = document.getElementById('errorText');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginBtnText = document.getElementById('loginBtnText');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !password) {
+                showError('请输入用户名和密码');
+                return;
+            }
+
+            loginBtn.disabled = true;
+            loginBtnText.textContent = '登录中...';
+            hideError();
+
+            try {
+                const response = await fetch('/api/v1/admin/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 成功登录，跳转到dashboard
+                    window.location.href = '/admin/dashboard';
+                } else {
+                    showError(data.error || '登录失败');
+                    loginBtn.disabled = false;
+                    loginBtnText.textContent = '登录';
+                }
+            } catch (error) {
+                showError('网络错误，请稍后重试');
+                loginBtn.disabled = false;
+                loginBtnText.textContent = '登录';
+            }
+        });
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        // 支持Enter键登录
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+    </script>
+    <script src="/static/theme-workshop.js?v=4"></script>
+</body>
+</html>

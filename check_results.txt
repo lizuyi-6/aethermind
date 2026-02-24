@@ -1,0 +1,4 @@
+﻿index_modern.html: imports=["@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;"], broken=["@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;"], has_ds_bg=True
+admin_dashboard_modern.html: imports=["@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;"], broken=["@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;"], has_ds_bg=True
+admin_login_modern.html: imports=["@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;"], broken=["@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;"], has_ds_bg=True
+czyq_index.html: imports=[], broken=[], has_ds_bg=True

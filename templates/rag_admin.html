@@ -4,24 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAG知识库控制台 - AetherMind</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style_unified.css') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='cosmic-theme.css') }}?v=1">
+    <!-- 全局主题加载器 -->
+    <script src="/static/theme-loader.js?v=4"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+
+    <link rel="stylesheet" href="/static/style_unified.css?v=1">
     <style>
         :root {
-            --bg: var(--cosmic-void);
-            --surface: var(--glass-bg-light);
-            --surface-alt: var(--glass-bg-dark);
-            --text: var(--text-primary);
-            --muted: var(--text-secondary);
-            --line: var(--glass-border);
-            --brand: var(--nebula-purple);
-            --brand-2: var(--nebula-pink);
-            --accent: var(--cosmic-cyan);
-            --danger: var(--black-hole-red);
-            --warn: var(--supernova-orange);
-            --ok: var(--comet-green);
+            --bg: rgb(var(--ds-bg));
+            --surface: rgb(var(--ds-bg-2));
+            --surface-alt: rgb(var(--ds-bg-3));
+            --text: rgb(var(--ds-text));
+            --muted: rgb(var(--ds-text-muted));
+            --line: rgba(255, 255, 255, 0.1);
+            --brand: rgb(var(--ds-accent));
+            --brand-2: #ff6ec7;
+            --accent: rgb(var(--ds-accent-2));
+            --danger: #ff4757;
+            --warn: #ff9500;
+            --ok: #00ff9d;
             --radius: 14px;
-            --shadow: var(--glass-shadow);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-theme="default"] {
+            --line: rgba(0, 0, 0, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="default"] .hero,
+        [data-theme="cashmere-chestnut"] .hero {
+            color: #ffffff;
+        }
+
+        [data-theme="cashmere-chestnut"] {
+            --line: rgba(0, 0, 0, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
 
         * { box-sizing: border-box; }
@@ -30,8 +48,7 @@
             margin: 0;
             font-family: "Noto Sans SC", "Source Han Sans SC", "IBM Plex Sans", "Segoe UI", sans-serif;
             color: var(--text);
-            background:
-                var(--cosmic-bg);
+            background: var(--bg);
             min-height: 100vh;
             padding: 18px;
         }
@@ -47,7 +64,7 @@
         }
 
         .hero {
-            background: var(--aurora-gradient);
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2) 100%);
             color: #f7fffb;
             padding: 24px 26px;
             display: flex;
@@ -881,6 +898,7 @@
             loadStats();
         });
     </script>
+    <script src="/static/theme-workshop.js?v=4"></script>
 </body>
 </html>
 

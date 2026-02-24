@@ -1,18 +1,24 @@
 ﻿<!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AetherMind工作台</title>
-    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}?v=10" />
-    <link rel="shortcut icon" type="image/jpeg" href="{{ url_for('static', filename='logo.jpg') }}?v=10" />
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='logo.jpg') }}?v=10" />
+    <link rel="icon" type="image/jpeg" href="/static/logo.jpg?v=10" />
+    <link rel="shortcut icon" type="image/jpeg" href="/static/logo.jpg?v=10" />
+    <link rel="apple-touch-icon" href="/static/logo.jpg?v=10" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='style_workspace.css') }}?v=2" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="/static/style_workspace.css?v=3" />
+    <!-- 全局主题加载器 -->
+    <script src="/static/theme-loader.js?v=4"></script>
 </head>
+
 <body class="ws-body h-screen overflow-hidden">
     <div class="h-full flex flex-col">
         <header class="h-10 ws-header flex items-center justify-between px-3 shrink-0">
@@ -23,7 +29,6 @@
                 <div class="ws-breadcrumb truncate" id="wsBreadcrumb">项目 &gt; 会话</div>
             </div>
             <div class="flex items-center gap-3 text-xs">
-                <a href="tel:18031609069" class="ws-link">180-3160-9069</a>
                 <a href="/admin" class="ws-link">管理</a>
                 <a href="/rag" class="ws-link" target="_blank">RAG</a>
             </div>
@@ -69,14 +74,17 @@
                     <div class="chat-container flex-1 min-h-0 overflow-auto" id="chatContainer">
                         <div class="welcome-message">
                             <div class="welcome-icon">
-                                <svg width="34" height="34" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <rect x="10" y="16" width="44" height="32" rx="10" fill="#ffffff" fill-opacity="0.16"/>
-                                    <rect x="16" y="22" width="32" height="20" rx="8" fill="#ffffff"/>
-                                    <circle cx="26" cy="32" r="3" fill="#1c6b61"/>
-                                    <circle cx="38" cy="32" r="3" fill="#1c6b61"/>
-                                    <rect x="24" y="38" width="16" height="2.8" rx="1.4" fill="#1c6b61"/>
-                                    <line x1="32" y1="12" x2="32" y2="18" stroke="#ffffff" stroke-width="3" stroke-linecap="round"/>
-                                    <circle cx="32" cy="9" r="2.6" fill="#ffffff"/>
+                                <svg width="34" height="34" viewBox="0 0 64 64" fill="none"
+                                    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <rect x="10" y="16" width="44" height="32" rx="10" fill="#ffffff"
+                                        fill-opacity="0.16" />
+                                    <rect x="16" y="22" width="32" height="20" rx="8" fill="#ffffff" />
+                                    <circle cx="26" cy="32" r="3" fill="#1c6b61" />
+                                    <circle cx="38" cy="32" r="3" fill="#1c6b61" />
+                                    <rect x="24" y="38" width="16" height="2.8" rx="1.4" fill="#1c6b61" />
+                                    <line x1="32" y1="12" x2="32" y2="18" stroke="#ffffff" stroke-width="3"
+                                        stroke-linecap="round" />
+                                    <circle cx="32" cy="9" r="2.6" fill="#ffffff" />
                                 </svg>
                             </div>
                             <h2>欢迎使用AetherMind</h2>
@@ -94,8 +102,12 @@
                         <div class="input-wrapper">
                             <div class="input-box">
                                 <button class="attach-btn" id="attachBtn" title="上传文件" aria-label="上传文件">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path d="M16.5 6.5l-6.9 7a2.5 2.5 0 103.5 3.5l7.1-7.2a4.5 4.5 0 10-6.4-6.4L6.4 10.8a6.5 6.5 0 109.2 9.2l6-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                                        xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path
+                                            d="M16.5 6.5l-6.9 7a2.5 2.5 0 103.5 3.5l7.1-7.2a4.5 4.5 0 10-6.4-6.4L6.4 10.8a6.5 6.5 0 109.2 9.2l6-6"
+                                            stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                                            stroke-linejoin="round" />
                                     </svg>
                                 </button>
                                 <textarea id="messageInput" placeholder="请输入问题或指令..." rows="1"></textarea>
@@ -111,15 +123,17 @@
                                     <span class="token-value" id="tokenValue">0</span>
                                 </div>
                                 <div class="download-actions" id="downloadActions">
-                                    <button type="button" class="download-btn" id="downloadPdfBtn" disabled>下载PDF</button>
-                                    <button type="button" class="download-btn" id="downloadMdBtn" disabled>下载Markdown</button>
+                                    <button type="button" class="download-btn" id="downloadPdfBtn"
+                                        disabled>下载PDF</button>
+                                    <button type="button" class="download-btn" id="downloadMdBtn"
+                                        disabled>下载Markdown</button>
                                 </div>
                                 <span class="status-indicator" id="statusIndicator">在线</span>
                             </div>
                         </div>
                     </div>
 
-                    <section class="rag-sources ws-evidence" id="ragSources">
+                    <section class="rag-sources ws-evidence" id="ragSources" style="display:none;">
                         <div class="ws-evidence-head rag-sources-header">
                             <span>RAG 检索上下文 / 证据来源</span>
                             <button class="rag-sources-close" id="ragSourcesClose">×</button>
@@ -175,17 +189,25 @@
 
     <button class="sidebar-toggle" id="sidebarToggle" title="切换侧边栏">☰</button>
 
-    <div class="modal-overlay" id="verifyCodeModal" style="display:none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
-        <div class="modal-content" style="background:white; border-radius:12px; padding:24px; max-width:400px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.3);">
-            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div class="modal-overlay" id="verifyCodeModal"
+        style="display:none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
+        <div class="modal-content"
+            style="background:white; border-radius:12px; padding:24px; max-width:400px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.3);">
+            <div class="modal-header"
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
                 <h2 style="margin:0; font-size:20px;">输入验证码</h2>
-                <button class="modal-close" onclick="hideVerifyCodeModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#666;">&times;</button>
+                <button class="modal-close" onclick="hideVerifyCodeModal()"
+                    style="background:none; border:none; font-size:24px; cursor:pointer; color:#666;">&times;</button>
             </div>
             <div class="modal-body">
                 <p style="color:#666; margin-bottom:16px;">请输入您的验证码以获得使用次数</p>
-                <input type="text" id="verifyCodeInput" class="verify-code-input" placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX" maxlength="27" style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:8px; font-size:16px; font-family:monospace; margin-bottom:12px;">
-                <div class="modal-error" id="verifyCodeError" style="display:none; color:#dc3545; font-size:14px; margin-bottom:12px;"></div>
-                <button class="modal-submit-btn" onclick="submitVerifyCode()" style="width:100%; padding:12px; background:#2f9d8f; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer; font-weight:600;">验证</button>
+                <input type="text" id="verifyCodeInput" class="verify-code-input"
+                    placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX" maxlength="27"
+                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:8px; font-size:16px; font-family:monospace; margin-bottom:12px;">
+                <div class="modal-error" id="verifyCodeError"
+                    style="display:none; color:#dc3545; font-size:14px; margin-bottom:12px;"></div>
+                <button class="modal-submit-btn" onclick="submitVerifyCode()"
+                    style="width:100%; padding:12px; background:#2f9d8f; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer; font-weight:600;">验证</button>
             </div>
         </div>
     </div>
@@ -207,11 +229,14 @@
         </div>
     </div>
 
-    <input type="file" id="fileInput" style="display:none;" accept=".pdf,.docx,.doc,.txt,.md,.xlsx,.xls,.csv,.json,.py,.js,.java,.cpp,.c,.html,.css" />
+    <input type="file" id="fileInput" style="display:none;"
+        accept=".pdf,.docx,.doc,.txt,.md,.xlsx,.xls,.csv,.json,.py,.js,.java,.cpp,.c,.html,.css" />
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='pdf-progress.css') }}" />
+    <link rel="stylesheet" href="/static/pdf-progress.css?v=8" />
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-    <script src="{{ url_for('static', filename='report-display.js') }}"></script>
-    <script src="{{ url_for('static', filename='app.js') }}"></script>
+    <script src="/static/report-display.js?v=8"></script>
+    <script src="/static/app.js?v=8"></script>
+    <script src="/static/theme-workshop.js?v=4"></script>
 </body>
+
 </html>

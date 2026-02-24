@@ -1,0 +1,1 @@
+{"error":{"code":"API_VERSION_MIGRATED","message":"Use /api/v1/* endpoints"}}

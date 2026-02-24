@@ -1,0 +1,4 @@
+﻿FIXED: index_modern.html
+FIXED: admin_dashboard_modern.html
+FIXED: admin_login_modern.html
+Done.

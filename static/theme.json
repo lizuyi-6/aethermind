@@ -1,0 +1,74 @@
+{
+  "themes": {
+    "default": {
+      "label": "海岸微风 (Coastal Chic)",
+      "colors": {
+        "primary": "30 41 59",
+        "secondary": "100 116 139",
+        "bg-60": "241 245 249",
+        "bg-30": "255 255 255",
+        "bg-sidebar": "226 232 240",
+        "border": "203 213 225",
+        "accent": "37 99 235",
+        "accent-hover": "29 78 216",
+        "accent-light": "96 165 250",
+        "glass-bg": "255 255 255",
+        "ds-bg": "241 245 249",
+        "ds-bg-2": "226 232 240",
+        "ds-bg-3": "203 213 225",
+        "ds-text": "30 41 59",
+        "ds-text-muted": "100 116 139",
+        "ds-accent": "37 99 235",
+        "ds-accent-2": "96 165 250",
+        "ds-scrollbar": "203 213 225"
+      }
+    },
+    "cashmere-chestnut": {
+      "label": "羊绒与栗木 (Cashmere & Chestnut)",
+      "colors": {
+        "primary": "45 40 38",
+        "secondary": "140 135 130",
+        "bg-60": "248 245 240",
+        "bg-30": "252 250 248",
+        "bg-sidebar": "242 238 232",
+        "border": "235 230 225",
+        "accent": "140 70 50",
+        "accent-hover": "120 50 40",
+        "accent-light": "170 100 80",
+        "glass-bg": "252 250 248",
+        "ds-bg": "35 25 20",
+        "ds-bg-2": "50 35 28",
+        "ds-bg-3": "70 50 40",
+        "ds-text": "240 230 220",
+        "ds-text-muted": "180 160 145",
+        "ds-accent": "160 80 55",
+        "ds-accent-2": "200 120 80",
+        "ds-scrollbar": "100 70 55"
+      }
+    },
+    "deep-space": {
+      "label": "深空暗色 (Deep Space)",
+      "colors": {
+        "primary": "226 232 240",
+        "secondary": "148 163 184",
+        "bg-60": "3 7 18",
+        "bg-30": "15 23 42",
+        "bg-sidebar": "15 23 42",
+        "border": "30 41 59",
+        "accent": "99 102 241",
+        "accent-hover": "79 70 229",
+        "accent-light": "165 180 252",
+        "glass-bg": "15 23 42",
+        "ds-bg": "3 7 18",
+        "ds-bg-2": "15 23 42",
+        "ds-bg-3": "30 41 59",
+        "ds-text": "226 232 240",
+        "ds-text-muted": "100 116 139",
+        "ds-accent": "99 102 241",
+        "ds-accent-2": "56 189 248",
+        "ds-scrollbar": "51 65 85"
+      }
+    }
+  },
+  "active": "default"
+}

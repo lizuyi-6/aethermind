@@ -191,54 +191,227 @@ class ReportDisplay {
         return div.innerHTML;
     }
 
+    unescapeHtml(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent;
+    }
+
+    sanitizeMermaidCode(rawCode) {
+        if (!rawCode) return rawCode;
+        let code = rawCode.trim();
+        code = code.replace(/：/g, ':').replace(/，/g, ',').replace(/。/g, '.');
+        code = code.replace(/（/g, '(').replace(/）/g, ')');
+        code = code.replace(/[""]/g, '"').replace(/['']/g, "'");
+        code = code.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+$/gm, '');
+        const lines = code.split('\n');
+        if (!lines.length) return code;
+        const firstLine = lines[0].trim();
+        const firstToken = firstLine.toLowerCase().split(/[\s([\-]/)[0];
+        const VALID_TYPES = new Set([
+            'xychart-beta', 'pie', 'flowchart', 'graph', 'gantt',
+            'sequencediagram', 'classdiagram', 'statediagram', 'erdiagram',
+            'gitgraph', 'journey', 'quadrantchart', 'mindmap', 'timeline',
+            'c4context', 'c4container', 'c4component', 'requirementdiagram', '%%{init',
+        ]);
+        if (firstToken && !VALID_TYPES.has(firstToken)) {
+            const label = firstLine.replace(/"/g, "'");
+            return `flowchart LR\n    A["${label}（图表类型不支持直接渲染）"]`;
+        }
+        if (firstToken === 'xychart-beta') {
+            return lines.map(line => {
+                const t = line.trim().toLowerCase();
+                if (t.startsWith('x-axis') && line.includes('[') && !line.includes('"')) {
+                    return line.replace(/\[([^\]]+)\]/, (_, inner) => {
+                        const parts = inner.split(',').map(v => {
+                            const val = v.trim();
+                            return /^[\d.]+$/.test(val) ? val : `"${val}"`;
+                        });
+                        return `[${parts.join(', ')}]`;
+                    });
+                }
+                if (/^\s*scatter\s/.test(line)) return line.replace('scatter', 'line');
+                if (/^\s*area\s/.test(line)) return line.replace('area', 'bar');
+                if (/^\s*y-axis\s/.test(line)) {
+                    if (!line.includes('"') && /[^\d\s\-.,]/.test(line)) {
+                        return line.replace(/y-axis\s+/i, 'y-axis "').replace(/$/, '"');
+                    }
+                }
+                if (/^\s*title\s/.test(line)) {
+                    const titleMatch = line.match(/^(\s*title\s+)(.+)$/i);
+                    if (titleMatch && !titleMatch[2].startsWith('"')) {
+                        return `${titleMatch[1]}"${titleMatch[2].trim()}"`;
+                    }
+                }
+                return line;
+            }).join('\n');
+        }
+        if (firstToken === 'gantt') {
+            let hasDateFormat = false;
+            const fixedLines = lines.map((line, idx) => {
+                const t = line.trim().toLowerCase();
+                if (t.startsWith('dateformat')) {
+                    hasDateFormat = true;
+                    let formatMatch = line.match(/dateFormat\s+(\S+)/i);
+                    if (formatMatch) {
+                        let format = formatMatch[1];
+                        format = format.replace(/YYYY/g, 'YYYY').replace(/YY/g, 'YY');
+                        format = format.replace(/MM/g, 'MM').replace(/DD/g, 'DD');
+                        return `dateFormat ${format}`;
+                    }
+                }
+                if (t.includes('axisformat')) {
+                    let formatMatch = line.match(/axisFormat\s+(\S+)/i);
+                    if (formatMatch) {
+                        let format = formatMatch[1];
+                        return `axisFormat ${format}`;
+                    }
+                }
+                return line;
+            });
+            if (!hasDateFormat) {
+                fixedLines.splice(1, 0, 'dateFormat YYYY-MM-DD');
+            }
+            return fixedLines.join('\n');
+        }
+        if (firstToken === 'pie') {
+            const fixedLines = [];
+            let hasTitle = false;
+            lines.forEach((line, idx) => {
+                const t = line.trim().toLowerCase();
+                if (t === 'pie') {
+                    fixedLines.push(line);
+                    return;
+                }
+                if (t.startsWith('title') && idx === 1) {
+                    hasTitle = true;
+                    let titleMatch = line.match(/^(\s*title\s+)(.+)$/i);
+                    if (titleMatch) {
+                        let title = titleMatch[2].trim();
+                        if (!title.startsWith('"') && !title.startsWith("'")) {
+                            fixedLines.push(`${titleMatch[1]}"${title}"`);
+                        } else {
+                            fixedLines.push(line);
+                        }
+                    } else {
+                        fixedLines.push(line);
+                    }
+                    return;
+                }
+                if (t.includes(':') && !t.startsWith('title')) {
+                    let colonMatch = line.match(/^(\s*)([^:]+)\s*:\s*(.+)$/);
+                    if (colonMatch) {
+                        let key = colonMatch[2].trim();
+                        let value = colonMatch[3].trim();
+                        if (!key.startsWith('"') && !key.startsWith("'")) {
+                            key = `"${key}"`;
+                        }
+                        let numValue = parseFloat(value);
+                        if (isNaN(numValue)) {
+                            numValue = 0;
+                        }
+                        fixedLines.push(`${colonMatch[1]}${key} : ${numValue}`);
+                        return;
+                    }
+                }
+                fixedLines.push(line);
+            });
+            return fixedLines.join('\n');
+        }
+        return code;
+    }
+
     renderMermaidCharts() {
-        // 渲染Mermaid图表
         if (typeof mermaid === 'undefined') {
-            console.warn('Mermaid库未加载，无法渲染图表');
+            console.warn('[图表渲染] Mermaid 库未加载');
+            setTimeout(() => {
+                if (typeof mermaid !== 'undefined') {
+                    this.renderMermaidCharts();
+                }
+            }, 500);
             return;
+        }
+        
+        if (typeof mermaid.initialize === 'function') {
+            try {
+                mermaid.initialize({ 
+                    startOnLoad: false,
+                    theme: 'default',
+                    flowchart: { useMaxWidth: true, htmlLabels: true },
+                    securityLevel: 'strict'
+                });
+            } catch (e) {
+                console.warn('[图表渲染] Mermaid 初始化警告:', e);
+            }
         }
         
         const mermaidContainers = this.container.querySelectorAll('.mermaid-container');
         console.log(`[图表渲染] 找到 ${mermaidContainers.length} 个图表容器`);
         
         mermaidContainers.forEach((container, index) => {
-            const code = container.textContent.trim();
+            if (container.classList.contains('mermaid-rendered') || container.classList.contains('mermaid-rendering')) {
+                return;
+            }
+            
+            let code = container.getAttribute('data-mermaid-code');
+            if (!code) {
+                code = container.textContent.trim();
+            }
+            
             if (!code) {
                 console.warn(`[图表渲染] 容器 ${index} 为空`);
                 return;
             }
             
-            console.log(`[图表渲染] 渲染图表 ${index + 1}:`, code.substring(0, 50) + '...');
+            code = this.unescapeHtml(code);
             
-            // 创建新的div用于mermaid渲染
+            if (!code.match(/(graph|pie|xychart|flowchart|gantt|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gitgraph|%%{init)/i)) {
+                console.warn(`[图表渲染] 容器 ${index} 不包含有效的 mermaid 语法，跳过`);
+                return;
+            }
+            
+            container.classList.add('mermaid-rendering');
+            
+            console.log(`[图表渲染] 渲染图表 ${index + 1}:`, code.substring(0, 100) + '...');
+            
             const mermaidDiv = document.createElement('div');
             mermaidDiv.className = 'mermaid';
-            mermaidDiv.textContent = code;
+            mermaidDiv.textContent = this.sanitizeMermaidCode(code);
+            mermaidDiv.style.minHeight = '200px';
+            mermaidDiv.style.width = '100%';
             
-            // 替换原容器
-            container.parentNode.replaceChild(mermaidDiv, container);
+            container.innerHTML = '';
+            container.appendChild(mermaidDiv);
             
-            // 渲染图表
             try {
-                mermaid.run({
-                    nodes: [mermaidDiv],
-                    suppressErrors: true
-                }).then(() => {
-                    console.log(`[图表渲染] 图表 ${index + 1} 渲染成功`);
-                }).catch((error) => {
-                    console.error(`[图表渲染] 图表 ${index + 1} 渲染失败:`, error);
-                    // 如果渲染失败，显示原始代码
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'mermaid-error';
-                    errorDiv.innerHTML = `<pre><code>${this.escapeHtml(code)}</code></pre><p style="color: #dc3545; font-size: 12px;">图表渲染失败，显示原始代码</p>`;
-                    mermaidDiv.parentNode.replaceChild(errorDiv, mermaidDiv);
-                });
+                if (typeof mermaid.run === 'function') {
+                    mermaid.run({
+                        nodes: [mermaidDiv],
+                        suppressErrors: true
+                    }).then(() => {
+                        console.log(`[图表渲染] 图表 ${index + 1} 渲染成功`);
+                        container.classList.remove('mermaid-rendering');
+                        container.classList.add('mermaid-rendered');
+                        mermaidDiv.classList.add('mermaid-rendered');
+                    }).catch((error) => {
+                        console.error(`[图表渲染] 图表 ${index + 1} 渲染失败:`, error);
+                        container.classList.remove('mermaid-rendering');
+                        container.classList.add('mermaid-render-failed');
+                        mermaidDiv.innerHTML = `<div class="mermaid-error" style="padding: 15px; border: 1px solid #ffc107; border-radius: 4px; background-color: #fff8e1;"><p style="color: #856404; font-size: 13px; margin: 0 0 10px 0;">图表渲染失败</p><pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-size: 12px;">${this.escapeHtml(code)}</pre></div>`;
+                    });
+                } else if (typeof mermaid.init === 'function') {
+                    mermaid.init(undefined, [mermaidDiv]);
+                    mermaidDiv.classList.add('mermaid-rendered');
+                    container.classList.add('mermaid-rendered');
+                } else {
+                    console.error('[图表渲染] Mermaid API 不可用');
+                    container.classList.add('mermaid-render-failed');
+                }
             } catch (error) {
-                console.error('Mermaid渲染错误:', error);
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'mermaid-error';
-                errorDiv.innerHTML = `<pre><code>${this.escapeHtml(code)}</code></pre><p style="color: #dc3545; font-size: 12px;">图表渲染失败，显示原始代码</p>`;
-                mermaidDiv.parentNode.replaceChild(errorDiv, mermaidDiv);
+                console.error('[图表渲染] Mermaid 渲染错误:', error);
+                container.classList.remove('mermaid-rendering');
+                container.classList.add('mermaid-render-failed');
+                mermaidDiv.innerHTML = `<div class="mermaid-error" style="padding: 15px; border: 1px solid #ffc107; border-radius: 4px; background-color: #fff8e1;"><p style="color: #856404; font-size: 13px; margin: 0 0 10px 0;">图表渲染失败</p><pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-size: 12px;">${this.escapeHtml(code)}</pre></div>`;
             }
         });
     }

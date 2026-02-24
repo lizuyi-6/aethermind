@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>产品信息收集 - AetherMind</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 全局主题加载器 -->
+    <script src="/static/theme-loader.js?v=4"></script>
+
+    <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
+    <link rel="shortcut icon" type="image/jpeg" href="/static/logo.jpg">
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
+
+        /* ================================================
+           主题变量 - 通过 theme-loader.js 动态切换
+        ================================================ */
+        :root {
+            --ds-bg: 3 7 18;
+            --ds-bg-2: 15 23 42;
+            --ds-bg-3: 30 41 59;
+            --ds-text: 226 232 240;
+            --ds-text-muted: 100 116 139;
+            --ds-accent: 99 102 241;
+            --ds-accent-2: 56 189 248;
+            --ds-scrollbar: 51 65 85;
+        }
+
+        [data-theme="cashmere-chestnut"] {
+            --ds-bg: 35 25 20;
+            --ds-bg-2: 50 35 28;
+            --ds-bg-3: 70 50 40;
+            --ds-text: 240 230 220;
+            --ds-text-muted: 180 160 145;
+            --ds-accent: 160 80 55;
+            --ds-accent-2: 200 120 80;
+            --ds-scrollbar: 100 70 55;
+        }
+
+        [data-theme="default"] {
+            --ds-bg: 15 23 42;
+            --ds-bg-2: 30 41 59;
+            --ds-bg-3: 51 65 85;
+            --ds-text: 226 232 240;
+            --ds-text-muted: 148 163 184;
+            --ds-accent: 37 99 235;
+            --ds-accent-2: 96 165 250;
+            --ds-scrollbar: 100 116 139;
+        }
+
+        [data-theme="deep-space"] {
+            --ds-bg: 3 7 18;
+            --ds-bg-2: 15 23 42;
+            --ds-bg-3: 30 41 59;
+            --ds-text: 226 232 240;
+            --ds-text-muted: 100 116 139;
+            --ds-accent: 99 102 241;
+            --ds-accent-2: 56 189 248;
+            --ds-scrollbar: 51 65 85;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: rgb(var(--ds-bg));
+            color: rgb(var(--ds-text));
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgb(var(--ds-bg-2));
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgb(var(--ds-scrollbar));
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgb(var(--ds-accent) / 0.6);
+        }
+
+        /* Glass Panel */
+        .glass-panel {
+            background: rgb(var(--ds-bg-2) / 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-card {
+            background: linear-gradient(180deg, rgb(var(--ds-bg-3) / 0.4) 0%, rgb(var(--ds-bg-2) / 0.4) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 专门为海岸微风 (Coastal Chic) 添加的亮色玻璃卡片样式 */
+        [data-theme="default"] .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+        }
+
+        [data-theme="default"] .glass-card:hover {
+            border-color: rgba(0, 0, 0, 0.15);
+            box-shadow: 0 12px 48px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        .text-glow {
+            text-shadow: 0 0 20px rgb(var(--ds-accent-2) / 0.3);
+        }
+
+        .hero-glow {
+            background: radial-gradient(circle at center, rgb(var(--ds-accent-2) / 0.15) 0%, rgb(var(--ds-bg) / 0) 70%);
+        }
+
+        /* Input Styles */
+        .input-field {
+            background: rgb(var(--ds-bg-2) / 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgb(var(--ds-text));
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: rgb(var(--ds-accent) / 0.5);
+            box-shadow: 0 0 0 3px rgb(var(--ds-accent) / 0.1);
+        }
+
+        .input-field::placeholder {
+            color: rgb(var(--ds-text-muted));
+        }
+
+        textarea.input-field {
+            resize: vertical;
+            min-height: 120px;
+        }
+
+        /* Animations */
+        .fade-in-up {
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+
+        .step-indicator.active {
+            background: linear-gradient(135deg, rgb(var(--ds-accent)) 0%, rgb(var(--ds-accent-2)) 100%);
+            color: white;
+        }
+
+        .step-indicator.completed {
+            background: #10b981;
+            color: white;
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-[rgb(var(--ds-accent))]/30 selection:text-[rgb(var(--ds-accent-2))] min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-panel border-b border-[rgb(var(--ds-text))/0.05]">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <div
+                    class="w-6 h-6 rounded-full bg-gradient-to-tr from-[rgb(var(--ds-accent))] to-[rgb(var(--ds-accent-2))] flex items-center justify-center">
+                    <div class="w-2 h-2 rounded-full bg-white"></div>
+                </div>
+                <span class="text-lg font-medium tracking-tight text-[rgb(var(--ds-text))]">AetherMind</span>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="/"
+                    class="text-sm font-medium text-[rgb(var(--ds-text-muted))] hover:text-[rgb(var(--ds-text))] transition-colors">
+                    <iconify-icon icon="solar:alt-arrow-left-linear" width="16" class="inline mr-1"></iconify-icon>
+                    返回首页
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <section class="relative pt-32 pb-20 overflow-hidden">
+        <div class="absolute inset-0 hero-glow z-0 pointer-events-none"></div>
+
+        <div class="max-w-4xl mx-auto px-6 relative z-10">
+            <!-- Header -->
+            <div class="text-center mb-12 fade-in-up">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgb(var(--ds-accent))]/10 border border-[rgb(var(--ds-accent))]/20 text-[rgb(var(--ds-accent))] text-xs font-medium mb-6">
+                    <iconify-icon icon="solar:document-text-linear" width="16"></iconify-icon>
+                    第一步：填写项目信息
+                </div>
+                <h1 class="text-4xl md:text-5xl font-medium tracking-tight text-[rgb(var(--ds-text))] mb-4">
+                    告诉我们您的<br />
+                    <span
+                        class="text-transparent bg-clip-text bg-gradient-to-r from-[rgb(var(--ds-accent))] to-[rgb(var(--ds-accent-2))] text-glow">项目需求</span>
+                </h1>
+                <p class="text-base text-[rgb(var(--ds-text-muted))] font-light max-w-2xl mx-auto">
+                    请填写以下信息，AI将基于您的需求生成专业的可行性研究报告。所有信息仅用于报告生成，不会对外泄露。
+                </p>
+            </div>
+
+            <!-- Progress Steps -->
+            <div class="flex items-center justify-center gap-4 mb-12 fade-in-up" style="animation-delay: 0.1s;">
+                <div
+                    class="step-indicator active w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[rgb(var(--ds-accent))]/30">
+                    1
+                </div>
+                <div class="w-16 h-0.5 bg-[rgb(var(--ds-bg-3))]"></div>
+                <div
+                    class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[rgb(var(--ds-text))/0.1] bg-[rgb(var(--ds-bg-3))/0.5] text-[rgb(var(--ds-text-muted))]">
+                    2
+                </div>
+                <div class="w-16 h-0.5 bg-[rgb(var(--ds-bg-3))]"></div>
+                <div
+                    class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[rgb(var(--ds-text))/0.1] bg-[rgb(var(--ds-bg-3))/0.5] text-[rgb(var(--ds-text-muted))]">
+                    3
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="glass-card rounded-2xl p-8 md:p-12 fade-in-up" style="animation-delay: 0.2s;">
+                <form id="productForm" class="space-y-8">
+                    <!-- Report Type Selection -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:document-text-linear" width="18"></iconify-icon>
+                            选择文档类型 <span class="text-red-400">*</span>
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="reportType" value="feasibility" class="peer sr-only" required
+                                    checked>
+                                <div
+                                    class="relative input-field px-6 py-5 rounded-lg peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="w-12 h-12 rounded-lg bg-[rgb(var(--ds-accent))]/20 flex items-center justify-center flex-shrink-0">
+                                            <iconify-icon icon="solar:file-text-linear" width="24"
+                                                class="text-[rgb(var(--ds-accent-2))]"></iconify-icon>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="text-base font-medium text-[rgb(var(--ds-text))] mb-1">可行性研究报告
+                                            </h4>
+                                            <p class="text-xs text-[rgb(var(--ds-text-muted))] leading-relaxed">
+                                                包含市场分析、技术方案、财务预测、风险评估等，适用于项目立项、融资申请</p>
+                                        </div>
+                                        <div
+                                            class="w-6 h-6 rounded-full border-2 border-[rgb(var(--ds-text))/0.2] peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))] flex items-center justify-center flex-shrink-0 transition-all">
+                                            <iconify-icon icon="solar:check-circle-linear" width="14"
+                                                class="text-[rgb(var(--ds-text))] opacity-0 peer-checked:opacity-100"></iconify-icon>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="reportType" value="business" class="peer sr-only">
+                                <div
+                                    class="relative input-field px-6 py-5 rounded-lg peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    <div class="flex items-start gap-4">
+                                        <div
+                                            class="w-12 h-12 rounded-lg bg-[rgb(var(--ds-accent-2))]/20 flex items-center justify-center flex-shrink-0">
+                                            <iconify-icon icon="solar:chart-linear" width="24"
+                                                class="text-[rgb(var(--ds-accent-2))]"></iconify-icon>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h4 class="text-base font-medium text-[rgb(var(--ds-text))] mb-1">商业计划书</h4>
+                                            <p class="text-xs text-[rgb(var(--ds-text-muted))] leading-relaxed">
+                                                包含商业模式、竞争分析、营销策略、团队介绍等，适用于创业路演、招商引资</p>
+                                        </div>
+                                        <div
+                                            class="w-6 h-6 rounded-full border-2 border-[rgb(var(--ds-text))/0.2] peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))] flex items-center justify-center flex-shrink-0 transition-all">
+                                            <iconify-icon icon="solar:check-circle-linear" width="14"
+                                                class="text-[rgb(var(--ds-text))] opacity-0 peer-checked:opacity-100"></iconify-icon>
+                                        </div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Project Name -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:folder-with-files-linear" width="18"></iconify-icon>
+                            项目名称 <span class="text-red-400">*</span>
+                        </label>
+                        <input type="text" id="projectName" name="projectName" required
+                            class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="例如：智能工厂自动化改造项目">
+                        <p class="text-xs text-[rgb(var(--ds-text-muted))]">为您的项目起一个清晰的名称</p>
+                    </div>
+
+                    <!-- Industry -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:building-2-linear" width="18"></iconify-icon>
+                            所属行业 <span class="text-red-400">*</span>
+                        </label>
+                        <select id="industry" name="industry" required
+                            class="input-field w-full px-4 py-3 rounded-lg text-sm">
+                            <option value="">请选择行业</option>
+                            <option value="制造业">制造业</option>
+                            <option value="信息技术">信息技术</option>
+                            <option value="金融服务">金融服务</option>
+                            <option value="医疗健康">医疗健康</option>
+                            <option value="教育培训">教育培训</option>
+                            <option value="零售电商">零售电商</option>
+                            <option value="物流运输">物流运输</option>
+                            <option value="能源环保">能源环保</option>
+                            <option value="建筑工程">建筑工程</option>
+                            <option value="政府机构">政府机构</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+
+                    <!-- Project Type -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:widget-linear" width="18"></iconify-icon>
+                            项目类型 <span class="text-red-400">*</span>
+                        </label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <label class="cursor-pointer">
+                                <input type="radio" name="projectType" value="新建项目" class="peer sr-only" required>
+                                <div
+                                    class="input-field px-4 py-3 rounded-lg text-sm text-center peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    新建项目
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="projectType" value="技术改造" class="peer sr-only">
+                                <div
+                                    class="input-field px-4 py-3 rounded-lg text-sm text-center peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    技术改造
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="projectType" value="扩建项目" class="peer sr-only">
+                                <div
+                                    class="input-field px-4 py-3 rounded-lg text-sm text-center peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    扩建项目
+                                </div>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="radio" name="projectType" value="研发项目" class="peer sr-only">
+                                <div
+                                    class="input-field px-4 py-3 rounded-lg text-sm text-center peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    研发项目
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Investment Scale -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:wallet-money-linear" width="18"></iconify-icon>
+                            投资规模（万元）
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <input type="number" id="investmentMin" name="investmentMin"
+                                    class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="最小投资额" min="0">
+                            </div>
+                            <div>
+                                <input type="number" id="investmentMax" name="investmentMax"
+                                    class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="最大投资额" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Project Description -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:document-text-linear" width="18"></iconify-icon>
+                            项目描述 <span class="text-red-400">*</span>
+                        </label>
+                        <textarea id="projectDesc" name="projectDesc" required
+                            class="input-field w-full px-4 py-3 rounded-lg text-sm"
+                            placeholder="请详细描述您的项目背景、目标、主要内容等..."></textarea>
+                        <p class="text-xs text-[rgb(var(--ds-text-muted))]">至少50个字符，描述越详细，生成的报告质量越高</p>
+                    </div>
+
+                    <!-- Key Requirements -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:checklist-linear" width="18"></iconify-icon>
+                            核心需求（可选）
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                                <input type="checkbox" name="requirements" value="市场分析"
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                <span class="text-sm">市场分析</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                                <input type="checkbox" name="requirements" value="技术方案"
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                <span class="text-sm">技术方案</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                                <input type="checkbox" name="requirements" value="财务分析"
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                <span class="text-sm">财务分析</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                                <input type="checkbox" name="requirements" value="风险评估"
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                <span class="text-sm">风险评估</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                                <input type="checkbox" name="requirements" value="经济效益"
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                <span class="text-sm">经济效益</span>
+                            </label>
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                                <input type="checkbox" name="requirements" value="实施计划"
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                <span class="text-sm">实施计划</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:letter-linear" width="18"></iconify-icon>
+                            联系方式（可选）
+                        </label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <input type="text" id="contactName" name="contactName"
+                                    class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="您的姓名">
+                            </div>
+                            <div>
+                                <input type="tel" id="contactPhone" name="contactPhone"
+                                    class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="联系电话"
+                                    pattern="[0-9]{11}">
+                            </div>
+                        </div>
+                        <p class="text-xs text-[rgb(var(--ds-text-muted))]">如需我们跟进服务，请留下联系方式</p>
+                    </div>
+
+                    <!-- Verification Code -->
+                    <div class="space-y-3">
+                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
+                            <iconify-icon icon="solar:lock-keyhole-linear" width="18"></iconify-icon>
+                            验证码 <span class="text-red-400">*</span>
+                        </label>
+                        <div class="flex gap-3">
+                            <input type="text" id="verifyCode" name="verifyCode" required
+                                class="input-field flex-1 px-4 py-3 rounded-lg text-sm font-mono tracking-wider"
+                                placeholder="请输入验证码：XXXXXX-XXXXXX-XXXXXX-XXXXXX" maxlength="27">
+                            <button type="button" id="checkCodeBtn" onclick="checkVerificationCode()"
+                                class="px-6 py-3 bg-[rgb(var(--ds-bg-3))] hover:bg-[rgb(var(--ds-bg-3))/0.8] text-[rgb(var(--ds-text))] rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap">
+                                <iconify-icon icon="solar:check-circle-linear" width="18"></iconify-icon>
+                                验证
+                            </button>
+                        </div>
+                        <div id="codeStatus" class="text-xs"></div>
+                        <p class="text-xs text-[rgb(var(--ds-text-muted))]">
+                            请先验证兑换码以获取使用次数。验证码格式：XXXXXX-XXXXXX-XXXXXX-XXXXXX</p>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="pt-6 border-t border-[rgb(var(--ds-text))/0.1]/50">
+                        <button type="submit"
+                            class="w-full bg-gradient-to-r from-[rgb(var(--ds-accent))] to-[rgb(var(--ds-accent-2))] hover:from-[rgb(var(--ds-accent))] hover:to-[rgb(var(--ds-accent-2))]/80 text-[rgb(var(--ds-text))] px-8 py-4 rounded-lg text-sm font-medium transition-all shadow-lg shadow-[rgb(var(--ds-accent))]/20 flex items-center justify-center gap-2 group">
+                            <iconify-icon icon="solar:magic-linear" width="20"></iconify-icon>
+                            生成可行性报告
+                            <iconify-icon icon="solar:arrow-right-linear" width="16"
+                                class="group-hover:translate-x-1 transition-transform"></iconify-icon>
+                        </button>
+                        <p class="text-xs text-[rgb(var(--ds-text-muted))] text-center mt-3">
+                            点击按钮后，系统将自动跳转至 AI 报告生成界面
+                        </p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Info Card -->
+            <div class="mt-8 glass-panel rounded-xl p-6 fade-in-up" style="animation-delay: 0.3s;">
+                <div class="flex items-start gap-4">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-[rgb(var(--ds-accent))]/10 flex items-center justify-center flex-shrink-0">
+                        <iconify-icon icon="solar:info-circle-linear" width="20"
+                            class="text-[rgb(var(--ds-accent-2))]"></iconify-icon>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-[rgb(var(--ds-text))] mb-2">关于报告生成</h4>
+                        <p class="text-xs text-[rgb(var(--ds-text-muted))] leading-relaxed">
+                            AI 将根据您提供的信息，自动生成一份包含市场分析、技术方案、财务预测、风险评估等专业章节的可行性研究报告。报告生成约需 1-2 分钟，生成完成后可下载 PDF 格式。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="border-t border-[rgb(var(--ds-text))/0.05] py-8">
+        <div class="max-w-7xl mx-auto px-6">
+            <div
+                class="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[rgb(var(--ds-text-muted))]">
+                <p>&copy; 2025 AetherMind. All rights reserved.</p>
+                <div class="flex items-center gap-4">
+                    <a href="#" class="hover:text-[rgb(var(--ds-text-muted))] transition-colors">隐私政策</a>
+                    <a href="#" class="hover:text-[rgb(var(--ds-text-muted))] transition-colors">使用条款</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let isCodeVerified = false;
+
+        // 调试：页面加载时检查 sessionStorage
+        console.log('%c🎯 [ProductForm v2.1] 页面已加载', 'color: green; font-size: 16px; font-weight: bold;');
+        console.log('🎯 [ProductForm] 当前时间:', new Date().toLocaleTimeString());
+        console.log('🎯 [ProductForm] 当前 URL:', window.location.href);
+        console.log('🎯 [ProductForm] sessionStorage 测试 - 设置测试数据...');
+        sessionStorage.setItem('test_key', 'test_value_' + Date.now());
+        console.log('🎯 [ProductForm] sessionStorage 测试 - 读取测试数据:', sessionStorage.getItem('test_key'));
+
+        // Format verification code input
+        document.addEventListener('DOMContentLoaded', function () {
+            const verifyCodeInput = document.getElementById('verifyCode');
+            if (verifyCodeInput) {
+                verifyCodeInput.addEventListener('input', function (e) {
+                    let value = e.target.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+                    // Auto-format to XXXXXX-XXXXXX-XXXXXX-XXXXXX
+                    if (value.length > 12) {
+                        value = value.slice(0, 6) + '-' + value.slice(6, 12) + '-' + value.slice(12, 18) + '-' + value.slice(18, 24);
+                    } else if (value.length > 6) {
+                        value = value.slice(0, 6) + '-' + value.slice(6);
+                    }
+
+                    e.target.value = value;
+                });
+
+                verifyCodeInput.addEventListener('keypress', function (e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        checkVerificationCode();
+                    }
+                });
+            }
+        });
+
+        // Check verification code
+        async function checkVerificationCode() {
+            const codeInput = document.getElementById('verifyCode');
+            const codeStatus = document.getElementById('codeStatus');
+            const checkBtn = document.getElementById('checkCodeBtn');
+            const code = codeInput.value.trim();
+
+            if (!code) {
+                showCodeStatus('请输入验证码', 'error');
+                return;
+            }
+
+            // Format: XXXXXX-XXXXXX-XXXXXX-XXXXXX
+            const codePattern = /^[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}-[A-Z0-9]{6}$/;
+            if (!codePattern.test(code)) {
+                showCodeStatus('验证码格式不正确，应为：XXXXXX-XXXXXX-XXXXXX-XXXXXX', 'error');
+                return;
+            }
+
+            // Show loading state
+            checkBtn.disabled = true;
+            checkBtn.innerHTML = '<iconify-icon icon="solar:configs-round-moving-linear" width="18" class="animate-spin"></iconify-icon> 验证中...';
+            showCodeStatus('正在验证...', 'info');
+
+            try {
+                const response = await fetch('/api/v1/verify-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code: code })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    isCodeVerified = true;
+                    showCodeStatus(`✓ 验证成功！剩余使用次数：${data.remaining_uses}`, 'success');
+                    checkBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear" width="18"></iconify-icon> 已验证';
+                    checkBtn.classList.remove('bg-[rgb(var(--ds-bg-3))]', 'hover:bg-[rgb(var(--ds-bg-3))/0.8]');
+                    checkBtn.classList.add('bg-green-600');
+                    codeInput.disabled = true;
+                } else {
+                    isCodeVerified = false;
+                    showCodeStatus(`验证失败：${data.error || '未知错误'}`, 'error');
+                    checkBtn.disabled = false;
+                    checkBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear" width="18"></iconify-icon> 验证';
+                }
+            } catch (error) {
+                isCodeVerified = false;
+                showCodeStatus('验证请求失败，请稍后重试', 'error');
+                checkBtn.disabled = false;
+                checkBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear" width="18"></iconify-icon> 验证';
+            }
+        }
+
+        function showCodeStatus(message, type) {
+            const codeStatus = document.getElementById('codeStatus');
+            codeStatus.textContent = message;
+
+            // Reset classes
+            codeStatus.classList.remove('text-green-500', 'text-red-500', 'text-blue-500', 'text-[rgb(var(--ds-text-muted))]');
+
+            // Apply type-specific styling
+            switch (type) {
+                case 'success':
+                    codeStatus.classList.add('text-green-500');
+                    break;
+                case 'error':
+                    codeStatus.classList.add('text-red-500');
+                    break;
+                case 'info':
+                    codeStatus.classList.add('text-blue-500');
+                    break;
+                default:
+                    codeStatus.classList.add('text-[rgb(var(--ds-text-muted))]');
+            }
+        }
+
+        // Update button text based on report type
+        document.querySelectorAll('input[name="reportType"]').forEach(radio => {
+            radio.addEventListener('change', function () {
+                const submitBtn = document.querySelector('button[type="submit"]');
+                const reportType = this.value;
+
+                if (reportType === 'feasibility') {
+                    submitBtn.innerHTML = '<iconify-icon icon="solar:magic-linear" width="20"></iconify-icon> 生成可行性报告 <iconify-icon icon="solar:arrow-right-linear" width="16" class="group-hover:translate-x-1 transition-transform"></iconify-icon>';
+                } else if (reportType === 'business') {
+                    submitBtn.innerHTML = '<iconify-icon icon="solar:magic-linear" width="20"></iconify-icon> 生成商业计划书 <iconify-icon icon="solar:arrow-right-linear" width="16" class="group-hover:translate-x-1 transition-transform"></iconify-icon>';
+                }
+            });
+        });
+
+        // Form submission handler
+        document.getElementById('productForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            console.log('%c🎯 [ProductForm v2.1] Form submission started', 'color: green; font-size: 16px; font-weight: bold;');
+
+            // Check if verification code is validated
+            if (!isCodeVerified) {
+                showCodeStatus('请先验证兑换码', 'error');
+                document.getElementById('verifyCode').focus();
+                return;
+            }
+
+            console.log('[ProductForm] Verification code validated, collecting data...');
+
+            // Collect form data
+            const formData = new FormData(this);
+            const data = {};
+            formData.forEach((value, key) => {
+                if (data[key]) {
+                    if (Array.isArray(data[key])) {
+                        data[key].push(value);
+                    } else {
+                        data[key] = [data[key], value];
+                    }
+                } else {
+                    data[key] = value;
+                }
+            });
+
+            console.log('[ProductForm] Form data collected:', data);
+            console.log('[ProductForm] reportType 字段值:', data.reportType);
+            console.log('[ProductForm] reportType 类型:', typeof data.reportType);
+
+            // Store in sessionStorage for next page
+            sessionStorage.setItem('productFormData', JSON.stringify(data));
+            console.log('[ProductForm] productFormData saved to sessionStorage');
+
+            // Generate prompt based on report type
+            const reportType = data.reportType || 'feasibility';
+            console.log('[ProductForm] 最终使用的 reportType:', reportType);
+            let prompt = '';
+
+            if (reportType === 'feasibility') {
+                // 可行性研究报告提示词
+                prompt = `请为以下项目生成一份完整的可行性研究报告：
+
+项目名称：${data.projectName}
+所属行业：${data.industry}
+项目类型：${data.projectType}
+投资规模：${data.investmentMin || '未填写'} - ${data.investmentMax || '未填写'} 万元
+
+项目描述：
+${data.projectDesc}
+
+核心需求：${Array.isArray(data.requirements) ? data.requirements.join('、') : data.requirements || '全面分析'}
+
+请按照以下结构生成报告（约4万字）：
+1. 项目总论
+2. 项目背景与必要性
+3. 市场分析
+4. 建设方案与技术路线
+5. 环境影响与节能措施
+6. 项目组织与管理
+7. 项目实施进度
+8. 投资估算与资金筹措
+9. 财务分析与经济效益评价
+10. 风险分析及对策
+11. 结论与建议
+
+请使用专业、严谨的语言，确保数据准确、分析深入、论证充分。`;
+            } else if (reportType === 'business') {
+                // 商业计划书提示词（详细的章节说明）
+                prompt = `请为以下项目生成一份完整的商业计划书：
+
+项目名称：${data.projectName}
+所属行业：${data.industry}
+项目类型：${data.projectType}
+投资规模：${data.investmentMin || '未填写'} - ${data.investmentMax || '未填写'} 万元
+
+项目描述：
+${data.projectDesc}
+
+核心需求：${Array.isArray(data.requirements) ? data.requirements.join('、') : data.requirements || '全面分析'}
+
+请按照以下结构生成商业计划书（约4万字）：
+
+第一章 执行摘要
+1.1 项目背景与机遇
+1.2 产品/服务概述
+1.3 商业模式亮点
+1.4 市场前景与竞争优势
+1.5 融资需求与投资回报
+1.6 核心团队介绍
+
+第二章 公司概况
+2.1 公司简介与使命愿景
+2.2 发展历程与里程碑
+2.3 组织架构与股权结构
+2.4 核心竞争力分析
+
+第三章 产品与服务
+3.1 产品/服务详细描述
+3.2 技术创新与知识产权
+3.3 产品开发与升级规划
+3.4 与竞品的差异化优势
+
+第四章 市场分析
+4.1 行业现状与发展趋势
+4.2 目标市场定位
+4.3 客户画像与需求分析
+4.4 市场规模与增长预测
+4.5 市场进入策略
+
+第五章 竞争分析
+5.1 主要竞争对手识别
+5.2 竞争对手优劣势分析
+5.3 本项目竞争优势（SWOT分析）
+5.4 竞争策略与壁垒构建
+
+第六章 商业模式
+6.1 价值主张
+6.2 收入模式与定价策略
+6.3 渠道策略与合作伙伴
+6.4 客户关系管理
+6.5 成本结构分析
+
+第七章 营销策略
+7.1 品牌定位与传播策略
+7.2 线上营销方案（SEO、社交媒体、内容营销）
+7.3 线下推广策略（展会、地推、渠道合作）
+7.4 销售漏斗与转化策略
+7.5 客户获取与留存策略
+
+第八章 运营计划
+8.1 运营流程设计
+8.2 供应链与资源配置
+8.3 质量控制体系
+8.4 技术架构与IT系统
+8.5 运营里程碑规划
+
+第九章 管理团队
+9.1 核心成员介绍（背景、经验、成就）
+9.2 组织架构与团队配置
+9.3 人力资源规划
+9.4 股权激励与期权池
+9.5 顾问团队与外部支持
+
+第十章 财务预测
+10.1 关键财务假设
+10.2 收入预测（3-5年）
+10.3 成本与费用预算
+10.4 利润表预测
+10.5 现金流量表预测
+10.6 盈亏平衡分析
+
+第十一章 融资需求与资金使用
+11.1 融资额度与估值
+11.2 资金用途分配
+11.3 融资方式与工具选择
+11.4 投资回报分析（ROI、IRR）
+11.5 退出机制设计（IPO、并购等）
+
+第十二章 风险因素与应对
+12.1 市场风险与应对
+12.2 技术风险与应对
+12.3 财务风险与应对
+12.4 法律合规风险
+12.5 团队风险与应对
+12.6 风险控制措施
+
+第十三章 附录
+13.1 市场调研数据
+13.2 技术专利证书
+13.3 财务报表
+13.4 核心团队成员简历
+13.5 重要合同与协议
+13.6 媒体报道与荣誉
+
+请突出项目的创新性、市场潜力、盈利模式和投资价值，使用专业且具有说服力的语言，确保投资者能够清晰了解项目的商业价值和增长潜力。`;
+            }
+
+            console.log('[ProductForm] Prompt generated, length:', prompt.length);
+            const promptPreview = prompt.substring(0, 100) + '...';
+            console.log('%c🎯 [ProductForm v2.1] 生成的提示词预览:', 'color: purple; font-weight: bold;', promptPreview);
+
+            // Store prompt for auto-submission
+            sessionStorage.setItem('autoSubmitPrompt', prompt);
+            console.log('[ProductForm] autoSubmitPrompt saved to sessionStorage');
+
+            // Verify it was saved
+            const savedPrompt = sessionStorage.getItem('autoSubmitPrompt');
+            console.log('[ProductForm] Verification - savedPrompt length:', savedPrompt ? savedPrompt.length : 'NULL');
+
+            // Show success message
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            const reportTypeName = reportType === 'feasibility' ? '可行性报告' : '商业计划书';
+            submitBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear" width="20"></iconify-icon> 信息已保存，正在跳转...';
+            submitBtn.classList.remove('from-[rgb(var(--ds-accent))]', 'to-[rgb(var(--ds-accent-2))]');
+            submitBtn.classList.add('bg-green-600');
+
+            console.log('[ProductForm] Redirecting to /workspace in 800ms...');
+
+            setTimeout(() => {
+                console.log('[ProductForm] Redirecting now!');
+                window.location.href = '/workspace';
+            }, 800);
+        });
+
+        // Animation on load
+        document.addEventListener('DOMContentLoaded', function () {
+            const elements = document.querySelectorAll('.fade-in-up');
+            elements.forEach((el, index) => {
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        // Input field focus effects
+        document.querySelectorAll('.input-field').forEach(field => {
+            field.addEventListener('focus', function () {
+                this.parentElement.classList.add('focused');
+            });
+            field.addEventListener('blur', function () {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+    </script>
+    <script src="/static/theme-workshop.js?v=4"></script>
+</body>
+
+</html>

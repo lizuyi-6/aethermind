@@ -31,6 +31,7 @@ from code_manager import CodeManager
 from file_registry_service import FileRegistry
 import uuid
 import secrets
+import queue
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 logging.basicConfig(level=os.getenv('LOG_LEVEL', 'INFO').upper())
@@ -179,6 +180,72 @@ def save_runtime_state():
 
 
 load_runtime_state()
+
+@app.route('/api/v1/debug/routes', methods=['GET'])
+def debug_routes():
+    lines = []
+    for rule in app.url_map.iter_rules():
+        lines.append(f"{rule.endpoint}: {rule}")
+    return "\n".join(lines)
+
+# ==== Theme Configuration API ====
+THEME_CONFIG_PATH = os.path.join(BASE_DIR, 'static', 'theme.json')
+
+@app.route('/api/v1/theme', methods=['GET'])
+def get_theme_config():
+    """Return the current theme configuration."""
+    try:
+        with open(THEME_CONFIG_PATH, 'r', encoding='utf-8') as f:
+            return jsonify(json.load(f))
+    except FileNotFoundError:
+        return jsonify({"error": "Theme config not found"}), 404
+
+@app.route('/api/v1/theme', methods=['POST'])
+def set_theme_config():
+    """Update the theme configuration (admin only)."""
+    # Basic auth check
+    session_token = request.cookies.get('admin_session')
+    if not session_token or session_token not in admin_sessions:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    try:
+        with open(THEME_CONFIG_PATH, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        return jsonify({"success": True, "message": "Theme updated"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/v1/theme/active', methods=['POST'])
+def set_active_theme():
+    """Switch the active theme by name."""
+    data = request.get_json()
+    theme_name = data.get('theme') if data else None
+    if not theme_name:
+        return jsonify({"error": "Missing 'theme' field"}), 400
+    
+    try:
+        with open(THEME_CONFIG_PATH, 'r', encoding='utf-8') as f:
+            config = json.load(f)
+        
+        if theme_name not in config.get('themes', {}):
+            return jsonify({"error": f"Theme '{theme_name}' not found"}), 404
+        
+        config['active'] = theme_name
+        with open(THEME_CONFIG_PATH, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        
+        return jsonify({"success": True, "active": theme_name})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ==== End Theme API ====
+
+
+
 
 
 @app.before_request
@@ -665,14 +732,108 @@ def require_admin_page_login(f):
     return decorated_function
 
 
+# ==== LLM Configuration API ====
+
+from config import save_llm_settings, ModelProvider
+
+_RELOAD_LOCK = threading.Lock()
+
+def _reload_agent():
+    """重建全局 config / agent，使新 LLM 配置即时生效（线程安全）。"""
+    global config, agent
+    with _RELOAD_LOCK:
+        try:
+            new_config = Config()
+            new_agent = IntelligentAgent(new_config)
+            config = new_config
+            agent = new_agent
+            logger.info("LLM 配置热更新成功: %s", repr(config))
+            return True, None
+        except Exception as e:
+            logger.exception("LLM 配置热更新失败")
+            return False, str(e)
+
+
+@app.route('/api/v1/admin/config/llm', methods=['GET'])
+@require_admin_login
+def get_llm_config():
+    """读取当前大模型配置（敏感字段脱敏）。"""
+    return jsonify({
+        'success': True,
+        'config': config.to_dict(),
+    })
+
+
+@app.route('/api/v1/admin/config/llm', methods=['POST'])
+@require_admin_login
+def set_llm_config():
+    """更新大模型配置并热重载 agent。"""
+    data = request.get_json(silent=True) or {}
+
+    provider_val = str(data.get('provider', '')).strip().lower()
+    if provider_val not in [p.value for p in ModelProvider]:
+        return jsonify({'error': f'不支持的 provider：{provider_val}'}), 400
+
+    api_key_raw = str(data.get('api_key', '')).strip()
+    base_url = str(data.get('base_url', '')).strip()
+    model_name = str(data.get('model_name', '')).strip()
+
+    try:
+        temperature = float(data.get('temperature', 0.7))
+        max_tokens = int(data.get('max_tokens', 32000))
+    except (TypeError, ValueError) as e:
+        return jsonify({'error': f'参数格式错误: {e}'}), 400
+
+    if not model_name:
+        return jsonify({'error': '模型名称不能为空'}), 400
+
+    # 如果 api_key 是脱敏占位符（全是 *），则保留旧的 key
+    if api_key_raw and all(c == '*' for c in api_key_raw):
+        from config import _load_llm_settings as _load_raw
+        api_key_raw = _load_raw().get('api_key', config.api_key)
+
+    new_settings = {
+        'provider': provider_val,
+        'api_key': api_key_raw,
+        'base_url': base_url,
+        'model_name': model_name,
+        'temperature': temperature,
+        'max_tokens': max_tokens,
+    }
+
+    try:
+        save_llm_settings(new_settings)
+    except Exception as e:
+        return jsonify({'error': f'保存配置失败: {e}'}), 500
+
+    # 热重载
+    ok, err = _reload_agent()
+    if not ok:
+        return jsonify({'success': False, 'warning': f'配置已保存，但热重载失败: {err}。请重启服务。'}), 200
+
+    return jsonify({'success': True, 'message': '配置已更新并立即生效', 'config': config.to_dict()})
+
+# ==== End LLM Configuration API ====
+
+
 @app.route('/')
 def index():
-    """首页"""
-    return render_template('index_new.html')
+    """落地页"""
+    return render_template('landing.html')
 
-@app.route('/old')
-def index_old():
-    """聊天页面（旧版）"""
+@app.route('/product-form')
+def product_form():
+    """产品信息收集页"""
+    return render_template('product_form.html')
+
+@app.route('/app')
+def application():
+    """主应用（现代化版本）"""
+    return render_template('index_modern.html')
+
+@app.route('/workspace')
+def workspace_page():
+    """工作空间页面"""
     return render_template('index.html')
 
 @app.route('/chat')
@@ -846,15 +1007,38 @@ def chat_stream():
             model_done_time = None
             try:
                 stream_start_time = time.time()
-                stream_timeout = 1200
 
-                for chunk in agent.chat_stream(user_input, conversation_history):
-                    full_reply += chunk
-                    yield f"data: {json.dumps({'content': chunk, 'done': False}, ensure_ascii=False)}\n\n"
-                    if time.time() - stream_start_time > stream_timeout:
-                        timeout_msg = '\n\n[警告] 流式输出总时间超时（超过20分钟），已停止接收数据。'
-                        yield f"data: {json.dumps({'content': timeout_msg, 'done': False}, ensure_ascii=False)}\n\n"
+                # Run chat_stream in a background thread so we can send SSE keepalive
+                # comments while waiting for long API calls (prevents proxy read-timeout).
+                _chunk_q = queue.Queue()
+
+                def _stream_producer():
+                    try:
+                        for _c in agent.chat_stream(user_input, conversation_history):
+                            _chunk_q.put(_c)
+                    except Exception as _e:
+                        _chunk_q.put(_e)
+                    finally:
+                        _chunk_q.put(None)  # sentinel
+
+                _producer_thread = threading.Thread(target=_stream_producer, daemon=True)
+                _producer_thread.start()
+
+                while True:
+                    try:
+                        item = _chunk_q.get(timeout=30)
+                    except queue.Empty:
+                        # No data for 30 s – send SSE comment to keep connection alive
+                        yield ": keepalive\n\n"
+                        continue
+                    if item is None:
                         break
+                    if isinstance(item, Exception):
+                        raise item
+                    full_reply += item
+                    yield f"data: {json.dumps({'content': item, 'done': False}, ensure_ascii=False)}\n\n"
+                    sys.stdout.flush()
+
                 model_done_time = time.time()
 
                 is_report = agent._is_report_request(user_input)
@@ -1436,14 +1620,14 @@ def admin_login_page():
     admin_token, session_info = get_valid_admin_session()
     if admin_token and session_info:
         return redirect('/admin/dashboard')
-    return render_template('admin_login.html')
+    return render_template('admin_login_modern.html')
 
 
 @app.route('/admin/dashboard')
 @require_admin_page_login
 def admin_dashboard():
     """Admin dashboard page."""
-    return render_template('admin_dashboard.html')
+    return render_template('admin_dashboard_modern.html')
 
 
 @app.route('/api/admin/login', methods=['POST'])
@@ -1536,16 +1720,42 @@ def admin_get_codes():
     try:
         codes = code_manager.get_all_codes()
         statistics = code_manager.get_statistics()
-        
+
         # 轍为列表格式，方便前显示
         codes_list = [{'code': code, 'uses': uses} for code, uses in codes.items()]
-        
+
         # 按验证码排序
         codes_list.sort(key=lambda x: x['code'])
-        
+
         return jsonify({
             'codes': codes_list,
             'statistics': statistics
+        })
+    except Exception as e:
+        return fail_response(exc=e)
+
+
+@app.route('/api/admin/stats', methods=['GET'])
+@app.route('/api/v1/admin/stats', methods=['GET'])
+@require_admin_login
+def admin_stats():
+    """获取验证码统计信息"""
+    try:
+        stats = code_manager.get_statistics()
+
+        # 计算已使用和未使用的数量
+        codes = code_manager.get_all_codes()
+        used_count = sum(1 for uses in codes.values() if uses <= 0)
+        unused_count = sum(1 for uses in codes.values() if uses > 0)
+
+        # 计算今日生成的数量（简化版，从总数量中估算）
+        total = stats.get('total_codes', 0)
+
+        return jsonify({
+            'total': total,
+            'used': used_count,
+            'unused': unused_count,
+            'today': total  # 简化版，实际可以记录生成时间
         })
     except Exception as e:
         return fail_response(exc=e)
@@ -1652,7 +1862,7 @@ def admin_statistics():
 # ==================== RAG 缁狅紕鎮婇惄绋垮彠 API ====================
 
 def get_rag_db_path():
-    default_path = os.path.join(BASE_DIR, 'knowledge_base', 'sqlite_rag.db')
+    default_path = os.path.join(BASE_DIR, 'knowledge_base', 'rag.db')
     return os.getenv('SQLITE_RAG_DB_PATH', default_path)
 
 
@@ -1804,6 +2014,12 @@ def rag_stats():
             chunk_count = int(cur.fetchone()[0])
             cur.execute('SELECT MAX(dim) FROM chunk_vectors')
             embed_dim = cur.fetchone()[0] or int(os.getenv('SQLITE_RAG_EMBED_DIM', '2048'))
+            cur.execute('SELECT SUM(char_count) FROM documents')
+            total_chars = int(cur.fetchone()[0] or 0)
+
+            # Calculate database file size
+            db_path = get_rag_db_path()
+            total_size = os.path.getsize(db_path) if os.path.exists(db_path) else 0
         finally:
             conn.close()
 
@@ -1817,6 +2033,8 @@ def rag_stats():
                 'embedding_model': os.getenv('SQLITE_RAG_EMBEDDING_MODEL', 'sqlite_char_ngram'),
                 'embedding_dimension': int(embed_dim),
                 'db_path': get_rag_db_path(),
+                'total_chars': total_chars,
+                'total_size': total_size,
             }
         })
     except Exception as e:
@@ -2071,6 +2289,60 @@ def rag_export():
             )
 
         return jsonify({'success': True, 'file': out_file, 'count': len(export_rows)})
+    except Exception as e:
+        return fail_response(exc=e)
+
+
+@app.route('/api/v1/admin/sessions/<string:session_id>', methods=['DELETE'])
+@require_admin_login
+def admin_delete_session(session_id):
+    """Admin: delete any session by its unscoped session_id."""
+    try:
+        suffix = f"{SESSION_KEY_SEP}{sanitize_session_id(session_id)}"
+        keys_to_delete = [k for k in list(conversation_histories.keys()) if k.endswith(suffix)]
+        if not keys_to_delete:
+            return jsonify({'error': 'session not found'}), 404
+        for k in keys_to_delete:
+            conversation_histories.pop(k, None)
+            session_metadata.pop(k, None)
+        save_runtime_state()
+        return jsonify({'success': True, 'deleted': len(keys_to_delete)})
+    except Exception as e:
+        return fail_response(exc=e)
+
+
+@app.route('/api/v1/files', methods=['GET'])
+@require_admin_login
+def list_files():
+    """Admin: list all active files from the file registry."""
+    try:
+        conn = file_registry._connect()
+        try:
+            rows = conn.execute(
+                """
+                SELECT file_id, origin_name, kind, mime_type, size_bytes, created_at, updated_at, status
+                FROM file_registry
+                WHERE status = 'active'
+                ORDER BY created_at DESC
+                LIMIT 200
+                """
+            ).fetchall()
+        finally:
+            conn.close()
+        files = [
+            {
+                'file_id': r['file_id'],
+                'filename': r['origin_name'],
+                'file_type': r['kind'],
+                'mime_type': r['mime_type'],
+                'file_size': int(r['size_bytes'] or 0),
+                'upload_time': r['created_at'],
+                'updated_at': r['updated_at'],
+                'status': r['status'],
+            }
+            for r in rows
+        ]
+        return jsonify({'files': files})
     except Exception as e:
         return fail_response(exc=e)
 
@@ -2402,6 +2674,9 @@ if __name__ == '__main__':
     logger.info("开发模式: %s, 自动重载: %s", debug, use_reloader)
     logger.info("按 Ctrl+C 停止服务")
     logger.info("-" * 50)
+    import pprint
+    logger.info("DEBUG URL MAP:")
+    logger.info(pprint.pformat(list(app.url_map.iter_rules())))
     app.run(debug=debug, host='0.0.0.0', port=port, threaded=True, use_reloader=use_reloader)
 
 

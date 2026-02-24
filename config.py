@@ -1,9 +1,11 @@
 """
 配置文件
 支持多种大模型API配置
+优先从 db/llm_settings.json 读取，不存在时回退到环境变量
 """
 
 import os
+import json
 import logging
 from enum import Enum
 from typing import Optional
@@ -13,73 +15,131 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+# JSON 配置文件路径（持久化大模型配置）
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LLM_SETTINGS_FILE = os.path.join(BASE_DIR, 'db', 'llm_settings.json')
+
 
 class ModelProvider(Enum):
     """支持的模型提供商"""
     OPENAI = "openai"
     TONGYI = "tongyi"  # 通义千问
+    ANTHROPIC = "anthropic"  # Claude 系列
     CUSTOM = "custom"  # 自定义OpenAI兼容API
 
 
+def _load_llm_settings() -> dict:
+    """从 JSON 文件加载大模型配置，失败时返回空字典"""
+    try:
+        if os.path.exists(LLM_SETTINGS_FILE):
+            with open(LLM_SETTINGS_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+    except Exception as e:
+        logger.warning("读取大模型配置文件失败: %s", e)
+    return {}
+
+
+def save_llm_settings(settings: dict) -> None:
+    """将大模型配置保存到 JSON 文件"""
+    os.makedirs(os.path.dirname(LLM_SETTINGS_FILE), exist_ok=True)
+    tmp_path = LLM_SETTINGS_FILE + '.tmp'
+    with open(tmp_path, 'w', encoding='utf-8') as f:
+        json.dump(settings, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, LLM_SETTINGS_FILE)
+    logger.info("大模型配置已保存到 %s", LLM_SETTINGS_FILE)
+
+
 class Config:
-    """配置类，管理API密钥和模型参数"""
+    """配置类，管理API密钥和模型参数
+    
+    优先级: db/llm_settings.json > 环境变量 > 代码默认值
+    """
     
     def __init__(self):
-        """从环境变量或默认值初始化配置"""
-        # 模型提供商（从环境变量读取，默认为openai）
-        provider_str = os.getenv('MODEL_PROVIDER', 'openai').lower()
+        """从 JSON 配置文件或环境变量初始化配置"""
+        # 先加载 JSON 配置
+        js = _load_llm_settings()
+
+        # 模型提供商
+        provider_str = js.get('provider') or os.getenv('MODEL_PROVIDER', 'openai')
+        provider_str = str(provider_str).lower()
         try:
             self.provider = ModelProvider(provider_str)
         except ValueError:
             self.provider = ModelProvider.OPENAI
             logger.warning("未知的模型提供商 '%s'，使用默认值 'openai'", provider_str)
         
-        # API密钥（优先从环境变量读取）
-        if self.provider == ModelProvider.OPENAI:
+        # API密钥
+        if js.get('api_key'):
+            self.api_key = js['api_key']
+        elif self.provider == ModelProvider.OPENAI:
             self.api_key = os.getenv('OPENAI_API_KEY', '')
         elif self.provider == ModelProvider.TONGYI:
             self.api_key = os.getenv('DASHSCOPE_API_KEY', '')
+        elif self.provider == ModelProvider.ANTHROPIC:
+            self.api_key = os.getenv('ANTHROPIC_API_KEY', '')
         else:
             self.api_key = os.getenv('CUSTOM_API_KEY', '')
         
-        # API基础URL（可选，用于自定义端点）
-        # 如果使用自定义模型且未设置，使用默认值
-        if self.provider == ModelProvider.CUSTOM:
+        # API基础URL
+        if js.get('base_url'):
+            self.base_url = js['base_url']
+        elif self.provider == ModelProvider.CUSTOM:
             self.base_url = os.getenv('API_BASE_URL', 'http://60.10.230.156:1025/v1')
         elif self.provider == ModelProvider.TONGYI:
             self.base_url = os.getenv('API_BASE_URL', 'https://dashscope.aliyuncs.com/compatible-mode/v1')
+        elif self.provider == ModelProvider.ANTHROPIC:
+            self.base_url = os.getenv('API_BASE_URL', '')  # 默认通过 anthropic 客户端自带地址
         else:
             self.base_url = os.getenv('API_BASE_URL', '')
         
         # 模型名称
-        if self.provider == ModelProvider.OPENAI:
+        if js.get('model_name'):
+            self.model_name = js['model_name']
+        elif self.provider == ModelProvider.OPENAI:
             self.model_name = os.getenv('MODEL_NAME', 'gpt-3.5-turbo')
         elif self.provider == ModelProvider.TONGYI:
-            self.model_name = os.getenv('MODEL_NAME', 'qwen3-max')
+            self.model_name = os.getenv('MODEL_NAME', 'qwen-max')
+        elif self.provider == ModelProvider.ANTHROPIC:
+            self.model_name = os.getenv('MODEL_NAME', 'claude-3-5-sonnet-20241022')
         else:
             self.model_name = os.getenv('MODEL_NAME', 'qwen3-32b')
         
+        # 模型参数
+        if 'temperature' in js:
+            self.temperature = float(js['temperature'])
+        elif self.provider == ModelProvider.CUSTOM:
+            self.temperature = float(os.getenv('TEMPERATURE', '0.9'))
+        else:
+            self.temperature = float(os.getenv('TEMPERATURE', '0.7'))
+        
+        if 'max_tokens' in js:
+            self.max_tokens = int(js['max_tokens'])
+        elif self.provider == ModelProvider.CUSTOM:
+            self.max_tokens = int(os.getenv('MAX_TOKENS', '16000'))
+        else:
+            self.max_tokens = int(os.getenv('MAX_TOKENS', '32000'))
+
         # 系统提示词（优先从文件读取，其次环境变量，最后使用默认值）
         self.system_prompt = self._load_system_prompt()
         
-        # 模型参数
-        # 针对自定义模型，使用更高的temperature和max_tokens以确保详细生成
-        if self.provider == ModelProvider.CUSTOM:
-            self.temperature = float(os.getenv('TEMPERATURE', '0.9'))
-            # 大幅增加max_tokens以确保生成详细内容（增加到16000，确保足够详细）
-            self.max_tokens = int(os.getenv('MAX_TOKENS', '16000'))
-        else:
-            self.temperature = float(os.getenv('TEMPERATURE', '0.7'))
-            # 默认max_tokens增加到32000，确保可以生成非常详细的报告（参考标准：约5万字）
-            self.max_tokens = int(os.getenv('MAX_TOKENS', '32000'))
-        
         # 验证配置
         if not self.api_key:
-            logger.warning("未设置API密钥，请设置相应的环境变量")
-            logger.warning("   - OpenAI: OPENAI_API_KEY")
-            logger.warning("   - 通义千问: DASHSCOPE_API_KEY")
-            logger.warning("   - 自定义: CUSTOM_API_KEY")
-    
+            logger.warning("未设置API密钥，请在管理后台的「大模型设置」中配置，或设置相应的环境变量")
+
+    def to_dict(self) -> dict:
+        """序列化为字典（用于 API 响应，敏感字段脱敏）"""
+        return {
+            'provider': self.provider.value,
+            'api_key': ('*' * 8 + self.api_key[-4:]) if len(self.api_key) > 4 else ('*' * len(self.api_key)),
+            'base_url': self.base_url,
+            'model_name': self.model_name,
+            'temperature': self.temperature,
+            'max_tokens': self.max_tokens,
+        }
+
     def _load_system_prompt(self) -> str:
         """
         加载系统提示词
@@ -157,4 +217,3 @@ class Config:
     
     def __repr__(self):
         return f"Config(provider={self.provider.value}, model={self.model_name})"
-

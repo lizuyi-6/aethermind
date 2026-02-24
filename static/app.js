@@ -1,7 +1,12 @@
 ﻿// 前端JavaScript逻辑
 
+console.log('%c🎯 [APP.JS v4.0] 文件已加载！', 'color: blue; font-size: 20px; font-weight: bold;');
+console.log('🎯 [APP.JS] 当前时间:', new Date().toLocaleTimeString());
+
 class ChatApp {
     constructor() {
+        console.log('🔧 [Constructor] 开始初始化...');
+
         this.sessionId = this.generateSessionId();
         this.devErrorPipelineEnabled = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
         this.devErrorDedupe = new Map();
@@ -19,19 +24,87 @@ class ChatApp {
         this.realtimeUsage = null;
         this.realtimePromptText = '';
         this.reportDownloads = { pdfUrl: '', mdUrl: '', pdfFilename: '', mdFilename: '' };
+
+        console.log('🔧 [Constructor] 调用 initializeElements...');
         this.initializeElements();
+
+        console.log('🔧 [Constructor] 调用 installDevErrorHooks...');
         this.installDevErrorHooks();
+
+        console.log('🔧 [Constructor] 调用 resetReportDownloadActions...');
         this.resetReportDownloadActions();
+
+        console.log('🔧 [Constructor] 调用 attachEventListeners...');
         this.attachEventListeners();
+
+        console.log('🔧 [Constructor] 调用 loadHistory...');
         this.loadHistory();
+
+        console.log('🔧 [Constructor] 调用 loadExplorerData...');
         this.loadExplorerData();
+
+        console.log('🔧 [Constructor] 设置 explorerPollTimer...');
         this.explorerPollTimer = setInterval(() => this.loadExplorerData(), 30000);
+
+        console.log('🔧 [Constructor] ⭐ 即将调用 checkAutoSend...');
+        console.log('🔧 [Constructor] checkAutoSend 方法类型:', typeof this.checkAutoSend);
+        console.log('🔧 [Constructor] sessionStorage 当前内容:', JSON.stringify(sessionStorage));
         this.checkAutoSend();
+        console.log('🔧 [Constructor] ✅ checkAutoSend 已完成');
+
+        console.log('🔧 [Constructor] 调用 updateBreadcrumb...');
         this.updateBreadcrumb();
+
+        console.log('🔧 [Constructor] ✅ 初始化完成');
     }
 
     generateSessionId() {
         return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+
+    checkAutoSend() {
+        console.log('%c🚨🚨🚨 [checkAutoSend] 方法被调用了！！！', 'color: red; font-size: 20px; font-weight: bold;');
+
+        // Check if there's an auto-submit prompt from product form
+        const autoSubmitPrompt = sessionStorage.getItem('autoSubmitPrompt');
+        const formData = sessionStorage.getItem('productFormData');
+
+        console.log('%c=== [AutoSubmit] DEBUG INFO ===', 'color: blue; font-size: 16px; font-weight: bold;');
+        console.log('[AutoSubmit] sessionStorage keys:', Object.keys(sessionStorage));
+        console.log('[AutoSubmit] autoSubmitPrompt:', autoSubmitPrompt ? `EXISTS (${autoSubmitPrompt.length} chars)` : 'NOT FOUND');
+        console.log('[AutoSubmit] productFormData:', formData ? `EXISTS (${formData.length} chars)` : 'NOT FOUND');
+        console.log('[AutoSubmit] messageInput element:', this.messageInput);
+        console.log('[AutoSubmit] sendBtn element:', this.sendBtn);
+        console.log('[AutoSubmit] isStreaming:', this.isStreaming);
+        console.log('%c=== [AutoSubmit] END DEBUG ===', 'color: blue; font-size: 16px; font-weight: bold;');
+
+        if (autoSubmitPrompt && this.messageInput) {
+            console.log('%c[AutoSubmit] ✅ Found prompt, will auto-submit in 500ms...', 'color: green; font-size: 14px;');
+
+            // Clear it immediately to avoid resubmission
+            sessionStorage.removeItem('autoSubmitPrompt');
+
+            // Wait for app to fully initialize
+            setTimeout(() => {
+                console.log('%c[AutoSubmit] ⏰ Timeout triggered, filling input...', 'color: orange; font-size: 14px;');
+                this.messageInput.value = autoSubmitPrompt;
+                console.log('[AutoSubmit] ✅ Input filled, length:', this.messageInput.value.length);
+                console.log('[AutoSubmit] Input value preview:', this.messageInput.value.substring(0, 100) + '...');
+
+                // Trigger send
+                console.log('%c[AutoSubmit] 🚀 Calling sendMessage() NOW!', 'color: red; font-size: 16px; font-weight: bold;');
+                try {
+                    this.sendMessage();
+                    console.log('%c[AutoSubmit] ✅ sendMessage() called successfully', 'color: green; font-size: 14px;');
+                } catch (error) {
+                    console.error('%c[AutoSubmit] ❌ sendMessage() FAILED:', 'color: red; font-size: 14px;', error);
+                }
+            }, 500);
+        } else {
+            console.log('%c[AutoSubmit] ⚠️ No auto-submit - conditions not met', 'color: orange; font-size: 14px;');
+            if (!autoSubmitPrompt) console.log('[AutoSubmit] Reason: autoSubmitPrompt is null/empty');
+            if (!this.messageInput) console.log('[AutoSubmit] Reason: messageInput element not found');
+        }
     }
 
     installDevErrorHooks() {
@@ -569,16 +642,31 @@ class ChatApp {
         }
         let fullContent = '';
         let lastRenderAt = 0;
-        const minRenderGapMs = 120;
+        let firstChunkReceived = false;  // 首次内容标志
+        const minRenderGapMs = 50;  // 减少渲染间隔: 120ms → 50ms
+
         const flushRender = (force = false) => {
             const now = performance.now();
+
+            // 首次内容立即显示，不等待节流
+            if (!firstChunkReceived && fullContent.length > 0) {
+                firstChunkReceived = true;
+                contentElement.innerHTML = this.markdownToHtml(fullContent);
+                this.scrollToBottom();
+                return true;
+            }
+
             if (!force && now - lastRenderAt < minRenderGapMs) {
                 return false;
             }
             lastRenderAt = now;
-            contentElement.innerHTML = this.markdownToHtml(fullContent);
+
+            // 使用requestAnimationFrame优化渲染
+            requestAnimationFrame(() => {
+                contentElement.innerHTML = this.markdownToHtml(fullContent);
+                this.scrollToBottom();
+            });
             this.debouncedRenderMermaidCharts(contentElement);
-            this.scrollToBottom();
             return true;
         };
 
@@ -734,17 +822,13 @@ class ChatApp {
                                 this.isStreaming = false;
                                 this.setLoading(false);
 
-                                // 清除防抖定时器
                                 if (this.mermaidRenderTimer) {
                                     clearTimeout(this.mermaidRenderTimer);
+                                    this.mermaidRenderTimer = null;
                                 }
 
-                                // 最终渲染Markdown（确保完整）
                                 flushRender(true);
-                                // 渲染 Mermaid 图表（延迟渲染确保DOM更新完成）
-                                setTimeout(() => {
-                                    this.renderMermaidCharts(contentElement);
-                                }, 300);
+                                this.renderMermaidCharts(contentElement);
                                 this.scrollToBottom();
                                 
                                 // 显示token使用信息（即使为0也显示，方便调试）
@@ -788,14 +872,17 @@ class ChatApp {
                 }
             }
 
-            // 兜底处理：如果流结束但没有收到 done 消息，也要正确结束
             if (this.isStreaming) {
                 console.log('流结束，执行兜底结束逻辑');
                 this.isStreaming = false;
                 this.setLoading(false);
+                if (this.mermaidRenderTimer) {
+                    clearTimeout(this.mermaidRenderTimer);
+                    this.mermaidRenderTimer = null;
+                }
                 if (fullContent) {
                     flushRender(true);
-                    setTimeout(() => { this.renderMermaidCharts(contentElement); }, 300);
+                    this.renderMermaidCharts(contentElement);
                 }
                 this.scrollToBottom();
                 this.loadSessions();
@@ -1052,16 +1139,12 @@ class ChatApp {
             html = html.replace(item.id, `<code>${this.escapeHtml(item.code)}</code>`);
         });
 
-        // 恢复代码块（支持图表渲染）- 在段落处理之前
-        let flowchartButtonIndex = 0;
         codeBlocks.forEach(item => {
             let replacement = item._replacement || '';
             if (!replacement) {
                 if (item.isMermaid) {
-                    flowchartButtonIndex += 1;
-                    const flowId = `FLOW_${Date.now()}_${this.flowCodeSeq++}`;
-                    this.flowCodeStore.set(flowId, item.code);
-                    replacement = `<button class="ws-flowchart-btn" type="button" data-flow-id="${flowId}">查看流程图 ${flowchartButtonIndex}</button>`;
+                    const sanitizedCode = this.sanitizeMermaidCode(item.code);
+                    replacement = `<div class="mermaid-container" data-mermaid-code="${this.escapeHtml(sanitizedCode).replace(/"/g, '&quot;')}"><pre class="mermaid-code-preview">${this.escapeHtml(sanitizedCode)}</pre></div>`;
                 } else if (item.isChart && item.lang === 'graph') {
                     // 其他图表类型（可以扩展）
                     const langClass = item.lang ? ` class="language-${item.lang}"` : '';
@@ -1157,6 +1240,12 @@ class ChatApp {
         return div.innerHTML;
     }
 
+    unescapeHtml(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent;
+    }
+
     sanitizeUrl(url) {
         if (!url || typeof url !== 'string') {
             return null;
@@ -1197,20 +1286,145 @@ class ChatApp {
         return lines.slice(start).join('\n').trim();
     }
 
+    sanitizeMermaidCode(rawCode) {
+        if (!rawCode) return rawCode;
+        let code = rawCode.trim();
+        code = code.replace(/：/g, ':').replace(/，/g, ',').replace(/。/g, '.');
+        code = code.replace(/（/g, '(').replace(/）/g, ')');
+        code = code.replace(/[""]/g, '"').replace(/['']/g, "'");
+        code = code.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+$/gm, '');
+        const lines = code.split('\n');
+        if (!lines.length) return code;
+        const firstLine = lines[0].trim();
+        const firstToken = firstLine.toLowerCase().split(/[\s([\-]/)[0];
+        const VALID_TYPES = new Set([
+            'xychart-beta', 'pie', 'flowchart', 'graph', 'gantt',
+            'sequencediagram', 'classdiagram', 'statediagram', 'erdiagram',
+            'gitgraph', 'journey', 'quadrantchart', 'mindmap', 'timeline',
+            'c4context', 'c4container', 'c4component', 'requirementdiagram', '%%{init',
+            'radar', 'radar-beta',
+        ]);
+        if (firstToken && !VALID_TYPES.has(firstToken)) {
+            const label = firstLine.replace(/"/g, "'");
+            return `flowchart LR\n    A["${label}（图表类型不支持直接渲染）"]`;
+        }
+        if (firstToken === 'xychart-beta') {
+            return lines.map(line => {
+                const t = line.trim().toLowerCase();
+                if (t.startsWith('x-axis') && line.includes('[') && !line.includes('"')) {
+                    return line.replace(/\[([^\]]+)\]/, (_, inner) => {
+                        const parts = inner.split(',').map(v => {
+                            const val = v.trim();
+                            return /^[\d.]+$/.test(val) ? val : `"${val}"`;
+                        });
+                        return `[${parts.join(', ')}]`;
+                    });
+                }
+                if (/^\s*scatter\s/.test(line)) return line.replace('scatter', 'line');
+                if (/^\s*area\s/.test(line)) return line.replace('area', 'bar');
+                if (/^\s*y-axis\s/.test(line)) {
+                    if (!line.includes('"') && /[^\d\s\-.,]/.test(line)) {
+                        return line.replace(/y-axis\s+/i, 'y-axis "').replace(/$/, '"');
+                    }
+                }
+                if (/^\s*title\s/.test(line)) {
+                    const titleMatch = line.match(/^(\s*title\s+)(.+)$/i);
+                    if (titleMatch && !titleMatch[2].startsWith('"')) {
+                        return `${titleMatch[1]}"${titleMatch[2].trim()}"`;
+                    }
+                }
+                return line;
+            }).join('\n');
+        }
+        if (firstToken === 'gantt') {
+            let hasDateFormat = false;
+            const fixedLines = lines.map((line, idx) => {
+                const t = line.trim().toLowerCase();
+                if (t.startsWith('dateformat')) {
+                    hasDateFormat = true;
+                    let formatMatch = line.match(/dateFormat\s+(\S+)/i);
+                    if (formatMatch) {
+                        let format = formatMatch[1];
+                        format = format.replace(/YYYY/g, 'YYYY').replace(/YY/g, 'YY');
+                        format = format.replace(/MM/g, 'MM').replace(/DD/g, 'DD');
+                        return `dateFormat ${format}`;
+                    }
+                }
+                if (t.includes('axisformat')) {
+                    let formatMatch = line.match(/axisFormat\s+(\S+)/i);
+                    if (formatMatch) {
+                        let format = formatMatch[1];
+                        return `axisFormat ${format}`;
+                    }
+                }
+                return line;
+            });
+            if (!hasDateFormat) {
+                fixedLines.splice(1, 0, 'dateFormat YYYY-MM-DD');
+            }
+            return fixedLines.join('\n');
+        }
+        if (firstToken === 'pie') {
+            const fixedLines = [];
+            let hasTitle = false;
+            lines.forEach((line, idx) => {
+                const t = line.trim().toLowerCase();
+                if (t === 'pie') {
+                    fixedLines.push(line);
+                    return;
+                }
+                if (t.startsWith('title') && idx === 1) {
+                    hasTitle = true;
+                    let titleMatch = line.match(/^(\s*title\s+)(.+)$/i);
+                    if (titleMatch) {
+                        let title = titleMatch[2].trim();
+                        if (!title.startsWith('"') && !title.startsWith("'")) {
+                            fixedLines.push(`${titleMatch[1]}"${title}"`);
+                        } else {
+                            fixedLines.push(line);
+                        }
+                    } else {
+                        fixedLines.push(line);
+                    }
+                    return;
+                }
+                if (t.includes(':') && !t.startsWith('title')) {
+                    let colonMatch = line.match(/^(\s*)([^:]+)\s*:\s*(.+)$/);
+                    if (colonMatch) {
+                        let key = colonMatch[2].trim();
+                        let value = colonMatch[3].trim();
+                        if (!key.startsWith('"') && !key.startsWith("'")) {
+                            key = `"${key}"`;
+                        }
+                        let numValue = parseFloat(value);
+                        if (isNaN(numValue)) {
+                            numValue = 0;
+                        }
+                        fixedLines.push(`${colonMatch[1]}${key} : ${numValue}`);
+                        return;
+                    }
+                }
+                fixedLines.push(line);
+            });
+            return fixedLines.join('\n');
+        }
+        return code;
+    }
+
     isLikelyMermaidSnippet(code, language = '') {
         const lang = String(language || '').toLowerCase().trim();
         const normalized = this.normalizeMermaidSnippet(code);
         if (!normalized) {
             return false;
         }
-        const knownLangs = ['mermaid', 'graph', 'flowchart', 'gantt', 'pie', 'sequencediagram',
+        const knownLangs = ['mermaid', 'graph', 'flowchart', 'gantt', 'pie', 'sequenceDiagram',
             'classdiagram', 'statediagram', 'erdiagram', 'gitgraph', 'journey', 'xychart',
-            'xychart-beta', 'quadrantchart', 'mindmap', 'timeline'];
+            'xychart-beta', 'quadrantchart', 'mindmap', 'timeline', 'radar', 'radar-beta'];
         if (knownLangs.includes(lang)) {
             return true;
         }
         const head = normalized.split('\n').slice(0, 4).join('\n');
-        return /(%%\{init\}|^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitgraph|mindmap|timeline|xychart-beta)\b)/im.test(head);
+        return /(%%\{init\}|^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitgraph|mindmap|timeline|xychart-beta|radar-beta|radar)\b)/im.test(head);
     }
 
     escapeRegex(str) {
@@ -1219,20 +1433,17 @@ class ChatApp {
     }
 
     debouncedRenderMermaidCharts(container) {
-        // 防抖机制：在流式输出过程中，延迟渲染图表，避免频繁调用
         if (this.mermaidRenderTimer) {
             clearTimeout(this.mermaidRenderTimer);
         }
         this.mermaidRenderTimer = setTimeout(() => {
             this.renderMermaidCharts(container);
-        }, 600); // 600ms 延迟，在用户输入停止后才渲染
+        }, 500);
     }
 
     renderMermaidCharts(container) {
-        // 渲染 Mermaid 图表
         if (typeof mermaid === 'undefined') {
             console.warn('[图表渲染] Mermaid 库未加载');
-            // 延迟重试
             setTimeout(() => {
                 if (typeof mermaid !== 'undefined') {
                     this.renderMermaidCharts(container);
@@ -1241,7 +1452,6 @@ class ChatApp {
             return;
         }
         
-        // 确保 Mermaid 已初始化
         if (typeof mermaid.initialize === 'function') {
             try {
                 mermaid.initialize({ 
@@ -1259,11 +1469,9 @@ class ChatApp {
         console.log(`[图表渲染] 找到 ${mermaidContainers.length} 个图表容器`);
         
         if (mermaidContainers.length === 0) {
-            // 检查是否有未处理的 mermaid 代码块（可能是普通代码块但内容是 mermaid）
             const codeBlocks = container.querySelectorAll('pre code');
             codeBlocks.forEach(block => {
                 const code = block.textContent.trim();
-                // 检查是否是 mermaid 代码（包含更多 mermaid 关键词）
                 if (code && (
                     code.includes('graph') || 
                     code.includes('pie') || 
@@ -1275,9 +1483,9 @@ class ChatApp {
                     code.includes('stateDiagram') ||
                     code.includes('erDiagram') ||
                     code.includes('gitgraph') ||
+                    code.includes('radar') ||
                     (code.startsWith('%%') && code.includes('init'))
                 )) {
-                    // 这可能是 mermaid 代码，创建容器
                     const mermaidContainer = document.createElement('div');
                     mermaidContainer.className = 'mermaid-container';
                     mermaidContainer.textContent = code;
@@ -1286,16 +1494,15 @@ class ChatApp {
                     }
                 }
             });
-            // 重新查找容器
             mermaidContainers = container.querySelectorAll('.mermaid-container');
             console.log(`[图表渲染] 重新查找后找到 ${mermaidContainers.length} 个图表容器`);
         }
         
-        // 也检查是否有直接包含 mermaid 类的元素（但未渲染）
-        const directMermaidElements = container.querySelectorAll('.mermaid:not(.mermaid-rendered)');
+        const directMermaidElements = container.querySelectorAll('.mermaid:not(.mermaid-rendered):not(.mermaid-rendering)');
         if (directMermaidElements.length > 0) {
             console.log(`[图表渲染] 找到 ${directMermaidElements.length} 个直接 mermaid 元素`);
             directMermaidElements.forEach((el, index) => {
+                el.classList.add('mermaid-rendering');
                 try {
                     if (typeof mermaid.run === 'function') {
                         mermaid.run({
@@ -1303,58 +1510,67 @@ class ChatApp {
                             suppressErrors: true
                         }).then(() => {
                             console.log(`[图表渲染] 直接 mermaid 元素 ${index + 1} 渲染成功`);
+                            el.classList.remove('mermaid-rendering');
                             el.classList.add('mermaid-rendered');
                         }).catch((error) => {
                             console.error(`[图表渲染] 直接 mermaid 元素 ${index + 1} 渲染失败:`, error);
+                            el.classList.remove('mermaid-rendering');
+                            el.classList.add('mermaid-render-failed');
                         });
                     }
                 } catch (error) {
                     console.error('[图表渲染] 直接 mermaid 元素渲染错误:', error);
+                    el.classList.remove('mermaid-rendering');
+                    el.classList.add('mermaid-render-failed');
                 }
             });
         }
         
-        // 重新获取所有容器（包括新创建的）
         const allContainers = container.querySelectorAll('.mermaid-container');
-        allContainers.forEach((container, index) => {
-            // 跳过已经渲染过的图表
-            if (container.classList.contains('mermaid-rendered') || container.classList.contains('mermaid-rendering')) {
+        allContainers.forEach((mermaidContainer, index) => {
+            if (mermaidContainer.classList.contains('mermaid-rendered') || mermaidContainer.classList.contains('mermaid-rendering')) {
                 return;
             }
             
-            const code = container.textContent.trim();
+            let code = mermaidContainer.getAttribute('data-mermaid-code');
+            if (!code) {
+                const previewEl = mermaidContainer.querySelector('.mermaid-code-preview');
+                if (previewEl) {
+                    code = previewEl.textContent.trim();
+                }
+            }
+            if (!code) {
+                code = mermaidContainer.textContent.trim();
+            }
+            
             if (!code) {
                 console.warn(`[图表渲染] 容器 ${index} 为空`);
                 return;
             }
             
-            // 验证代码是否包含有效的 mermaid 语法
+            code = this.unescapeHtml(code);
+            
             if (!code.match(/(graph|pie|xychart|flowchart|gantt|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gitgraph|%%{init)/i)) {
                 console.warn(`[图表渲染] 容器 ${index} 不包含有效的 mermaid 语法，跳过`);
                 return;
             }
             
-            // 标记为正在渲染
-            container.classList.add('mermaid-rendering');
+            mermaidContainer.classList.add('mermaid-rendering');
             
             console.log(`[图表渲染] 渲染图表 ${index + 1}:`, code.substring(0, 100) + '...');
             
-            // 创建新的 div 用于 mermaid 渲染
             const mermaidDiv = document.createElement('div');
             mermaidDiv.className = 'mermaid';
-            mermaidDiv.textContent = code;
-            mermaidDiv.style.minHeight = '200px'; // 确保有足够空间显示图表
+            mermaidDiv.textContent = this.sanitizeMermaidCode(code);
+            mermaidDiv.style.minHeight = '200px';
             mermaidDiv.style.width = '100%';
             
-            // 替换原容器
-            if (container.parentNode) {
-                container.parentNode.replaceChild(mermaidDiv, container);
-            } else {
-                console.error(`[图表渲染] 容器 ${index} 没有父节点，无法替换`);
-                return;
+            const previewEl = mermaidContainer.querySelector('.mermaid-code-preview');
+            if (previewEl) {
+                previewEl.style.display = 'none';
             }
+            mermaidContainer.appendChild(mermaidDiv);
             
-            // 渲染图表
             try {
                 if (typeof mermaid.run === 'function') {
                     mermaid.run({
@@ -1362,36 +1578,28 @@ class ChatApp {
                         suppressErrors: true
                     }).then(() => {
                         console.log(`[图表渲染] 图表 ${index + 1} 渲染成功`);
+                        mermaidContainer.classList.remove('mermaid-rendering');
+                        mermaidContainer.classList.add('mermaid-rendered');
                         mermaidDiv.classList.add('mermaid-rendered');
                     }).catch((error) => {
                         console.error(`[图表渲染] 图表 ${index + 1} 渲染失败:`, error);
-                        // 如果渲染失败，显示原始代码
-                        const errorDiv = document.createElement('div');
-                        errorDiv.className = 'mermaid-error';
-                        errorDiv.style.padding = '20px';
-                        errorDiv.style.border = '1px solid #dc3545';
-                        errorDiv.style.borderRadius = '4px';
-                        errorDiv.style.backgroundColor = '#fff5f5';
-                        errorDiv.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;"><code>${this.escapeHtml(code)}</code></pre><p style="color: #dc3545; font-size: 12px; margin-top: 10px;">图表渲染失败，显示原始代码</p>`;
-                        mermaidDiv.parentNode.replaceChild(errorDiv, mermaidDiv);
+                        mermaidContainer.classList.remove('mermaid-rendering');
+                        mermaidContainer.classList.add('mermaid-render-failed');
+                        mermaidDiv.innerHTML = `<div class="mermaid-error" style="padding: 15px; border: 1px solid #ffc107; border-radius: 4px; background-color: #fff8e1;"><p style="color: #856404; font-size: 13px; margin: 0 0 10px 0;">图表渲染失败</p><pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-size: 12px;">${this.escapeHtml(code)}</pre></div>`;
                     });
                 } else if (typeof mermaid.init === 'function') {
-                    // 旧版本 mermaid API
                     mermaid.init(undefined, [mermaidDiv]);
                     mermaidDiv.classList.add('mermaid-rendered');
+                    mermaidContainer.classList.add('mermaid-rendered');
                 } else {
                     console.error('[图表渲染] Mermaid API 不可用');
+                    mermaidContainer.classList.add('mermaid-render-failed');
                 }
             } catch (error) {
                 console.error('[图表渲染] Mermaid 渲染错误:', error);
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'mermaid-error';
-                errorDiv.style.padding = '20px';
-                errorDiv.style.border = '1px solid #dc3545';
-                errorDiv.style.borderRadius = '4px';
-                errorDiv.style.backgroundColor = '#fff5f5';
-                errorDiv.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;"><code>${this.escapeHtml(code)}</code></pre><p style="color: #dc3545; font-size: 12px; margin-top: 10px;">图表渲染失败，显示原始代码</p>`;
-                mermaidDiv.parentNode.replaceChild(errorDiv, mermaidDiv);
+                mermaidContainer.classList.remove('mermaid-rendering');
+                mermaidContainer.classList.add('mermaid-render-failed');
+                mermaidDiv.innerHTML = `<div class="mermaid-error" style="padding: 15px; border: 1px solid #ffc107; border-radius: 4px; background-color: #fff8e1;"><p style="color: #856404; font-size: 13px; margin: 0 0 10px 0;">图表渲染失败</p><pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-size: 12px;">${this.escapeHtml(code)}</pre></div>`;
             }
         });
     }
@@ -1770,27 +1978,6 @@ class ChatApp {
         this.sidebar.classList.toggle('collapsed');
     }
 
-    checkAutoSend() {
-        // 检查URL参数，如果是从表单页面跳转过来的，自动发送消息
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('autoSend') === 'true') {
-            const prompt = sessionStorage.getItem('reportPrompt');
-            if (prompt) {
-                // 清除URL参数
-                window.history.replaceState({}, document.title, window.location.pathname);
-                
-                // 等待页面完全加载后自动发送
-                setTimeout(() => {
-                    this.messageInput.value = prompt;
-                    this.sendMessage();
-                    // 清除sessionStorage
-                    sessionStorage.removeItem('reportPrompt');
-                    sessionStorage.removeItem('projectData');
-                }, 500);
-            }
-        }
-    }
-
     updateTokenInfo(usage, usageUnavailable = false) {
         const tokenInfo = document.getElementById('tokenInfo');
         const tokenValue = document.getElementById('tokenValue');
@@ -1805,8 +1992,16 @@ class ChatApp {
             const prompt = usage.prompt_tokens || 0;
             const completion = usage.completion_tokens || 0;
             const isEstimated = usage.estimated || false;
-            
-            let displayText = `${total.toLocaleString()} (输入: ${prompt.toLocaleString()}, 输出: ${completion.toLocaleString()})`;
+
+            // 格式化数字，确保大数字不显示为科学计数法
+            const formatNumber = (num) => {
+                if (num >= 1000000) {
+                    return num.toLocaleString('zh-CN', { maximumFractionDigits: 0, useGrouping: true });
+                }
+                return num.toLocaleString('zh-CN');
+            };
+
+            let displayText = `${formatNumber(total)} (输入: ${formatNumber(prompt)}, 输出: ${formatNumber(completion)})`;
             if (isEstimated) {
                 displayText += ' [估算]';
             }

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AetherMind - 智能分析平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 全局主题加载器 -->
+    <script src="/static/theme-loader.js?v=4"></script>
+
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
+    <link rel="stylesheet" href="/static/style_unified.css?v=1">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
+
+        /* ================================================
+           主题变量 - 通过 theme-loader.js 动态切换
+        ================================================ */
+        :root {
+            --ds-bg:          3 7 18;
+            --ds-bg-2:        15 23 42;
+            --ds-bg-3:        30 41 59;
+            --ds-text:        226 232 240;
+            --ds-text-muted:  100 116 139;
+            --ds-accent:      99 102 241;
+            --ds-accent-2:    56 189 248;
+            --ds-scrollbar:   51 65 85;
+        }
+        [data-theme="cashmere-chestnut"] {
+            --ds-bg:          35 25 20;
+            --ds-bg-2:        50 35 28;
+            --ds-bg-3:        70 50 40;
+            --ds-text:        240 230 220;
+            --ds-text-muted:  180 160 145;
+            --ds-accent:      160 80 55;
+            --ds-accent-2:    200 120 80;
+            --ds-scrollbar:   100 70 55;
+        }
+        [data-theme="default"] {
+            --ds-bg:          15 23 42;
+            --ds-bg-2:        30 41 59;
+            --ds-bg-3:        51 65 85;
+            --ds-text:        226 232 240;
+            --ds-text-muted:  148 163 184;
+            --ds-accent:      37 99 235;
+            --ds-accent-2:    96 165 250;
+            --ds-scrollbar:   100 116 139;
+        }
+        [data-theme="deep-space"] {
+            --ds-bg:          3 7 18;
+            --ds-bg-2:        15 23 42;
+            --ds-bg-3:        30 41 59;
+            --ds-text:        226 232 240;
+            --ds-text-muted:  100 116 139;
+            --ds-accent:      99 102 241;
+            --ds-accent-2:    56 189 248;
+            --ds-scrollbar:   51 65 85;
+        }
+
+
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: rgb(var(--ds-bg));
+            color: rgb(var(--ds-text));
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgb(var(--ds-bg-2));
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgb(var(--ds-scrollbar));
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgb(var(--ds-scrollbar) / 0.8);
+        }
+
+        /* Glass Panel */
+        .glass-panel {
+            background: rgba(var(--ds-bg-2), 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        /* Glass Card */
+        .glass-card {
+            background: linear-gradient(180deg, rgb(var(--ds-bg-3) / 0.4) 0%, rgb(var(--ds-bg-2) / 0.4) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Input Styles */
+        .modern-input {
+            background: rgba(20, 20, 22, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            transition: all 0.2s;
+        }
+
+        .modern-input:focus {
+            outline: none;
+            border-color: rgba(99, 102, 241, 0.5);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        /* Button Styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            border: 1px solid rgba(99, 102, 241, 0.5);
+            color: white;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
+            box-shadow: 0 8px 25px -5px rgba(79, 70, 229, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #d1d5db;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Message Bubble */
+        .message-bubble {
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .message-bubble.user {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            border: none;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #0d1117;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Loading Animation */
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full z-50 glass-panel border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/" class="flex items-center gap-2 hover:opacity-80 transition-opacity">
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-sky-400 flex items-center justify-center">
+                        <img src="/static/logo.jpg" class="w-6 h-6 rounded" alt="Logo">
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-semibold text-white tracking-tight">AetherMind</h1>
+                        <p class="text-xs text-slate-400">智能分析平台</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <a href="/admin" class="text-sm text-slate-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-white/5">
+                    管理后台
+                </a>
+                <button id="verifyCodeBtn" class="btn-secondary px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
+                    <iconify-icon icon="solar:ticket-linear" width="16"></iconify-icon>
+                    兑换验证码
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 pt-16">
+        <!-- Hero Section -->
+        <section id="heroSection" class="py-12">
+            <div class="max-w-4xl mx-auto px-6 text-center">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-medium mb-6">
+                    <iconify-icon icon="solar:stars-minimalistic-linear" width="14"></iconify-icon>
+                    AI 驱动的智能分析
+                </div>
+                <h2 class="text-4xl md:text-5xl font-semibold text-white mb-4 tracking-tight">
+                    专业的项目可行性报告
+                </h2>
+                <p class="text-lg text-slate-400 mb-8 max-w-2xl mx-auto">
+                    基于人工智能技术，为您的项目提供全方位的可行性分析，包括市场评估、财务分析、风险评估和专业建议
+                </p>
+                <button id="startProjectBtn" class="btn-primary px-8 py-3 rounded-lg text-sm font-medium flex items-center gap-2 mx-auto">
+                    <iconify-icon icon="solar:document-add-linear" width="18"></iconify-icon>
+                    开始创建报告
+                </button>
+            </div>
+        </section>
+
+        <!-- Chat Section (Initially Hidden) -->
+        <section id="chatSection" class="hidden pb-8">
+            <div class="max-w-7xl mx-auto px-6">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Chat Area -->
+                    <div class="lg:col-span-3">
+                        <div class="glass-card rounded-2xl p-6 min-h-[600px] flex flex-col">
+                            <!-- Messages Container -->
+                            <div id="chatMessages" class="flex-1 space-y-6 mb-4 overflow-y-auto" style="max-height: 500px;">
+                                <!-- Welcome Message -->
+                                <div class="message-bubble rounded-2xl rounded-tl-sm p-4 max-w-[80%]">
+                                    <div class="flex items-start gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center flex-shrink-0">
+                                            <iconify-icon icon="solar:smart-home-angle-linear" class="text-indigo-400" width="18"></iconify-icon>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-slate-200 leading-relaxed">
+                                                你好！我是 AetherMind，专业的项目分析助手。我可以帮你：
+                                            </p>
+                                            <ul class="mt-3 space-y-2 text-sm text-slate-400">
+                                                <li class="flex items-center gap-2">
+                                                    <iconify-icon icon="solar:check-circle-linear" class="text-emerald-400" width="16"></iconify-icon>
+                                                    生成可行性研究报告
+                                                </li>
+                                                <li class="flex items-center gap-2">
+                                                    <iconify-icon icon="solar:check-circle-linear" class="text-emerald-400" width="16"></iconify-icon>
+                                                    分析上传的文档
+                                                </li>
+                                                <li class="flex items-center gap-2">
+                                                    <iconify-icon icon="solar:check-circle-linear" class="text-emerald-400" width="16"></iconify-icon>
+                                                    智能问答与咨询
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Input Area -->
+                            <div class="border-t border-white/5 pt-4">
+                                <div class="flex gap-3">
+                                    <div class="flex-1 relative">
+                                        <input type="text" id="messageInput"
+                                            class="modern-input w-full rounded-xl pl-4 pr-12 py-3 text-sm"
+                                            placeholder="输入你的问题或需求..."
+                                            onkeypress="if(event.key === 'Enter') sendMessage()">
+                                        </div>
+                                    </div>
+                                    <button onclick="sendMessage()" class="btn-primary px-6 py-3 rounded-xl text-sm font-medium flex items-center gap-2">
+                                        <iconify-icon icon="solar:plain-3-linear" width="18"></iconify-icon>
+                                        发送
+                                    </button>
+                                </div>
+
+                                <!-- File Upload -->
+                                <div class="mt-3 flex items-center gap-3">
+                                    <label class="cursor-pointer btn-secondary px-4 py-2 rounded-lg text-sm flex items-center gap-2">
+                                        <iconify-icon icon="solar:upload-linear" width="16"></iconify-icon>
+                                        上传文件
+                                        <input type="file" id="fileUpload" class="hidden" accept=".pdf,.doc,.docx,.txt,.md" onchange="handleFileUpload(event)">
+                                    </label>
+                                    <span id="fileName" class="text-xs text-slate-500"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Sidebar -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <!-- Token Info -->
+                        <div id="tokenInfo" class="glass-card rounded-xl p-4 hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-xs font-medium text-slate-400">Token 用量</span>
+                            </div>
+                            <div id="tokenValue" class="text-sm text-slate-200"></div>
+                        </div>
+
+                        <!-- RAG Sources -->
+                        <div id="ragSources" class="glass-card rounded-xl p-4 hidden">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-medium text-slate-400">参考文档</span>
+                                <button onclick="hideRagSources()" class="text-slate-500 hover:text-white">
+                                    <iconify-icon icon="solar:close-circle-linear" width="16"></iconify-icon>
+                                </button>
+                            </div>
+                            <div id="ragSourcesList" class="space-y-2">
+                                <!-- RAG sources will be rendered here -->
+                            </div>
+                        </div>
+
+                        <!-- Session Info -->
+                        <div class="glass-card rounded-xl p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-medium text-slate-400">会话信息</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-500">剩余次数</span>
+                                    <span id="usageCount" class="text-indigo-400">-</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-500">会话ID</span>
+                                    <span id="sessionId" class="text-slate-300 text-xs truncate max-w-[120px]">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Verify Code Modal -->
+    <div id="verifyCodeModal" class="modal-overlay fixed inset-0 z-50 flex items-center justify-center hidden">
+        <div class="modal-content rounded-2xl p-6 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-white">兑换验证码</h3>
+                <button onclick="hideVerifyCodeModal()" class="text-slate-400 hover:text-white">
+                    <iconify-icon icon="solar:close-circle-linear" width="20"></iconify-icon>
+                </button>
+            </div>
+            <p class="text-sm text-slate-400 mb-4">请输入您的验证码以获得使用次数</p>
+            <input type="text" id="verifyCodeInput"
+                class="modern-input w-full rounded-lg px-4 py-3 text-sm mb-3"
+                placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX"
+                maxlength="27">
+            <div id="verifyCodeError" class="text-red-400 text-sm mb-4 hidden"></div>
+            <button onclick="submitVerifyCode()" class="btn-primary w-full py-3 rounded-lg text-sm font-medium">
+                验证
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/static/app_new.js?v=20250104"></script>
+    <script>
+        // Global functions
+        function hideRagSources() {
+            document.getElementById('ragSources').classList.add('hidden');
+        }
+
+        function hideVerifyCodeModal() {
+            document.getElementById('verifyCodeModal').classList.add('hidden');
+        }
+
+        function showVerifyCodeModal() {
+            document.getElementById('verifyCodeModal').classList.remove('hidden');
+        }
+
+        document.getElementById('verifyCodeBtn').addEventListener('click', showVerifyCodeModal);
+
+        // Start project button
+        document.getElementById('startProjectBtn').addEventListener('click', function() {
+            document.getElementById('heroSection').classList.add('hidden');
+            document.getElementById('chatSection').classList.remove('hidden');
+        });
+    </script>
+    <script src="/static/theme-workshop.js?v=4"></script>
+</body>
+</html>

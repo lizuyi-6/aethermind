@@ -10,6 +10,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from config import Config, ModelProvider
 from openai import OpenAI
+import anthropic
 from file_processor import FileProcessor
 import json
 import re
@@ -46,7 +47,7 @@ class IntelligentAgent:
     def _initialize_client(self):
         """根据配置初始化API客户端"""
         # 设置超时参数（秒）
-        timeout = 600.0  # 10分钟超时
+        timeout = 3600.0  # 60分钟超时（无限制）
         
         if self.config.provider == ModelProvider.OPENAI:
             api_key = os.getenv('OPENAI_API_KEY') or self.config.api_key
@@ -67,6 +68,16 @@ class IntelligentAgent:
                 timeout=timeout,
                 max_retries=2
             )
+        elif self.config.provider == ModelProvider.ANTHROPIC:
+            api_key = os.getenv('ANTHROPIC_API_KEY') or self.config.api_key
+            base_url = self.config.base_url
+            # 如果没设 base_url，Anthropic 官方库默认会连 api.anthropic.com
+            kwargs = {"api_key": api_key, "max_retries": 2}
+            if base_url:
+                kwargs["base_url"] = base_url
+            self.client = anthropic.Anthropic(**kwargs)
+            print(f"[信息] Anthropic 客户端已初始化: {base_url or '默认官方地址'}", flush=True)
+            
         elif self.config.provider == ModelProvider.CUSTOM:
             api_key = os.getenv('CUSTOM_API_KEY') or self.config.api_key
             base_url = self.config.base_url
@@ -121,21 +132,75 @@ class IntelligentAgent:
     
     def _is_report_request(self, user_input: str) -> bool:
         """
-        检测用户输入是否涉及撰写可行性研究报告
-        
+        检测用户输入是否涉及撰写报告（可行性研究报告或商业计划书）
+
         Args:
             user_input: 用户输入文本
-            
+
         Returns:
             如果是报告撰写请求，返回True
         """
         keywords = [
             '可行性研究报告', '可行性报告', '撰写报告', '写报告',
             '编制报告', '编写报告', '生成报告', '制作报告',
-            '项目可行性', '可行性分析报告'
+            '项目可行性', '可行性分析报告',
+            '商业计划书', '创业计划书', '项目计划书', '项目计划'
         ]
         user_input_lower = user_input.lower()
         return any(keyword in user_input_lower for keyword in keywords)
+
+    def _get_report_type(self, user_input: str) -> str:
+        """
+        检测报告类型（可行性研究报告或商业计划书）
+
+        Args:
+            user_input: 用户输入文本
+
+        Returns:
+            'feasibility' (可行性研究报告) 或 'business' (商业计划书)
+        """
+        if '商业计划书' in user_input or '创业计划书' in user_input:
+            return 'business'
+        return 'feasibility'  # 默认为可行性研究报告
+
+    def _get_report_type_from_content(self, content: str) -> str:
+        """
+        从报告内容或已存储的类型中检测报告类型
+
+        Args:
+            content: 报告内容
+
+        Returns:
+            'feasibility' (可行性研究报告) 或 'business' (商业计划书)
+        """
+        # 优先使用已存储的报告类型（从用户输入中检测的）
+        stored_type = getattr(self, '_current_report_type', None)
+        if stored_type:
+            print(f'[DEBUG] 使用已存储的报告类型: {stored_type}')
+            return stored_type
+
+        # 如果没有存储的类型，从内容中推断（向后兼容）
+        print('[DEBUG] 未找到已存储的报告类型，从内容中推断')
+
+        # 优先检查用户输入提示词（通常在开头）
+        if '商业计划书' in content[:500] or '创业计划书' in content[:500]:
+            print('[DEBUG] 检测到商业计划书（前500字符）')
+            return 'business'
+
+        # 检查是否包含商业计划书的关键词
+        business_keywords = ['商业计划书', '创业计划书', '执行摘要', '商业模式', '融资需求', '投资回报']
+        feasibility_keywords = ['可行性研究报告', '可行性研究', '项目总论', '建设方案', '环境影响']
+
+        business_score = sum(1 for keyword in business_keywords if keyword in content)
+        feasibility_score = sum(1 for keyword in feasibility_keywords if keyword in content)
+
+        print(f'[DEBUG] 商业计划书得分: {business_score}, 可行性研究报告得分: {feasibility_score}')
+
+        if business_score > feasibility_score:
+            print('[DEBUG] 判定为商业计划书')
+            return 'business'
+        print('[DEBUG] 判定为可行性研究报告')
+        return 'feasibility'
     
     def _extract_project_name(self, user_input: str, report_content: str = "") -> str:
         """
@@ -266,48 +331,61 @@ class IntelligentAgent:
                                 return False  # 内容足够长且有章节，可能只是格式不同
                 return True
             
-            # 检查最后章节（结论与建议）是否完整
-            final_section_markers = ["第十章", "第十章 研究结论及建议", "研究结论及建议"]
+            # 检查最后章节（根据报告类型判断）
+            report_type = self._get_report_type(content)
+
+            if report_type == 'business':
+                # 商业计划书：检查第十三章或第十二章
+                final_section_markers = ["第十三章", "第十三章 附录", "第十二章 风险", "第十二章 风险因素", "风险因素与应对"]
+                # 商业计划书不需要检查10.1和10.2子章节
+                check_subsections = False
+            else:
+                # 可行性研究报告：检查第十章
+                final_section_markers = ["第十章", "第十章 研究结论及建议", "研究结论及建议"]
+                check_subsections = True
+
             has_final_section = any(marker in content for marker in final_section_markers)
-            
+
             if has_final_section:
-                # 检查结论与建议部分是否有实质性内容
+                # 检查最后章节部分是否有实质性内容
                 final_section_start = -1
                 for marker in final_section_markers:
                     pos = content.rfind(marker)
                     if pos > final_section_start:
                         final_section_start = pos
-                
+
                 if final_section_start >= 0:
                     final_section = content[final_section_start:]
                     final_section_length = self._get_text_length_without_mermaid(final_section)
                     # 如果结论部分太短（少于500字符），可能未完成
                     if final_section_length < 500:
                         return True
-                    # 检查是否包含10.1和10.2子章节
-                    if "10.1" not in final_section or "10.2" not in final_section:
-                        return True
-                    # 如果第十章内容超过2000字符，且包含10.1和10.2，且最后有结束标记，认为已完成
-                    if final_section_length > 2000 and "10.1" in final_section and "10.2" in final_section:
-                        # 检查10.1和10.2是否有实质性内容（不只是标题）
-                        section_101_text = final_section.split("10.1")[1].split("10.2")[0] if "10.2" in final_section else final_section.split("10.1")[1]
-                        section_102_text = final_section.split("10.2")[1] if "10.2" in final_section else ""
-                        has_substantial_101 = "10.1" in final_section and self._get_text_length_without_mermaid(section_101_text) > 500
-                        has_substantial_102 = "10.2" in final_section and self._get_text_length_without_mermaid(section_102_text) > 1000
-                        
-                        if has_substantial_101 and has_substantial_102:
-                            # 检查是否有明确的结束标记（放宽条件，只要有句号等标点即可）
-                            if any(end_marker in final_section[-300:] for end_marker in ['附件', '附录', '---', '**附件**', '。', '.', '！', '!']):
-                                # 如果最后部分包含"目录"，可能是重复生成，需要继续
-                                if "目录" in final_section[-1000:]:
-                                    return True
-                                # 检查总长度是否足够（至少4.8万字，这是硬性要求）
-                                if text_length >= 48000:
-                                    # 内容达到要求，认为已完成
-                                    return False
-                                else:
-                                    # 内容长度不足，继续
-                                    return True
+
+                    # 对于可行性研究报告，检查10.1和10.2子章节
+                    if check_subsections:
+                        if "10.1" not in final_section or "10.2" not in final_section:
+                            return True
+                        # 如果第十章内容超过2000字符，且包含10.1和10.2，且最后有结束标记，认为已完成
+                        if final_section_length > 2000 and "10.1" in final_section and "10.2" in final_section:
+                            # 检查10.1和10.2是否有实质性内容（不只是标题）
+                            section_101_text = final_section.split("10.1")[1].split("10.2")[0] if "10.2" in final_section else final_section.split("10.1")[1]
+                            section_102_text = final_section.split("10.2")[1] if "10.2" in final_section else ""
+                            has_substantial_101 = "10.1" in final_section and self._get_text_length_without_mermaid(section_101_text) > 500
+                            has_substantial_102 = "10.2" in final_section and self._get_text_length_without_mermaid(section_102_text) > 1000
+
+                            if has_substantial_101 and has_substantial_102:
+                                # 检查是否有明确的结束标记（放宽条件，只要有句号等标点即可）
+                                if any(end_marker in final_section[-300:] for end_marker in ['附件', '附录', '---', '**附件**', '。', '.', '！', '!']):
+                                    # 如果最后部分包含"目录"，可能是重复生成，需要继续
+                                    if "目录" in final_section[-1000:]:
+                                        return True
+                                    # 检查总长度是否足够（至少4.8万字，这是硬性要求）
+                                    if text_length >= 48000:
+                                        # 内容达到要求，认为已完成
+                                        return False
+                                    else:
+                                        # 内容长度不足，继续
+                                        return True
             else:
                 # 没有最后章节，肯定被截断
                 return True
@@ -415,99 +493,200 @@ class IntelligentAgent:
             return False, "方括号未闭合"
         if code.count('{') != code.count('}'):
             return False, "花括号未闭合"
-        
-        return True, ""
+
+        # 新增：实际渲染验证（使用mermaid.ink API）
+        try:
+            import base64
+            import urllib.request
+
+            encoded_code = base64.urlsafe_b64encode(code.encode('utf-8')).decode('utf-8')
+            verify_url = f'https://mermaid.ink/img/{encoded_code}'
+
+            # 使用HEAD请求验证（不下载完整图片，节省带宽）
+            req = urllib.request.Request(verify_url, method='HEAD')
+            with urllib.request.urlopen(req, timeout=5) as response:
+                if response.status == 200:
+                    print("[Mermaid] 渲染验证通过")
+                    return True, ""
+                return False, f"渲染服务错误: HTTP {response.status}"
+
+        except urllib.error.HTTPError as e:
+            return False, f"图表语法错误: HTTP {e.code}"
+        except Exception as e:
+            # 网络超时不阻塞生成流程
+            print(f"[Mermaid] 渲染验证超时或失败，跳过: {e}")
+            return True, ""
     
+    # ---- Mermaid sanitizer ----
+
+    _VALID_MERMAID_TYPES = frozenset([
+        'xychart-beta', 'pie', 'flowchart', 'graph', 'gantt',
+        'sequencediagram', 'classdiagram', 'statediagram', 'erdiagram',
+        'gitgraph', 'journey', 'quadrantchart', 'mindmap', 'timeline',
+        'c4context', 'c4container', 'c4component', 'requirementdiagram',
+        '%%{init',
+    ])
+
+    def _sanitize_mermaid_code(self, code: str) -> str:
+        """Fix common LLM-generated Mermaid syntax errors before rendering/saving."""
+        if not code or not code.strip():
+            return code
+        lines = code.strip().split('\n')
+        first_line = lines[0].strip()
+        first_token = first_line.lower().split()[0] if first_line.split() else ''
+        # If chart type is not recognised by Mermaid, replace with a simple flowchart note
+        is_valid = any(first_token.startswith(t) for t in self._VALID_MERMAID_TYPES)
+        if not is_valid and first_token:
+            label = first_line.replace('"', "'")
+            return f'flowchart LR\n    A["{label}（图表类型不支持直接渲染）"]'
+        # Fix xychart-beta issues
+        if first_token == 'xychart-beta':
+            fixed = []
+            for line in lines:
+                stripped = line.strip().lower()
+                # Auto-quote unquoted x-axis string labels: x-axis [a, b, c] → x-axis ["a", "b", "c"]
+                if stripped.startswith('x-axis') and '[' in line and '"' not in line:
+                    def _quote_vals(m):
+                        parts = [v.strip() for v in m.group(1).split(',')]
+                        quoted = ', '.join(
+                            p if re.match(r'^[\d.]+$', p) else f'"{p}"'
+                            for p in parts
+                        )
+                        return f'[{quoted}]'
+                    line = re.sub(r'\[([^\]]+)\]', _quote_vals, line)
+                # Replace unsupported series types: scatter→line, area→bar
+                if re.match(r'^\s*scatter\s', line):
+                    line = re.sub(r'scatter', 'line', line, count=1)
+                elif re.match(r'^\s*area\s', line):
+                    line = re.sub(r'area', 'bar', line, count=1)
+                fixed.append(line)
+            return '\n'.join(fixed)
+        return code
+
+    def _sanitize_mermaid_blocks(self, content: str) -> str:
+        """Apply _sanitize_mermaid_code to every mermaid code block in a markdown string."""
+        def _fix_block(m):
+            fixed = self._sanitize_mermaid_code(m.group(1).strip())
+            return f'```mermaid\n{fixed}\n```'
+        return re.sub(r'```mermaid\s*\n([\s\S]*?)\n```', _fix_block, content)
+
+    # ---- end Mermaid sanitizer ----
+
     def _is_chapter_10_complete(self, content: str) -> Tuple[bool, str]:
         """
-        检查第十章是否完整（严格验证，避免误判）
-        
+        检查最后一章是否完整（根据报告类型检查不同章节）
+        - 可行性研究报告：检查"第十章 结论与建议"
+        - 商业计划书：检查"第十三章 附录"或"第十二章 风险因素与应对"
+
         Args:
             content: 报告内容
-            
+
         Returns:
-            (是否完整, 第十章内容)
+            (是否完整, 最后一章内容)
         """
-        # 【重要】如果存在占位符，说明报告明显未完成，不应该认为第十章完成
+        # 【重要】如果存在占位符，说明报告明显未完成，不应该认为最后一章完成
         has_placeholder = any(placeholder in content for placeholder in [
             "（因篇幅限制", "后续章节继续展开", "待续", "待补充", "详见下文",
             "（待续……）", "未完待续", "精简示例", "此处为精简", "因篇幅限制"
         ])
         if has_placeholder:
             return False, ""
-        
-        # 【重要】必须严格检查"第十章"是作为章节标题出现的，而不是文本中的提及
-        ch10_patterns = ["\n第十章", "\r\n第十章", "## 第十章", "# 第十章", "第十章 ", "第十章　", "第十章：", "第十章:", "第十章 研究结论", "第十章 研究结论及建议"]
-        ch10_found = False
-        ch10_start = -1
-        
-        for pattern in ch10_patterns:
+
+        # 检测报告类型
+        report_type = self._get_report_type_from_content(content)
+
+        # 根据报告类型设置不同的最后一章检测模式
+        if report_type == 'business':
+            # 商业计划书：检查"第十三章 附录"或"第十二章 风险因素与应对"
+            final_ch_patterns = ["\n第十三章", "\r\n第十三章", "## 第十三章", "# 第十三章", "第十三章 ", "第十三章　", "第十三章：", "第十三章:", "第十三章 附录"]
+            alt_final_ch_patterns = ["\n第十二章", "\r\n第十二章", "## 第十二章", "# 第十二章", "第十二章 ", "第十二章　", "第十二章：", "第十二章:", "第十二章 风险"]
+        else:
+            # 可行性研究报告：检查"第十章 结论与建议"
+            final_ch_patterns = ["\n第十章", "\r\n第十章", "## 第十章", "# 第十章", "第十章 ", "第十章　", "第十章：", "第十章:", "第十章 研究结论", "第十章 研究结论及建议"]
+            alt_final_ch_patterns = []
+
+        final_ch_found = False
+        final_ch_start = -1
+        final_ch_name = ""
+
+        # 先尝试查找主要的最后一章
+        for pattern in final_ch_patterns:
             pos = content.rfind(pattern)
             if pos >= 0:
                 # 检查前面是否是换行符或章节标记，确保是真正的章节标题
                 before_text = content[max(0, pos-30):pos]
-                # 如果前面是换行符、数字、或者章节标记，说明是章节标题
                 if any(marker in before_text for marker in ['\n', '\r', '##', '#', '第', '章', '目录', '目 录']):
-                    # 进一步验证：检查"第十章"后面是否跟着章节名称或内容
                     after_text = content[pos:pos+50]
-                    if any(marker in after_text for marker in ['研究结论', '结论', '建议', ' ', '　', '：', ':', '\n']):
-                        ch10_found = True
-                        ch10_start = pos + (1 if pattern.startswith('\n') or pattern.startswith('\r') else 0)
+                    if any(marker in after_text for marker in ['附录', '风险', '结论', '建议', ' ', '　', '：', ':', '\n']):
+                        final_ch_found = True
+                        final_ch_start = pos + (1 if pattern.startswith('\n') or pattern.startswith('\r') else 0)
+                        final_ch_name = "最后一章"
                         break
-        
-        if not ch10_found or ch10_start < 0:
+
+        # 如果没找到主要最后一章，尝试找备选的最后一章（仅限商业计划书）
+        if not final_ch_found and alt_final_ch_patterns:
+            for pattern in alt_final_ch_patterns:
+                pos = content.rfind(pattern)
+                if pos >= 0:
+                    before_text = content[max(0, pos-30):pos]
+                    if any(marker in before_text for marker in ['\n', '\r', '##', '#', '第', '章']):
+                        after_text = content[pos:pos+50]
+                        if any(marker in after_text for marker in ['风险', '因素', '应对', ' ', '　', '：', ':', '\n']):
+                            final_ch_found = True
+                            final_ch_start = pos + (1 if pattern.startswith('\n') or pattern.startswith('\r') else 0)
+                            final_ch_name = "最后一章"
+                            break
+
+        if not final_ch_found or final_ch_start < 0:
             return False, ""
-        
-        ch10_content = content[ch10_start:]
-        ch10_text_length = self._get_text_length_without_mermaid(ch10_content)
-        
-        # 如果第十章内容少于2000字符，认为不完整
-        if ch10_text_length < 2000:
-            return False, ch10_content
-        
-        # 【重要】必须确保10.1和10.2是在第十章内容中，且是子章节标题格式
-        # 检查10.1和10.2是否作为子章节标题出现（前面有换行或空格）
-        has_101 = False
-        has_102 = False
-        
-        # 查找10.1，必须是在第十章之后，且是子章节格式
-        for pattern in ["\n10.1", "\r\n10.1", " 10.1", "　10.1", "10.1 ", "10.1　", "10.1：", "10.1:"]:
-            pos_101 = ch10_content.find(pattern)
-            if pos_101 >= 0:
-                # 检查前面是否是换行符或空格，确保是子章节标题
-                before_101 = ch10_content[max(0, pos_101-10):pos_101]
-                if any(marker in before_101 for marker in ['\n', '\r', ' ', '　', '##', '#']):
-                    has_101 = True
-                    break
-        
-        # 查找10.2，必须是在第十章之后，且是子章节格式
-        for pattern in ["\n10.2", "\r\n10.2", " 10.2", "　10.2", "10.2 ", "10.2　", "10.2：", "10.2:"]:
-            pos_102 = ch10_content.find(pattern)
-            if pos_102 >= 0:
-                # 检查前面是否是换行符或空格，确保是子章节标题
-                before_102 = ch10_content[max(0, pos_102-10):pos_102]
-                if any(marker in before_102 for marker in ['\n', '\r', ' ', '　', '##', '#']):
-                    has_102 = True
-                    break
-        
-        # 如果10.1和10.2都存在，检查是否有实质性内容
-        if has_101 and has_102:
-            try:
-                section_101 = ch10_content.split("10.1")[1].split("10.2")[0] if "10.2" in ch10_content else ch10_content.split("10.1")[1]
-                section_102 = ch10_content.split("10.2")[1] if "10.2" in ch10_content else ""
-                # 如果10.1超过500字符，10.2超过1000字符，认为完成（排除Mermaid图表）
-                section_101_length = self._get_text_length_without_mermaid(section_101.strip())
-                section_102_length = self._get_text_length_without_mermaid(section_102.strip())
-                if section_101_length > 500 and section_102_length > 1000:
-                    return True, ch10_content
-            except:
-                pass
-        
-        # 放宽条件：第十章内容超过2000字符，且有10.1和10.2，就认为完成
-        if ch10_text_length > 2000 and has_101 and has_102:
-            return True, ch10_content
-        
-        return False, ch10_content
+
+        final_ch_content = content[final_ch_start:]
+        final_ch_text_length = self._get_text_length_without_mermaid(final_ch_content)
+
+        # 如果最后一章内容少于2000字符，认为不完整
+        if final_ch_text_length < 2000:
+            return False, final_ch_content
+
+        # 对于可行性研究报告，检查10.1和10.2子章节
+        if report_type == 'feasibility':
+            # 【重要】必须确保10.1和10.2是在第十章内容中，且是子章节标题格式
+            has_101 = False
+            has_102 = False
+
+            for pattern in ["\n10.1", "\r\n10.1", " 10.1", "　10.1", "10.1 ", "10.1　", "10.1：", "10.1:"]:
+                pos_101 = final_ch_content.find(pattern)
+                if pos_101 >= 0:
+                    before_101 = final_ch_content[max(0, pos_101-10):pos_101]
+                    if any(marker in before_101 for marker in ['\n', '\r', ' ', '　', '##', '#']):
+                        has_101 = True
+                        break
+
+            for pattern in ["\n10.2", "\r\n10.2", " 10.2", "　10.2", "10.2 ", "10.2　", "10.2：", "10.2:"]:
+                pos_102 = final_ch_content.find(pattern)
+                if pos_102 >= 0:
+                    before_102 = final_ch_content[max(0, pos_102-10):pos_102]
+                    if any(marker in before_102 for marker in ['\n', '\r', ' ', '　', '##', '#']):
+                        has_102 = True
+                        break
+
+            if has_101 and has_102:
+                try:
+                    section_101 = final_ch_content.split("10.1")[1].split("10.2")[0] if "10.2" in final_ch_content else final_ch_content.split("10.1")[1]
+                    section_102 = final_ch_content.split("10.2")[1] if "10.2" in final_ch_content else ""
+                    section_101_length = self._get_text_length_without_mermaid(section_101.strip())
+                    section_102_length = self._get_text_length_without_mermaid(section_102.strip())
+                    if section_101_length > 500 and section_102_length > 1000:
+                        return True, final_ch_content
+                except:
+                    pass
+
+            if final_ch_text_length > 2000 and has_101 and has_102:
+                return True, final_ch_content
+
+            return False, final_ch_content
+        else:
+            # 对于商业计划书，只要最后一章有足够内容就认为完成
+            return True, final_ch_content
     
     def _get_missing_sections(self, content: str) -> list:
         """
@@ -674,9 +853,32 @@ class IntelligentAgent:
         text = str(report_content or "")
         if not text:
             return ""
+
         text = text.replace('\r\n', '\n').replace('\r', '\n')
-        for marker in ("（待续……）", "待续", "待补充"):
+
+        # 清理占位符
+        for marker in ("（待续……）", "待续", "待补充", "因篇幅限制"):
             text = text.replace(marker, "")
+
+        # 过滤AI自我指涉和免责声明
+        ai_refusal_patterns = [
+            r'作为+(?:AI)?(?:语言模型|人工智能|助手)[,:：]?.*?(?:\n|$)',
+            r'我?(?:无法|不能|不)(?:提供|给出|确保|保证)[,:：]?.*?(?:\n|$)',
+            r'请注意[,:：].*?(?:\n|$)',
+            r'(?:建议|请|应当|最好).*?咨询.*?(?:专业|律师|专家).*?(?:\n|$)',
+            r'本(?:回答|内容).*?仅供参考.*?(?:\n|$)',
+            r'我?(?:认为|觉得|建议)[,:：]?.*?(?:\n|$)',
+            r'作为AI.*?(?:\n|$)',
+            r'请注意.*?(?:\n|$)',
+            r'需要.*?注意.*?(?:\n|$)',
+        ]
+
+        for pattern in ai_refusal_patterns:
+            text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.MULTILINE)
+
+        # 清理多余空行（超过2个连续换行符替换为2个）
+        text = re.sub(r'\n{3,}', '\n\n', text)
+
         return text.strip()
 
     def _expand_pre_final_sections(self, report_content: str, user_input: str = "") -> str:
@@ -906,23 +1108,58 @@ class IntelligentAgent:
                             
                             # 尝试调用API（某些SDK版本可能不支持timeout参数）
                             try:
-
-                                response = self.client.chat.completions.create(
-                                    model=self.config.model_name,
-                                    messages=messages,
-                                    temperature=self.config.temperature,
-                                    max_tokens=continuation_max_tokens,
-                                    timeout=300.0  # 5分钟超时
-                                )
+                                if self.config.provider == ModelProvider.ANTHROPIC:
+                                    # Extract system prompt for anthropic
+                                    system_prompt = ""
+                                    anthropic_messages = []
+                                    for msg in messages:
+                                        if msg.get("role") == "system":
+                                            system_prompt = msg.get("content", "")
+                                        else:
+                                            anthropic_messages.append(msg)
+                                            
+                                    response = self.client.messages.create(
+                                        model=self.config.model_name,
+                                        system=system_prompt,
+                                        messages=anthropic_messages,
+                                        temperature=self.config.temperature,
+                                        max_tokens=continuation_max_tokens,
+                                        timeout=300.0  # 5分钟超时
+                                    )
+                                else:
+                                    response = self.client.chat.completions.create(
+                                        model=self.config.model_name,
+                                        messages=messages,
+                                        temperature=self.config.temperature,
+                                        max_tokens=continuation_max_tokens,
+                                        timeout=300.0  # 5分钟超时
+                                    )
                                 break  # 成功则退出重试循环
                             except TypeError:
                                 # 如果SDK不支持timeout参数，不使用timeout
-                                response = self.client.chat.completions.create(
-                                    model=self.config.model_name,
-                                    messages=messages,
-                                    temperature=self.config.temperature,
-                                    max_tokens=continuation_max_tokens
-                                )
+                                if self.config.provider == ModelProvider.ANTHROPIC:
+                                    system_prompt = ""
+                                    anthropic_messages = []
+                                    for msg in messages:
+                                        if msg.get("role") == "system":
+                                            system_prompt = msg.get("content", "")
+                                        else:
+                                            anthropic_messages.append(msg)
+                                            
+                                    response = self.client.messages.create(
+                                        model=self.config.model_name,
+                                        system=system_prompt,
+                                        messages=anthropic_messages,
+                                        temperature=self.config.temperature,
+                                        max_tokens=continuation_max_tokens
+                                    )
+                                else:
+                                    response = self.client.chat.completions.create(
+                                        model=self.config.model_name,
+                                        messages=messages,
+                                        temperature=self.config.temperature,
+                                        max_tokens=continuation_max_tokens
+                                    )
                                 break  # 成功则退出重试循环
                         except Exception as retry_error:
                             retry_count += 1
@@ -978,15 +1215,21 @@ class IntelligentAgent:
                 continuation = None
                 finish_reason = None
                 
-                if response and hasattr(response, 'choices') and len(response.choices) > 0:
-                    choice = response.choices[0]
-                    if hasattr(choice, 'message') and hasattr(choice.message, 'content'):
-                        continuation = choice.message.content
-                    elif hasattr(choice, 'content'):
-                        continuation = choice.content
-                    
-                    if hasattr(choice, 'finish_reason'):
-                        finish_reason = choice.finish_reason
+                if self.config.provider == ModelProvider.ANTHROPIC:
+                    if response and hasattr(response, 'content') and len(response.content) > 0:
+                        continuation = response.content[0].text
+                    if response and hasattr(response, 'stop_reason'):
+                        finish_reason = response.stop_reason
+                else:
+                    if response and hasattr(response, 'choices') and len(response.choices) > 0:
+                        choice = response.choices[0]
+                        if hasattr(choice, 'message') and hasattr(choice.message, 'content'):
+                            continuation = choice.message.content
+                        elif hasattr(choice, 'content'):
+                            continuation = choice.content
+                        
+                        if hasattr(choice, 'finish_reason'):
+                            finish_reason = choice.finish_reason
                 
                 # 输出API响应信息
                 if continuation:
@@ -1562,13 +1805,31 @@ class IntelligentAgent:
                     if self.config.provider == ModelProvider.CUSTOM:
                         continuation_max_tokens = max(continuation_max_tokens, 20000)
                     
-                    stream = self.client.chat.completions.create(
-                        model=self.config.model_name,
-                        messages=messages,
-                        temperature=self.config.temperature,
-                        max_tokens=continuation_max_tokens,
-                        stream=True
-                    )
+                    if self.config.provider == ModelProvider.ANTHROPIC:
+                        system_prompt = ""
+                        anthropic_messages = []
+                        for msg in messages:
+                            if msg.get("role") == "system":
+                                system_prompt = msg.get("content", "")
+                            else:
+                                anthropic_messages.append(msg)
+                                
+                        stream = self.client.messages.create(
+                            model=self.config.model_name,
+                            system=system_prompt,
+                            messages=anthropic_messages,
+                            temperature=self.config.temperature,
+                            max_tokens=continuation_max_tokens,
+                            stream=True
+                        )
+                    else:
+                        stream = self.client.chat.completions.create(
+                            model=self.config.model_name,
+                            messages=messages,
+                            temperature=self.config.temperature,
+                            max_tokens=continuation_max_tokens,
+                            stream=True
+                        )
                     
                     timeout_break = False  # 重置超时标记
                     for chunk in stream:
@@ -1581,40 +1842,56 @@ class IntelligentAgent:
                         current_time = time.time()
                         last_chunk_time[0] = current_time  # 更新最后收到数据的时间
                         
-                        # 检查总时间是否超时（20分钟）
-                        if current_time - start_time > 1200:
-                            yield "\n\n[警告] 续写流式输出总时间超时（超过20分钟），已停止接收数据。将保存已生成内容并继续续写..."
-                            timeout_break = True
-                            break
-                        
-                        if chunk.choices[0].delta.content is not None:
-                            content = chunk.choices[0].delta.content
-                            continuation_text += content
-                            yield content
-                            
-                            # 实时检测完成标记
-                            _stream_markers = ["研究报告完", "可行性研究报告完", "总字数统计:", "总行数统计:", "Mermaid图表数量:"]
-                            _check = continuation_text[-1000:] if len(continuation_text) > 1000 else continuation_text
-                            if any(m in _check for m in _stream_markers) and len(full_content + continuation_text) >= 40000:
-                                pass  # print("[实时检测] 续写检测到完成标记，停止", flush=True)
-                                finish_reason = "stop"
+                        if self.config.provider == ModelProvider.ANTHROPIC:
+                            # Anthropic Stream Event handling
+                            if chunk.type == "content_block_delta" and hasattr(chunk.delta, "text"):
+                                content = chunk.delta.text
+                                continuation_text += content
+                                yield content
+                                
+                                # 实时检测完成标记
+                                _stream_markers = ["研究报告完", "可行性研究报告完", "总字数统计:", "总行数统计:", "Mermaid图表数量:"]
+                                _check = continuation_text[-1000:] if len(continuation_text) > 1000 else continuation_text
+                                if any(m in _check for m in _stream_markers) and len(full_content + continuation_text) >= 40000:
+                                    pass  # print("[实时检测] 续写检测到完成标记，停止", flush=True)
+                                    finish_reason = "stop"
+                                    break
+                            elif chunk.type == "message_delta" and hasattr(chunk.delta, "stop_reason") and chunk.delta.stop_reason:
+                                finish_reason = chunk.delta.stop_reason
                                 break
-                        
-                        # 累计续写时的token使用信息
-                        if hasattr(chunk, 'usage') and chunk.usage:
-                            if not hasattr(self, '_continuation_usage'):
-                                self._continuation_usage = {
-                                    'prompt_tokens': 0,
-                                    'completion_tokens': 0,
-                                    'total_tokens': 0
-                                }
-                            self._continuation_usage['prompt_tokens'] += getattr(chunk.usage, 'prompt_tokens', 0)
-                            self._continuation_usage['completion_tokens'] += getattr(chunk.usage, 'completion_tokens', 0)
-                            self._continuation_usage['total_tokens'] += getattr(chunk.usage, 'total_tokens', 0)
-                        
-                        if chunk.choices[0].finish_reason:
-                            finish_reason = chunk.choices[0].finish_reason
-                            # 如果这个chunk有usage信息，立即累计
+                            elif chunk.type == "message_start" and hasattr(chunk.message, "usage"):
+                                if not hasattr(self, '_continuation_usage'):
+                                    self._continuation_usage = {
+                                        'prompt_tokens': 0,
+                                        'completion_tokens': 0,
+                                        'total_tokens': 0
+                                    }
+                                self._continuation_usage['prompt_tokens'] += getattr(chunk.message.usage, 'input_tokens', 0)
+                                self._continuation_usage['total_tokens'] += getattr(chunk.message.usage, 'input_tokens', 0)
+                            elif chunk.type == "message_delta" and hasattr(chunk, "usage"):
+                                if not hasattr(self, '_continuation_usage'):
+                                    self._continuation_usage = {
+                                        'prompt_tokens': 0,
+                                        'completion_tokens': 0,
+                                        'total_tokens': 0
+                                    }
+                                self._continuation_usage['completion_tokens'] += getattr(chunk.usage, 'output_tokens', 0)
+                                self._continuation_usage['total_tokens'] += getattr(chunk.usage, 'output_tokens', 0)
+                        else:
+                            if chunk.choices[0].delta.content is not None:
+                                content = chunk.choices[0].delta.content
+                                continuation_text += content
+                                yield content
+                                
+                                # 实时检测完成标记
+                                _stream_markers = ["研究报告完", "可行性研究报告完", "总字数统计:", "总行数统计:", "Mermaid图表数量:"]
+                                _check = continuation_text[-1000:] if len(continuation_text) > 1000 else continuation_text
+                                if any(m in _check for m in _stream_markers) and len(full_content + continuation_text) >= 40000:
+                                    pass  # print("[实时检测] 续写检测到完成标记，停止", flush=True)
+                                    finish_reason = "stop"
+                                    break
+                            
+                            # 累计续写时的token使用信息
                             if hasattr(chunk, 'usage') and chunk.usage:
                                 if not hasattr(self, '_continuation_usage'):
                                     self._continuation_usage = {
@@ -1625,7 +1902,21 @@ class IntelligentAgent:
                                 self._continuation_usage['prompt_tokens'] += getattr(chunk.usage, 'prompt_tokens', 0)
                                 self._continuation_usage['completion_tokens'] += getattr(chunk.usage, 'completion_tokens', 0)
                                 self._continuation_usage['total_tokens'] += getattr(chunk.usage, 'total_tokens', 0)
-                            break
+                            
+                            if chunk.choices[0].finish_reason:
+                                finish_reason = chunk.choices[0].finish_reason
+                                # 如果这个chunk有usage信息，立即累计
+                                if hasattr(chunk, 'usage') and chunk.usage:
+                                    if not hasattr(self, '_continuation_usage'):
+                                        self._continuation_usage = {
+                                            'prompt_tokens': 0,
+                                            'completion_tokens': 0,
+                                            'total_tokens': 0
+                                        }
+                                    self._continuation_usage['prompt_tokens'] += getattr(chunk.usage, 'prompt_tokens', 0)
+                                    self._continuation_usage['completion_tokens'] += getattr(chunk.usage, 'completion_tokens', 0)
+                                    self._continuation_usage['total_tokens'] += getattr(chunk.usage, 'total_tokens', 0)
+                                break
                     
                     # 如果超时线程还在运行，停止它
                     if timeout_thread.is_alive():
@@ -1917,13 +2208,16 @@ class IntelligentAgent:
                 pdf_filepath = os.path.join(reports_dir, pdf_filename)
                 counter += 1
             
+            # 清理Mermaid代码块中的语法错误
+            report_content = self._sanitize_mermaid_blocks(report_content)
+
             # 保存Markdown文件
             with open(md_filepath, 'w', encoding='utf-8') as f:
                 f.write(report_content)
             
             # 生成PDF文件（使用超时机制，防止卡住）
             pdf_success = False
-            pdf_timeout = 60  # PDF转换超时时间（秒）
+            pdf_timeout = 300  # PDF转换超时时间（秒）
             try:
                 print(f"[PDF转换] 开始转换，超时时间: {pdf_timeout}秒...", flush=True)
                 with ThreadPoolExecutor(max_workers=1) as executor:
@@ -1980,68 +2274,90 @@ class IntelligentAgent:
     
     def _convert_mermaid_to_images(self, markdown_content: str) -> str:
         """
-        将Markdown中的Mermaid代码块转换为图片
+        将Markdown中的Mermaid代码块转换为图片（并行下载优化版）
         使用 mermaid.ink 在线服务渲染图表
-        
+
         Args:
             markdown_content: 包含Mermaid代码块的Markdown内容
-            
+
         Returns:
             Mermaid代码块被替换为图片标签的Markdown内容
         """
         import base64
+        import zlib
         import urllib.request
-        import urllib.parse
-        
-        # 正则匹配 mermaid 代码块
+        import time
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
         mermaid_pattern = r'```mermaid\s*\n([\s\S]*?)\n```'
-        
-        def replace_mermaid_with_image(match):
+
+        matches = list(re.finditer(mermaid_pattern, markdown_content))
+        if not matches:
+            return markdown_content
+
+        print(f"[Mermaid] 发现 {len(matches)} 个图表，开始并行下载...")
+
+        def encode_mermaid_code(mermaid_code: str) -> str:
+            json_str = '{"code":"' + mermaid_code.replace('\\', '\\\\').replace('\n', '\\n').replace('"', '\\"') + '","mermaid":{"theme":"default"}}'
+            compressed = zlib.compress(json_str.encode('utf-8'), 9)
+            deflated = compressed[2:-4]
+            encoded = base64.urlsafe_b64encode(deflated).decode('utf-8').rstrip('=')
+            return encoded
+
+        def download_mermaid_image(match):
+            start, end = match.span()
             mermaid_code = match.group(1).strip()
-            
+
             if not mermaid_code:
-                return ''
-            
-            try:
+                return start, end, ''
 
-                # 使用 mermaid.ink 服务
-                # 需要将 mermaid 代码进行 base64 编码（URL安全的）
-                encoded_code = base64.urlsafe_b64encode(mermaid_code.encode('utf-8')).decode('utf-8')
-                
-                # 生成图片 URL
-                img_url = f'https://mermaid.ink/img/{encoded_code}'
-                
-                # 尝试下载图片并转为 base64 内嵌（避免网络依赖）
+            encoded_code = encode_mermaid_code(mermaid_code)
+            img_url = f'https://mermaid.ink/img/pako:{encoded_code}'
+
+            max_retries = 3
+            last_error = None
+
+            for attempt in range(max_retries):
                 try:
-
-                    # 设置超时和请求头
                     req = urllib.request.Request(
                         img_url,
                         headers={'User-Agent': 'Mozilla/5.0'}
                     )
-                    with urllib.request.urlopen(req, timeout=30) as response:
+                    with urllib.request.urlopen(req, timeout=15) as response:
                         img_data = response.read()
                         img_base64 = base64.b64encode(img_data).decode('utf-8')
-                        # 返回内嵌的 base64 图片
-                        return f'<img src="data:image/png;base64,{img_base64}" alt="Mermaid Diagram" style="max-width: 100%; height: auto;" />'
-                except Exception as download_error:
-                    print(f"[Mermaid] 下载图片失败: {download_error}，使用外链URL")
-                    # 如果下载失败，返回外链图片
-                    return f'<img src="{img_url}" alt="Mermaid Diagram" style="max-width: 100%; height: auto;" />'
-                    
-            except Exception as e:
-                print(f"[Mermaid] 转换失败: {e}")
-                # 转换失败时保留原始代码块（作为代码显示）
-                return f'<pre><code class="language-mermaid">{mermaid_code}</code></pre>'
-        
-        # 替换所有 mermaid 代码块
-        result = re.sub(mermaid_pattern, replace_mermaid_with_image, markdown_content)
-        
-        # 统计转换数量
-        original_count = len(re.findall(mermaid_pattern, markdown_content))
-        if original_count > 0:
-            print(f"[Mermaid] 共转换 {original_count} 个图表")
-        
+                        img_tag = f'<img src="data:image/png;base64,{img_base64}" alt="Mermaid Diagram" style="max-width: 100%; height: auto;" />'
+                        return start, end, img_tag
+
+                except Exception as e:
+                    last_error = e
+                    if attempt < max_retries - 1:
+                        time.sleep(1)
+                        print(f"[Mermaid] 图表下载失败(尝试 {attempt + 1}/{max_retries}): {e}")
+
+            print(f"[Mermaid] 图表下载最终失败: {last_error}")
+            return start, end, f'<pre><code class="language-mermaid">{mermaid_code}</code></pre>'
+
+        results = {}
+        completed_count = 0
+
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            futures = {executor.submit(download_mermaid_image, match): match for match in matches}
+
+            for future in as_completed(futures):
+                try:
+                    start, end, replacement = future.result()
+                    results[start] = (start, end, replacement)
+                    completed_count += 1
+                    print(f"[Mermaid] 进度: {completed_count}/{len(matches)}")
+                except Exception as e:
+                    print(f"[Mermaid] 并发任务异常: {e}")
+
+        result = markdown_content
+        for start, end, replacement in sorted(results.values(), key=lambda x: x[0], reverse=True):
+            result = result[:start] + replacement + result[end:]
+
+        print(f"[Mermaid] 所有图表转换完成")
         return result
 
     def _convert_markdown_to_pdf(self, markdown_content: str, pdf_filepath: str):
@@ -2062,31 +2378,58 @@ class IntelligentAgent:
                 import markdown
                 from weasyprint import HTML, CSS
                 from weasyprint.text.fonts import FontConfiguration
+                import os
                 
-                # 将Markdown转换为HTML
+                font_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'fonts', 'HarmonyOS_Sans_Regular.ttf')
+                font_path_abs = os.path.abspath(font_path)
+                font_url = f'file:///{font_path_abs.replace(os.sep, "/")}'
+                
+                print(f"[PDF字体] 检查字体文件: {font_path_abs}")
+                if os.path.exists(font_path_abs):
+                    print(f"[PDF字体] 字体文件存在，大小: {os.path.getsize(font_path_abs)} bytes")
+                else:
+                    print(f"[PDF字体] 字体文件不存在，尝试查找其他字体")
+                    alt_fonts = [
+                        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'fonts', 'simhei.ttf'),
+                        os.path.join(os.path.dirname(os.path.dirname(__file__)), 'static', 'fonts', 'simsun.ttc'),
+                    ]
+                    for alt_font in alt_fonts:
+                        alt_abs = os.path.abspath(alt_font)
+                        if os.path.exists(alt_abs):
+                            font_path_abs = alt_abs
+                            font_url = f'file:///{alt_abs.replace(os.sep, "/")}'
+                            print(f"[PDF字体] 使用备用字体: {alt_abs}")
+                            break
+                
                 html_content = markdown.markdown(
                     markdown_content, 
                     extensions=['extra', 'codehilite', 'tables', 'fenced_code']
                 )
                 
-                # 添加CSS样式
                 styled_html = f"""
                 <!DOCTYPE html>
                 <html>
                 <head>
                     <meta charset="utf-8">
                     <style>
+                        @font-face {{
+                            font-family: 'HarmonyOS';
+                            src: url('{font_url}');
+                            font-weight: normal;
+                            font-style: normal;
+                        }}
                         @page {{
                             size: A4;
                             margin: 2cm;
                         }}
                         body {{
-                            font-family: "Microsoft YaHei", "SimSun", "Arial Unicode MS", Arial, sans-serif;
+                            font-family: 'HarmonyOS', 'Microsoft YaHei', 'SimSun', 'Arial Unicode MS', Arial, sans-serif;
                             line-height: 1.8;
                             color: #333;
                             font-size: 12pt;
                         }}
                         h1, h2, h3, h4, h5, h6 {{
+                            font-family: 'HarmonyOS', 'Microsoft YaHei', 'SimSun', 'Arial Unicode MS', Arial, sans-serif;
                             color: #2c3e50;
                             margin-top: 1.5em;
                             margin-bottom: 0.8em;
@@ -2146,11 +2489,12 @@ class IntelligentAgent:
                 </html>
                 """
                 
-                # 将HTML转换为PDF
-                HTML(string=styled_html).write_pdf(pdf_filepath)
+                font_config = FontConfiguration()
+                print(f"[PDF字体] FontConfiguration已创建，开始生成PDF")
+                HTML(string=styled_html).write_pdf(pdf_filepath, font_config=font_config)
                 return
-            except ImportError:
-                pass
+            except Exception as _wp_err:
+                print(f"[PDF转换] weasyprint失败（将尝试reportlab）: {_wp_err}", flush=True)
             
             # 如果weasyprint不可用，尝试使用reportlab
             try:
@@ -2170,14 +2514,55 @@ class IntelligentAgent:
                 styles = getSampleStyleSheet()
                 story = []
                 
-                # 尝试注册中文字体（如果可用）
-                try:
-
-                    # 尝试使用系统字体
-                    pdfmetrics.registerFont(TTFont('SimSun', '/usr/share/fonts/truetype/wqy/wqy-microhei.ttc'))
-                    chinese_font = 'SimSun'
-                except Exception:
-                    chinese_font = 'Helvetica'
+                import os
+                
+                chinese_font = 'Helvetica'
+                font_registered = False
+                
+                project_font = 'x:/test_2/static/fonts/HarmonyOS_Sans_Regular.ttf'
+                if os.path.exists(project_font):
+                    try:
+                        pdfmetrics.registerFont(TTFont('HarmonyOS', project_font))
+                        chinese_font = 'HarmonyOS'
+                        font_registered = True
+                        print(f"[PDF] 使用项目字体: {project_font}")
+                    except Exception as e:
+                        print(f"[PDF] 项目字体注册失败: {e}")
+                
+                if not font_registered:
+                    windows_fonts = [
+                        ('C:/Windows/Fonts/msyh.ttc', 'MicrosoftYaHei'),
+                        ('C:/Windows/Fonts/simsun.ttc', 'SimSun'),
+                    ]
+                    for font_path, font_name in windows_fonts:
+                        if os.path.exists(font_path):
+                            try:
+                                pdfmetrics.registerFont(TTFont(font_name, font_path))
+                                chinese_font = font_name
+                                font_registered = True
+                                print(f"[PDF] 使用Windows字体: {font_path}")
+                                break
+                            except Exception as e:
+                                print(f"[PDF] Windows字体注册失败: {e}")
+                
+                if not font_registered:
+                    linux_fonts = [
+                        ('/usr/share/fonts/truetype/wqy/wqy-microhei.ttc', 'WQY'),
+                        ('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 'DejaVu'),
+                    ]
+                    for font_path, font_name in linux_fonts:
+                        if os.path.exists(font_path):
+                            try:
+                                pdfmetrics.registerFont(TTFont(font_name, font_path))
+                                chinese_font = font_name
+                                font_registered = True
+                                print(f"[PDF] 使用Linux字体: {font_path}")
+                                break
+                            except Exception as e:
+                                print(f"[PDF] Linux字体注册失败: {e}")
+                
+                if not font_registered:
+                    print("[PDF] 警告: 未找到可用的中文字体，PDF可能无法正确显示中文")
                 
                 # 创建自定义样式
                 normal_style = ParagraphStyle(
@@ -2238,8 +2623,8 @@ class IntelligentAgent:
                 
                 doc.build(story)
                 return
-            except ImportError:
-                pass
+            except Exception as _rl_err:
+                print(f"[PDF转换] reportlab失败: {_rl_err}", flush=True)
             
             # 如果都不可用，抛出异常
             raise ImportError("需要安装PDF生成库。请运行: pip install weasyprint 或 pip install reportlab")
@@ -2300,6 +2685,52 @@ class IntelligentAgent:
             (10, "研究结论及建议"),
         ]
 
+    def _extract_toc_from_content(self, content: str) -> list:
+        if not content:
+            return []
+        titles = []
+        chapter_pattern = r'^第[一二三四五六七八九十0-9]+章\s+.+$'
+        section_pattern = r'^[一二三四五六七八九十]+、.+$'
+        subsection_pattern = r'^（[一二三四五六七八九十]+）.+$'
+        alt_section_pattern = r'^\d+\.\d+\s+.+$'
+        alt_subsection_pattern = r'^\d+\.\d+\.\d+\s+.+$'
+        for line in content.split('\n'):
+            line = line.strip()
+            if not line:
+                continue
+            if re.match(chapter_pattern, line):
+                titles.append(('chapter', line))
+            elif re.match(section_pattern, line):
+                titles.append(('section', line))
+            elif re.match(subsection_pattern, line):
+                titles.append(('subsection', line))
+            elif re.match(alt_section_pattern, line):
+                titles.append(('section', line))
+            elif re.match(alt_subsection_pattern, line):
+                titles.append(('subsection', line))
+        return titles
+
+    def _generate_toc(self, content: str) -> str:
+        titles = self._extract_toc_from_content(content)
+        if not titles:
+            return ""
+        toc_lines = ["## 目录", ""]
+        page_num = 1
+        for level, title in titles:
+            if level == 'chapter':
+                indent = ""
+                page_num = max(1, page_num)
+            elif level == 'section':
+                indent = "    "
+                page_num += 2
+            else:
+                indent = "        "
+                page_num += 1
+            dots = "." * (50 - len(title) - len(indent))
+            toc_lines.append(f"{indent}{title} {dots} {page_num}")
+        toc_lines.append("")
+        return "\n".join(toc_lines)
+
     def _chapter_heading(self, chapter_no: int, chapter_title: str) -> str:
         cn = ["一", "二", "三", "四", "五", "六", "七", "八", "九", "十"]
         if 1 <= chapter_no <= 10:
@@ -2337,24 +2768,150 @@ class IntelligentAgent:
                 block = "\n".join(lines).strip()
             else:
                 block = f"{expected}\n\n{block}"
-        return block
+        return self._clean_chapter_content(block)
+
+    def _clean_chapter_content(self, content: str) -> str:
+        if not content:
+            return ""
+        lines = content.split('\n')
+        title_line = ""
+        body_start = 0
+        for i, line in enumerate(lines):
+            if re.match(r'^\s*第[一二三四五六七八九十0-9]+章', line):
+                title_line = line
+                body_start = i + 1
+                break
+        body_lines = lines[body_start:]
+        cleaned_lines = []
+        for line in body_lines:
+            stripped = line.strip()
+            if re.match(r'^(好的[，,。]?|好的$)', stripped):
+                continue
+            if re.match(r'^(好的[，,]\s*我来|我将为您|我来为您|我将为您撰写|我来为您撰写)', stripped):
+                continue
+            if re.match(r'^(以下[是为]|下面[是为]|以下是第|下面是第)', stripped):
+                continue
+            if re.match(r'^(开始生成|正在生成|开始撰写|正在撰写)', stripped):
+                continue
+            if re.match(r'^第[一二三四五六七八九十0-9]+章[的内容如下：:]*', stripped):
+                continue
+            if re.match(r'^请看下面的内容[：:]?$', stripped):
+                continue
+            if re.match(r'^请看下文[：:]?$', stripped):
+                continue
+            if re.match(r'^内容如下[：:]?$', stripped):
+                continue
+            cleaned_lines.append(line)
+        result_lines = []
+        empty_count = 0
+        for line in cleaned_lines:
+            if line.strip() == '':
+                empty_count += 1
+                if empty_count <= 2:
+                    result_lines.append(line)
+            else:
+                empty_count = 0
+                result_lines.append(line)
+        while result_lines and result_lines[-1].strip() == '':
+            result_lines.pop()
+        if title_line:
+            result_lines.insert(0, title_line)
+        return '\n'.join(result_lines)
+
+    def _check_chapter_completeness(self, chapter_block: str, min_length: int = 1500) -> dict:
+        """
+        检测章节完整性。
+        返回: {'is_complete': bool, 'needs_continuation': bool, 'reason': str}
+        """
+        if not chapter_block:
+            return {'is_complete': False, 'needs_continuation': True, 'reason': '章节内容为空'}
+        
+        lines = chapter_block.strip().split('\n')
+        body_lines = [l for l in lines if l.strip() and not re.match(r'^\s*第[一二三四五六七八九十0-9]+章', l)]
+        body_text = '\n'.join(body_lines)
+        
+        chapter_len = len(body_text.replace('\n', '').replace(' ', ''))
+        if chapter_len < min_length:
+            return {'is_complete': False, 'needs_continuation': True, 'reason': f'章节内容过短({chapter_len}字符<{min_length})'}
+        
+        has_subsection = bool(re.search(r'^\s*##\s+.+', chapter_block, re.MULTILINE))
+        has_subsubsection = bool(re.search(r'^\s*###\s+.+', chapter_block, re.MULTILINE))
+        has_numbered_section = bool(re.search(r'^\s*[（(][一二三四五六七八九十\d]+[)）]\s*.+', chapter_block, re.MULTILINE))
+        has_bullet_section = bool(re.search(r'^\s*[\d]+\.\s+.+', chapter_block, re.MULTILINE))
+        
+        if not (has_subsection or has_subsubsection or has_numbered_section or has_bullet_section):
+            return {'is_complete': False, 'needs_continuation': True, 'reason': '章节缺少二级/三级标题结构'}
+        
+        last_line = ''
+        for line in reversed(lines):
+            stripped = line.strip()
+            if stripped and not re.match(r'^\s*第[一二三四五六七八九十0-9]+章', stripped):
+                last_line = stripped
+                break
+        
+        if last_line:
+            ends_with_punctuation = bool(re.search(r'[。！？.!?]$', last_line))
+            ends_with_incomplete = bool(re.search(r'[，、；：,;:]$', last_line))
+            
+            if ends_with_incomplete:
+                return {'is_complete': False, 'needs_continuation': True, 'reason': '章节以非终结标点结尾'}
+            if not ends_with_punctuation:
+                incomplete_patterns = [
+                    r'包括以下',
+                    r'具体如下',
+                    r'如下[：:]?$',
+                    r'如下所示',
+                    r'主要包括',
+                    r'分为以下',
+                    r'详见',
+                ]
+                for pattern in incomplete_patterns:
+                    if re.search(pattern, last_line):
+                        return {'is_complete': False, 'needs_continuation': True, 'reason': '章节结尾不完整'}
+        
+        return {'is_complete': True, 'needs_continuation': False, 'reason': '章节完整'}
 
     def _call_chat_once(self, messages: list, max_tokens: Optional[int] = None) -> Tuple[str, dict, Optional[str]]:
         """统一的单次非流式调用，便于按章节累计token。"""
         temperature = self.config.temperature
-        use_max_tokens = max_tokens if max_tokens is not None else self.config.max_tokens
+        use_max_tokens = max_tokens if max_tokens is not None else 8000
 
         if self.config.provider == ModelProvider.CUSTOM:
             temperature = min(temperature * 1.1, 0.95)
             if use_max_tokens < 16000:
                 use_max_tokens = 16000
 
-        response = self.client.chat.completions.create(
-            model=self.config.model_name,
-            messages=messages,
-            temperature=temperature,
-            max_tokens=use_max_tokens
-        )
+        if self.config.provider == ModelProvider.ANTHROPIC:
+            sys_msg = ""
+            anthropic_messages = []
+            for msg in messages:
+                if msg.get("role") == "system":
+                    sys_msg = msg.get("content", "")
+                else:
+                    anthropic_messages.append(msg)
+            
+            response = self.client.messages.create(
+                model=self.config.model_name,
+                system=sys_msg,
+                messages=anthropic_messages,
+                temperature=temperature,
+                max_tokens=use_max_tokens
+            )
+            content = response.content[0].text if response and hasattr(response, 'content') and len(response.content) > 0 else ""
+            finish_reason = response.stop_reason if hasattr(response, 'stop_reason') else None
+            usage = {
+                'prompt_tokens': getattr(response.usage, 'input_tokens', 0) if hasattr(response, 'usage') and response.usage else 0,
+                'completion_tokens': getattr(response.usage, 'output_tokens', 0) if hasattr(response, 'usage') and response.usage else 0,
+                'total_tokens': (getattr(response.usage, 'input_tokens', 0) + getattr(response.usage, 'output_tokens', 0)) if hasattr(response, 'usage') and response.usage else 0
+            }
+            return content, usage, finish_reason
+        else:
+            response = self.client.chat.completions.create(
+                model=self.config.model_name,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=use_max_tokens
+            )
         content = response.choices[0].message.content or ""
         finish_reason = response.choices[0].finish_reason
         usage = {
@@ -2419,13 +2976,13 @@ class IntelligentAgent:
         chapter_names = [self._chapter_heading(no, title) for no, title in chapter_plan]
 
         cover_prompt = f"""
-你是专业可研报告编制助手。请先只生成封面与目录，不要生成正文章节。
+你是专业可研报告编制助手。请只生成封面，不要生成目录和正文章节。
 用户需求：{user_input}
 
 硬性要求：
-1. 输出标题为“目录”，并列出第1章到第10章的章节名。
-2. 不得出现“待续/待补充/详见下文”等占位词。
-3. 不要输出任何正文段落。
+1. 输出报告封面，包含报告标题、编制单位、编制日期等基本信息。
+2. 不得出现"待续/待补充/详见下文"等占位词。
+3. 不要输出目录和任何正文段落。
 """
         cover_text, u1, _ = self._call_chat_once(base_messages + [{"role": "user", "content": cover_prompt}], max_tokens=2500)
         self._acc_usage(usage_total, u1)
@@ -2461,9 +3018,10 @@ class IntelligentAgent:
             self._acc_usage(usage_total, u2)
             chapter_block = self._extract_single_chapter(chapter_text, chapter_no, chapter_title)
 
-            # 章节过短时追加强化扩写（只针对当前章）
             chapter_len = self._get_text_length_without_mermaid(chapter_block)
-            if chapter_len < 1800:
+            completeness = self._check_chapter_completeness(chapter_block)
+            
+            if chapter_len < 1800 or completeness['needs_continuation']:
                 enrich_guide = self._build_report_context_guide(
                     user_input=user_input,
                     current_heading=heading,
@@ -2479,17 +3037,41 @@ class IntelligentAgent:
 {enrich_guide}
 
 要求：
-1. 保留当前章节标题“{heading}”不变。
+1. 保留当前章节标题"{heading}"不变。
 2. 增加方法、步骤、约束、数据口径、风险控制、实施节奏等细节。
 3. 输出完整章节正文。
 """
+                if chapter_len >= 1800:
+                    last_200_chars = chapter_block[-200:] if len(chapter_block) > 200 else chapter_block
+                    enrich_prompt = f"""
+上一章内容被截断，请继续完成"{heading}"的剩余内容。
+
+已生成内容摘要：{last_200_chars}
+
+{enrich_guide}
+
+要求：
+1. 只输出剩余内容，不要重复已输出的部分。
+2. 继续完成当前章节，不得新增其它章节标题。
+3. 确保内容完整，以完整句子结尾。
+"""
                 enriched, u3, _ = self._call_chat_once(base_messages + [{"role": "user", "content": enrich_prompt}], max_tokens=6000)
                 self._acc_usage(usage_total, u3)
-                chapter_block = self._extract_single_chapter(enriched, chapter_no, chapter_title)
+                if chapter_len < 1800:
+                    chapter_block = self._extract_single_chapter(enriched, chapter_no, chapter_title)
+                else:
+                    continuation = enriched.strip()
+                    if continuation:
+                        chapter_block = chapter_block.rstrip() + "\n\n" + continuation
 
             report_parts.append(chapter_block.strip())
 
         final_report = "\n\n".join([p for p in report_parts if p]).strip()
+        toc_content = self._generate_toc(final_report)
+        if toc_content:
+            cover_only = report_parts[0] if report_parts else ""
+            chapters_only = "\n\n".join([p for p in report_parts[1:] if p]).strip()
+            final_report = cover_only + "\n\n" + toc_content + "\n\n" + chapters_only
         total_chars = self._get_text_length_without_mermaid(final_report)
         final_report += f"\n\n【报告已完成】\n总字数：{total_chars}字符\n包含章节：第一章至第十章（全部完成）"
         self.last_usage = usage_total
@@ -2518,50 +3100,86 @@ class IntelligentAgent:
             state['usage'] = {'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
 
             temperature = self.config.temperature
-            use_max_tokens = max_tokens if max_tokens is not None else self.config.max_tokens
+            use_max_tokens = max_tokens if max_tokens is not None else 8000
             if self.config.provider == ModelProvider.CUSTOM:
                 temperature = min(temperature * 1.1, 0.95)
                 if use_max_tokens < 16000:
                     use_max_tokens = 16000
 
-            stream = self.client.chat.completions.create(
-                model=self.config.model_name,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=use_max_tokens,
-                stream=True
-            )
+            if self.config.provider == ModelProvider.ANTHROPIC:
+                sys_msg = ""
+                anthropic_messages = []
+                for msg in messages:
+                    if msg.get("role") == "system":
+                        sys_msg = msg.get("content", "")
+                    else:
+                        anthropic_messages.append(msg)
+                
+                stream = self.client.messages.create(
+                    model=self.config.model_name,
+                    system=sys_msg,
+                    messages=anthropic_messages,
+                    temperature=temperature,
+                    max_tokens=use_max_tokens,
+                    stream=True
+                )
+            else:
+                stream = self.client.chat.completions.create(
+                    model=self.config.model_name,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=use_max_tokens,
+                    stream=True
+                )
 
             for chunk in stream:
-                # usage（若模型支持在流中返回）
-                try:
-                    if hasattr(chunk, 'usage') and chunk.usage:
-                        state['usage'] = {
-                            'prompt_tokens': int(getattr(chunk.usage, 'prompt_tokens', 0) or 0),
-                            'completion_tokens': int(getattr(chunk.usage, 'completion_tokens', 0) or 0),
-                            'total_tokens': int(getattr(chunk.usage, 'total_tokens', 0) or 0),
-                        }
-                except Exception:
-                    pass
-
-                if chunk.choices and len(chunk.choices) > 0:
+                if self.config.provider == ModelProvider.ANTHROPIC:
+                    # Anthropic stream handling
+                    if chunk.type == "message_start":
+                        uso = chunk.message.usage
+                        if uso:
+                            state['usage'] = {'prompt_tokens': getattr(uso, 'input_tokens', 0), 'completion_tokens': getattr(uso, 'output_tokens', 0), 'total_tokens': getattr(uso, 'input_tokens', 0) + getattr(uso, 'output_tokens', 0)}
+                    elif chunk.type == "content_block_delta" and hasattr(chunk.delta, "text"):
+                        content = chunk.delta.text
+                        if content:
+                            state['text'] += content
+                            yield content
+                    elif chunk.type == "message_delta":
+                        uso = chunk.usage
+                        if uso and hasattr(uso, 'output_tokens'):
+                            state['usage']['completion_tokens'] += uso.output_tokens
+                            state['usage']['total_tokens'] += uso.output_tokens
+                        if hasattr(chunk.delta, "stop_reason"):
+                            state['finish_reason'] = chunk.delta.stop_reason
+                else:
+                    # usage（若模型支持在流中返回）
                     try:
-                        fr = getattr(chunk.choices[0], 'finish_reason', None)
-                        if fr:
-                            state['finish_reason'] = fr
+                        if hasattr(chunk, 'usage') and chunk.usage:
+                            state['usage'] = {
+                                'prompt_tokens': int(getattr(chunk.usage, 'prompt_tokens', 0) or 0),
+                                'completion_tokens': int(getattr(chunk.usage, 'completion_tokens', 0) or 0),
+                                'total_tokens': int(getattr(chunk.usage, 'total_tokens', 0) or 0),
+                            }
                     except Exception:
                         pass
-
-                    delta = getattr(chunk.choices[0], 'delta', None)
-                    content = getattr(delta, 'content', None) if delta else None
-                    if content:
-                        state['text'] += content
-                        yield content
+    
+                    if chunk.choices and len(chunk.choices) > 0:
+                        try:
+                            fr = getattr(chunk.choices[0], 'finish_reason', None)
+                            if fr:
+                                state['finish_reason'] = fr
+                        except Exception:
+                            pass
+    
+                        delta = getattr(chunk.choices[0], 'delta', None)
+                        content = getattr(delta, 'content', None) if delta else None
+                        if content:
+                            state['text'] += content
+                            yield content
 
         cover_prompt = f"""
-请只生成报告封面和目录，不生成正文章节。
+请只生成报告封面，不生成目录和正文章节。
 用户需求：{user_input}
-目录必须覆盖第一章至第十章。
 """
         cover_state = {}
         for chunk in _stream_once(base_messages + [{"role": "user", "content": cover_prompt}], max_tokens=2500, state=cover_state):
@@ -2603,49 +3221,173 @@ class IntelligentAgent:
             u2 = chapter_state.get('usage') or {'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
             self._acc_usage(usage_total, u2)
             chapter_block = self._extract_single_chapter(chapter_text, chapter_no, chapter_title)
+            
+            chapter_len = self._get_text_length_without_mermaid(chapter_block)
+            completeness = self._check_chapter_completeness(chapter_block)
+            
+            if chapter_len < 1800 or completeness['needs_continuation']:
+                yield "\n[章节续写] 检测到内容不完整，正在续写...\n"
+                enrich_guide = self._build_report_context_guide(
+                    user_input=user_input,
+                    current_heading=heading,
+                    completed_heads=generated_heads[:-1],
+                    chapter_plan_heads=chapter_plan_heads,
+                    report_parts=generated_parts + [chapter_block]
+                )
+                
+                if chapter_len < 1800:
+                    enrich_prompt = f"""
+请对下面这一章进行深化扩写，仅限这一章，不得新增其它章节标题：
+
+{chapter_block}
+
+{enrich_guide}
+
+要求：
+1. 保留当前章节标题"{heading}"不变。
+2. 增加方法、步骤、约束、数据口径、风险控制、实施节奏等细节。
+3. 输出完整章节正文。
+"""
+                else:
+                    last_200_chars = chapter_block[-200:] if len(chapter_block) > 200 else chapter_block
+                    enrich_prompt = f"""
+上一章内容被截断，请继续完成"{heading}"的剩余内容。
+
+已生成内容摘要：{last_200_chars}
+
+{enrich_guide}
+
+要求：
+1. 只输出剩余内容，不要重复已输出的部分。
+2. 继续完成当前章节，不得新增其它章节标题。
+3. 确保内容完整，以完整句子结尾。
+"""
+                enrich_state = {}
+                for chunk in _stream_once(base_messages + [{"role": "user", "content": enrich_prompt}], max_tokens=6000, state=enrich_state):
+                    yield chunk
+                u3 = enrich_state.get('usage') or {'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
+                self._acc_usage(usage_total, u3)
+                enriched = enrich_state.get('text', '')
+                if chapter_len < 1800:
+                    chapter_block = self._extract_single_chapter(enriched, chapter_no, chapter_title)
+                else:
+                    continuation = enriched.strip()
+                    if continuation:
+                        chapter_block = chapter_block.rstrip() + "\n\n" + continuation
+            
             generated_parts.append(chapter_block.strip())
             yield "\n\n"
             if chapter_state.get('finish_reason'):
                 self._last_finish_reason = chapter_state.get('finish_reason')
 
+        yield "[按章节生成] 正在生成目录...\n"
+        all_chapters_text = "\n\n".join([p for p in generated_parts if p])
+        toc_text = self._generate_toc(all_chapters_text)
+        if toc_text:
+            for char in toc_text:
+                yield char
+            yield "\n\n"
+
         final_report = "\n\n".join([p for p in generated_parts if p]).strip()
+        if toc_text:
+            cover_only = generated_parts[0] if generated_parts else ""
+            chapters_only = "\n\n".join([p for p in generated_parts[1:] if p]).strip()
+            final_report = cover_only + "\n\n" + toc_text + "\n\n" + chapters_only
         total_chars = self._get_text_length_without_mermaid(final_report)
         done_mark = f"【报告已完成】\n总字数：{total_chars}字符\n包含章节：第一章至第十章（全部完成）"
         yield done_mark
         self.last_usage = usage_total
-    
+
+    def _retrieve_rag_context(self, query: str, top_k: int = 3) -> list:
+        """
+        从RAG知识库检索相关上下文
+
+        Args:
+            query: 查询文本
+            top_k: 返回前K个结果
+
+        Returns:
+            检索结果列表，每个元素包含chunk_text, score, title, filename, chunk_index
+        """
+        try:
+            from query_rag import query as rag_query
+            from pathlib import Path
+
+            rag_db_path = Path(__file__).parent / 'knowledge_base' / 'rag.db'
+            if not rag_db_path.exists():
+                print(f"[RAG] 知识库不存在: {rag_db_path}")
+                return []
+
+            print(f"[RAG] 检索查询: {query[:100]}...")
+            results = rag_query(str(rag_db_path), query, top_k=top_k)
+
+            formatted_results = []
+            for row in results:
+                formatted_results.append({
+                    'chunk_text': row.get('chunk_text', ''),
+                    'score': float(row.get('score', 0.0)),
+                    'title': row.get('title', ''),
+                    'filename': row.get('filename', ''),
+                    'chunk_index': row.get('chunk_index', 0)
+                })
+
+            print(f"[RAG] 检索到 {len(formatted_results)} 个相关文档")
+            return formatted_results
+
+        except Exception as e:
+            print(f"[RAG] 检索失败: {e}")
+            import traceback
+            traceback.print_exc()
+            return []
+
     def chat(self, user_input: str, conversation_history: Optional[list] = None) -> Tuple[str, dict]:
         """
         处理用户输入并返回模型回复
-        
+
         Args:
             user_input: 用户的自然语言输入
             conversation_history: 可选的对话历史记录
-            
+
         Returns:
             (模型的回复文本, token使用信息字典)
         """
         try:
-            # 报告请求优先走“按章节生成”链路，避免整篇一次生成导致自动缩减和循环续写。
+            # 【新增】在处理开始时检测并存储报告类型
+            report_type = self._get_report_type(user_input)
+            setattr(self, '_current_report_type', report_type)
+            print(f'[DEBUG] 检测到报告类型: {report_type}')
+
+            # RAG检索：优先从知识库获取相关上下文
+            rag_sources = self._retrieve_rag_context(user_input, top_k=3)
+            setattr(self, '_last_rag_sources', rag_sources)
+
+            # 报告请求优先走"按章节生成"链路，避免整篇一次生成导致自动缩减和循环续写。
             if self._is_report_request(user_input):
                 reply, usage_info = self._generate_report_by_chapter(user_input, conversation_history)
                 return reply, usage_info
 
             messages = []
-            
+
             # 添加系统提示词（可选）
             if self.config.system_prompt:
                 messages.append({
                     "role": "system",
                     "content": self.config.system_prompt
                 })
-            
+
             # 添加对话历史
             if conversation_history:
                 messages.extend(conversation_history)
-            
-            # 检测是否需要加载报告模板
+
+            # 构建增强输入（集成RAG上下文）
             enhanced_input = user_input
+            if rag_sources:
+                context_parts = []
+                for i, source in enumerate(rag_sources, 1):
+                    chunk_preview = source['chunk_text'][:500]
+                    context_parts.append(f"【参考文档{i}】{source['title']}\n内容: {chunk_preview}...")
+                rag_context = "\n\n".join(context_parts)
+                enhanced_input = f"""参考以下文档回答用户问题：\n\n{rag_context}\n\n用户问题: {user_input}"""
             
             # 针对自定义模型，增强提示词以生成更详细的内容
             is_custom_model = self.config.provider == ModelProvider.CUSTOM
@@ -2738,13 +3480,13 @@ class IntelligentAgent:
 ```mermaid
 xychart-beta
     title "图表标题"
-    x-axis [类别1, 类别2, 类别3]
-    y-axis "Y轴标签" 0 --> 最大值
-    bar [数据1, 数据2, 数据3]  # 或 line, area, scatter
+    x-axis ["类别1", "类别2", "类别3"]
+    y-axis "Y轴标签" 0 --> 100
+    bar [10, 20, 30]
 ```
 - **饼图**必须使用 `pie` 语法，格式如下：
 ```mermaid
-pie title 图表标题
+pie title "图表标题"
     "标签1" : 数值1
     "标签2" : 数值2
     "标签3" : 数值3
@@ -2762,25 +3504,25 @@ flowchart TD
 
 **绝对要求：每个章节都必须包含图表，不能有任何章节没有图表！在生成每个章节时，必须立即生成该章节要求的图表，不能只写文字！生成图表后必须检查语法是否正确！**
 
-- **第一章 项目概述**：**必须包含至少3-5个图表**，包括：树状图（项目结构）、饼图（投资结构）、雷达图（项目优势）、柱形图（对比分析）、折线图（发展趋势）、流程图（项目流程）、关系图（利益相关者）、组合图（综合分析）等。**⚠️ 在生成第一章时，必须立即生成至少15个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第一章 项目概述**：**必须包含至少3-5个图表**，包括：流程图（项目结构，flowchart TD）、饼图（投资结构，pie）、象限图（项目优势，quadrantChart）、柱形图（对比分析，xychart-beta bar）、折线图（发展趋势，xychart-beta line）、甘特图（项目计划，gantt）、思维导图（利益相关者，mindmap）等。**⚠️ 在生成第一章时，必须立即生成至少15个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第二章 项目建设背景及必要性**：**必须包含至少18-25个图表**，包括：折线图（历史趋势）、柱形图（市场对比）、饼图（市场分布）、面积图（累积数据）、热力图（区域分析）、散点图（相关性分析）、条形图（横向对比）、组合图（多维度分析）等。**⚠️ 在生成第二章时，必须立即生成至少18个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第二章 项目建设背景及必要性**：**必须包含至少18-25个图表**，包括：折线图（历史趋势，xychart-beta line）、柱形图（市场对比，xychart-beta bar）、饼图（市场分布，pie）、柱形图（累积数据，xychart-beta bar）、流程图（区域分析，flowchart LR）、折线图（相关性分析，xychart-beta line）、柱形图（横向对比，xychart-beta bar）、时间轴（发展历程，timeline）等。**⚠️ 在生成第二章时，必须立即生成至少18个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第三章 项目需求分析与产出方案**：**必须包含至少20-28个图表**，包括：条形图（需求优先级）、面积图（需求累积）、散点图（需求关系）、组合图（需求分析）、网络图（需求关联）、树状图（需求层级）、饼图（需求分布）、折线图（需求趋势）、流程图（需求流程）、直方图（需求分布）等。**⚠️ 在生成第三章时，必须立即生成至少20个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第三章 项目需求分析与产出方案**：**必须包含至少20-28个图表**，包括：柱形图（需求优先级，xychart-beta bar）、折线图（需求趋势，xychart-beta line）、流程图（需求关联，flowchart TD）、思维导图（需求层级，mindmap）、饼图（需求分布，pie）、流程图（需求流程，flowchart TD）、柱形图（需求分布，xychart-beta bar）等。**⚠️ 在生成第三章时，必须立即生成至少20个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第四章 项目选址与要素保障**：**必须包含至少18-25个图表**，包括：组合图（选址对比）、直方图（要素分布）、树状图（要素结构）、地理图（位置分析）、流程图（选址流程）、饼图（要素占比）、柱形图（要素对比）、雷达图（要素评估）、散点图（要素关系）、面积图（要素累积）等。**⚠️ 在生成第四章时，必须立即生成至少18个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第四章 项目选址与要素保障**：**必须包含至少18-25个图表**，包括：柱形图（选址对比，xychart-beta bar）、柱形图（要素分布，xychart-beta bar）、流程图（要素结构，flowchart TD）、流程图（选址流程，flowchart TD）、饼图（要素占比，pie）、柱形图（要素对比，xychart-beta bar）、象限图（要素评估，quadrantChart）、折线图（要素趋势，xychart-beta line）等。**⚠️ 在生成第四章时，必须立即生成至少18个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第五章 项目建设方案**：**必须包含至少22-30个图表**，包括：树状图（建设结构）、流程图（建设流程）、组合图（方案对比）、甘特图（时间计划）、网络图（系统架构）、时序图（建设时序）、状态图（建设状态）、柱形图（方案对比）、折线图（进度计划）、饼图（资源分配）、条形图（任务对比）、散点图（资源关系）等。**⚠️ 在生成第五章时，必须立即生成至少22个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第五章 项目建设方案**：**必须包含至少22-30个图表**，包括：流程图（建设结构，flowchart TD）、流程图（建设流程，flowchart TD）、柱形图（方案对比，xychart-beta bar）、甘特图（时间计划，gantt）、序列图（建设时序，sequenceDiagram）、状态图（建设状态，stateDiagram-v2）、折线图（进度计划，xychart-beta line）、饼图（资源分配，pie）等。**⚠️ 在生成第五章时，必须立即生成至少22个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第六章 项目运营方案**：**必须包含至少20-28个图表**，包括：树状图（运营结构）、饼图（运营成本）、折线图（运营趋势）、关系图（运营关系）、状态图（运营状态）、柱形图（运营对比）、面积图（运营累积）、组合图（运营分析）、流程图（运营流程）、条形图（运营指标）等。**⚠️ 在生成第六章时，必须立即生成至少20个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第六章 项目运营方案**：**必须包含至少20-28个图表**，包括：流程图（运营结构，flowchart TD）、饼图（运营成本，pie）、折线图（运营趋势，xychart-beta line）、实体关系图（运营关系，erDiagram）、状态图（运营状态，stateDiagram-v2）、柱形图（运营对比，xychart-beta bar）、折线图（运营累积，xychart-beta line）、流程图（运营流程，flowchart TD）等。**⚠️ 在生成第六章时，必须立即生成至少20个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第七章 项目投融资与财务方案**：**必须包含至少8-10个图表**（此章节应包含最多图表），包括：柱形图（投资对比、收益对比）、折线图（收益趋势、成本趋势）、瀑布图（投资构成、收益构成）、饼图（投资结构、收入构成）、面积图（累计投资、累计收益）、箱形图（风险分布、收益波动）、散点图（投资收益关系、价格需求关系）、组合图（财务综合分析）、直方图（成本分布、收益分布）、雷达图（财务指标）、树状图（财务结构）、旭日图（财务层级）、曲面图（多因素影响）、股价图（价格波动）、热力图（财务相关性）、关系图（财务关系）等。**⚠️ 在生成第七章时，必须立即生成至少40个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第七章 项目投融资与财务方案**：**必须包含至少8-10个图表**（此章节应包含最多图表），包括：柱形图（投资对比，xychart-beta bar）、折线图（收益趋势，xychart-beta line）、柱形图（投资构成，xychart-beta bar）、饼图（投资结构，pie）、折线图（累计收益，xychart-beta line）、柱形图（风险分布，xychart-beta bar）、折线图（投资收益关系，xychart-beta line）、柱形图（成本分布，xychart-beta bar）、象限图（财务指标，quadrantChart）、思维导图（财务结构，mindmap）、流程图（财务关系，flowchart LR）等。**⚠️ 在生成第七章时，必须立即生成至少40个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第八章 项目影响效果分析**：**必须包含至少20-28个图表**，包括：雷达图（影响评估）、柱形图（影响对比）、饼图（影响分布）、组合图（影响分析）、面积图（影响累积）、折线图（影响趋势）、散点图（影响关系）、条形图（影响指标）、树状图（影响结构）、热力图（影响相关性）、曲面图（多因素影响）等。**⚠️ 在生成第八章时，必须立即生成至少20个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第八章 项目影响效果分析**：**必须包含至少20-28个图表**，包括：象限图（影响评估，quadrantChart）、柱形图（影响对比，xychart-beta bar）、饼图（影响分布，pie）、折线图（影响趋势，xychart-beta line）、流程图（影响关系，flowchart TD）、柱形图（影响指标，xychart-beta bar）、思维导图（影响结构，mindmap）、时间轴（影响时序，timeline）等。**⚠️ 在生成第八章时，必须立即生成至少20个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第九章 项目风险管控方案**：**必须包含至少22-30个图表**，包括：雷达图（风险分布）、箱形图（风险影响范围）、条形图（风险等级对比）、热力图（风险相关性）、关系图（风险关系）、树状图（风险结构）、柱形图（风险对比）、折线图（风险趋势）、饼图（风险分布）、散点图（风险关系）、组合图（风险分析）、流程图（风险应对流程）等。**⚠️ 在生成第九章时，必须立即生成至少22个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第九章 项目风险管控方案**：**必须包含至少22-30个图表**，包括：象限图（风险分布，quadrantChart）、柱形图（风险影响，xychart-beta bar）、柱形图（风险等级，xychart-beta bar）、流程图（风险关系，flowchart TD）、思维导图（风险结构，mindmap）、折线图（风险趋势，xychart-beta line）、饼图（风险分布，pie）、流程图（风险应对流程，flowchart TD）等。**⚠️ 在生成第九章时，必须立即生成至少22个图表，不能只写文字！生成后检查Mermaid语法！**
 
-- **第十章 研究结论及建议**：**必须包含至少20-28个图表**，包括：组合图（综合评估）、旭日图（建议优先级）、曲面图（多因素影响）、流程图（实施流程）、关系图（建议关系）、树状图（建议结构）、雷达图（综合评估）、柱形图（建议对比）、折线图（实施趋势）、饼图（建议分布）等。**⚠️ 在生成第十章时，必须立即生成至少20个图表，不能只写文字！生成后检查Mermaid语法！**
+- **第十章 研究结论及建议**：**必须包含至少20-28个图表**，包括：柱形图（综合评估，xychart-beta bar）、思维导图（建议优先级，mindmap）、流程图（实施流程，flowchart TD）、流程图（建议关系，flowchart LR）、思维导图（建议结构，mindmap）、象限图（综合评估，quadrantChart）、折线图（实施趋势，xychart-beta line）、饼图（建议分布，pie）等。**⚠️ 在生成第十章时，必须立即生成至少20个图表，不能只写文字！生成后检查Mermaid语法！**
 
 **⚠️⚠️⚠️ 图表总数要求（极其重要，绝对不能违反）⚠️⚠️⚠️：**
 - **整个报告必须包含至少30-50个图表**，这是硬性要求，不能少于30个
@@ -2818,9 +3560,9 @@ flowchart TD
 ```mermaid
 xychart-beta
     title "图表标题"
-    x-axis [类别1, 类别2, 类别3]
-    y-axis "Y轴标签" 0 --> 最大值
-    bar [数据1, 数据2, 数据3]
+    x-axis ["类别1", "类别2", "类别3"]
+    y-axis "Y轴标签" 0 --> 100
+    bar [10, 20, 30]
 ```
 ```
 - **⚠️ 生成图表后，必须检查Mermaid语法是否正确，确保图表能够正常渲染！如果语法有错误，必须修正！**
@@ -2947,23 +3689,47 @@ xychart-beta
                 if max_tokens < 16000:
                     max_tokens = 16000
             
-            response = self.client.chat.completions.create(
-                model=self.config.model_name,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
-            
-            # 提取回复
-            reply = response.choices[0].message.content
-            finish_reason = response.choices[0].finish_reason
-            
-            # 提取token使用信息
-            usage_info = {
-                'prompt_tokens': getattr(response.usage, 'prompt_tokens', 0) if hasattr(response, 'usage') and response.usage else 0,
-                'completion_tokens': getattr(response.usage, 'completion_tokens', 0) if hasattr(response, 'usage') and response.usage else 0,
-                'total_tokens': getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') and response.usage else 0
-            }
+            if self.config.provider == ModelProvider.ANTHROPIC:
+                sys_msg = ""
+                anthropic_messages = []
+                for msg in messages:
+                    if msg.get("role") == "system":
+                        sys_msg = msg.get("content", "")
+                    else:
+                        anthropic_messages.append(msg)
+                
+                response = self.client.messages.create(
+                    model=self.config.model_name,
+                    system=sys_msg,
+                    messages=anthropic_messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                reply = response.content[0].text if response and hasattr(response, 'content') and len(response.content) > 0 else ""
+                finish_reason = response.stop_reason if hasattr(response, 'stop_reason') else None
+                usage_info = {
+                    'prompt_tokens': getattr(response.usage, 'input_tokens', 0) if hasattr(response, 'usage') and response.usage else 0,
+                    'completion_tokens': getattr(response.usage, 'output_tokens', 0) if hasattr(response, 'usage') and response.usage else 0,
+                    'total_tokens': (getattr(response.usage, 'input_tokens', 0) + getattr(response.usage, 'output_tokens', 0)) if hasattr(response, 'usage') and response.usage else 0
+                }
+            else:
+                response = self.client.chat.completions.create(
+                    model=self.config.model_name,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens
+                )
+                # 提取回复
+                reply = response.choices[0].message.content
+                finish_reason = response.choices[0].finish_reason
+                
+                # 提取token使用信息
+                usage_info = {
+                    'prompt_tokens': getattr(response.usage, 'prompt_tokens', 0) if hasattr(response, 'usage') and response.usage else 0,
+                    'completion_tokens': getattr(response.usage, 'completion_tokens', 0) if hasattr(response, 'usage') and response.usage else 0,
+                    'total_tokens': getattr(response.usage, 'total_tokens', 0) if hasattr(response, 'usage') and response.usage else 0
+                }
+
             self.last_usage = usage_info
             
             # 检测是否被截断，如果是报告请求则自动续写
@@ -3021,15 +3787,24 @@ API地址: {self.config.base_url}
     def chat_stream(self, user_input: str, conversation_history: Optional[list] = None):
         """
         流式处理用户输入并返回模型回复（逐字输出）
-        
+
         Args:
             user_input: 用户的自然语言输入
             conversation_history: 可选的对话历史记录
-            
+
         Yields:
             模型的回复文本片段
         """
         try:
+            # 【新增】在处理开始时检测并存储报告类型
+            report_type = self._get_report_type(user_input)
+            setattr(self, '_current_report_type', report_type)
+            print(f'[DEBUG] [STREAM] 检测到报告类型: {report_type}')
+
+            # RAG检索：优先从知识库获取相关上下文
+            rag_sources = self._retrieve_rag_context(user_input, top_k=3)
+            setattr(self, '_last_rag_sources', rag_sources)
+
             # 流式报告请求改为章节级流式输出，减少截断与跨章串写。
             if self._is_report_request(user_input):
                 for chunk in self._generate_report_by_chapter_stream(user_input, conversation_history):
@@ -3037,18 +3812,25 @@ API地址: {self.config.base_url}
                 return
 
             messages = []
-            
+
             if self.config.system_prompt:
                 messages.append({
                     "role": "system",
                     "content": self.config.system_prompt
                 })
-            
+
             if conversation_history:
                 messages.extend(conversation_history)
-            
-            # 检测是否需要加载报告模板
+
+            # 构建增强输入（集成RAG上下文）
             enhanced_input = user_input
+            if rag_sources:
+                context_parts = []
+                for i, source in enumerate(rag_sources, 1):
+                    chunk_preview = source['chunk_text'][:500]
+                    context_parts.append(f"【参考{i}】{source['title']}\n{chunk_preview}...")
+                rag_context = "\n\n".join(context_parts)
+                enhanced_input = f"""参考文档:\n{rag_context}\n\n问题: {user_input}"""
             
             # 针对自定义模型，增强提示词以生成更详细的内容
             is_custom_model = self.config.provider == ModelProvider.CUSTOM
@@ -3390,13 +4172,33 @@ API地址: {self.config.base_url}
                     max_tokens = 16000
             
             # 针对自定义模型，设置更长的超时时间（通过线程检测）
-            stream = self.client.chat.completions.create(
-                model=self.config.model_name,
-                messages=messages,
-                temperature=temperature,
-                max_tokens=max_tokens,
-                stream=True
-            )
+            # 准备基础流发信
+            stream = None
+            if self.config.provider == ModelProvider.ANTHROPIC:
+                # Anthropic 要求剥离出 system
+                system_str = ""
+                anthropic_messages = []
+                for msg in messages:
+                    if msg['role'] == "system":
+                        system_str += msg['content'] + "\n"
+                    else:
+                        anthropic_messages.append({"role": msg['role'], "content": msg['content']})
+                stream = self.client.messages.create(
+                    model=self.config.model_name,
+                    system=system_str.strip() if system_str else None,
+                    messages=anthropic_messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    stream=True
+                )
+            else:
+                stream = self.client.chat.completions.create(
+                    model=self.config.model_name,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                    stream=True
+                )
             
             full_content = ""
             finish_reason = None
@@ -3409,8 +4211,8 @@ API地址: {self.config.base_url}
                 while not timeout_occurred[0]:
                     time.sleep(3)  # 每3秒检查一次
                     current_time = time.time()
-                    # 如果超过90秒没有收到数据，或者总时间超过1200秒（20分钟），则超时
-                    if (current_time - last_chunk_time[0] > 90) or (current_time - stream_start_time > 1200):
+                    # 如果超过90秒没有收到数据则超时
+                    if (current_time - last_chunk_time[0] > 90):
                         timeout_occurred[0] = True
                         break
             
@@ -3431,101 +4233,123 @@ API地址: {self.config.base_url}
                     
                     current_time = time.time()
                     last_chunk_time[0] = current_time  # 更新最后收到数据的时间
-                    
-                    # 检查总时间是否超时（20分钟）
-                    if current_time - stream_start_time > 1200:
-                        yield "\n\n[警告] 流式输出总时间超时（超过20分钟），已停止接收数据。"
-                        break
-                    
-                    # 检查是否有usage信息（可能在chunk的多个位置）
-                    chunk_has_usage = False
-                    usage_data = None
-                    
-                    # 方式1: 检查chunk.usage
-                    if hasattr(chunk, 'usage') and chunk.usage:
-                        usage_data = chunk.usage
-                        chunk_has_usage = True
-                        last_chunk_with_usage = chunk
-                    
-                    # 方式2: 检查chunk本身是否有usage属性（某些API格式）
-                    if not chunk_has_usage and hasattr(chunk, 'usage'):
-                        try:
 
-                            if chunk.usage is not None:
-                                usage_data = chunk.usage
-                                chunk_has_usage = True
-                                last_chunk_with_usage = chunk
-                        except Exception:
-                            pass
-                    
-                    # 方式3: 检查chunk的字典形式（某些SDK版本）
-                    if not chunk_has_usage:
-                        try:
-
-                            chunk_dict = chunk.model_dump() if hasattr(chunk, 'model_dump') else vars(chunk)
-                            if 'usage' in chunk_dict and chunk_dict['usage']:
-                                usage_data = chunk_dict['usage']
-                                chunk_has_usage = True
-                                last_chunk_with_usage = chunk
-                        except Exception:
-                            pass
-                    
-                    if chunk_has_usage and usage_data:
-                        # 提取token信息
-                        try:
-
-                            if hasattr(usage_data, 'prompt_tokens'):
-                                usage_info = {
-                                    'prompt_tokens': getattr(usage_data, 'prompt_tokens', 0),
-                                    'completion_tokens': getattr(usage_data, 'completion_tokens', 0),
-                                    'total_tokens': getattr(usage_data, 'total_tokens', 0)
-                                }
-                            elif isinstance(usage_data, dict):
-                                usage_info = {
-                                    'prompt_tokens': usage_data.get('prompt_tokens', 0),
-                                    'completion_tokens': usage_data.get('completion_tokens', 0),
-                                    'total_tokens': usage_data.get('total_tokens', 0)
-                                }
-                            else:
-                                usage_info = {
-                                    'prompt_tokens': 0,
-                                    'completion_tokens': 0,
-                                    'total_tokens': 0
-                                }
-                            
-                            # 只有当token信息不为0时才更新（避免被0覆盖）
-                            if usage_info['total_tokens'] > 0:
-                                self.last_usage = usage_info
-                        except Exception as e:
-                            print(f"[警告] 提取token信息失败: {e}", flush=True)
-                    
-                    if chunk.choices and len(chunk.choices) > 0:
-                        if chunk.choices[0].delta.content is not None:
-                            content = chunk.choices[0].delta.content
-                            full_content += content
-                            yield content
-                            
-                            # 实时检测完成标记
-                            _main_markers = ["研究报告完", "可行性研究报告完", "总字数统计:", "总行数统计:", "Mermaid图表数量:"]
-                            _main_check = full_content[-1000:] if len(full_content) > 1000 else full_content
-                            if any(m in _main_check for m in _main_markers) and len(full_content) >= 40000:
-                                print("[实时检测] 初始生成检测到完成标记，停止", flush=True)
-                                finish_reason = "stop"
-                                break
-                        
-                        # 检查finish_reason（兼容多种API格式）
-                        chunk_finish_reason = None
-                        if hasattr(chunk.choices[0], 'finish_reason'):
-                            chunk_finish_reason = chunk.choices[0].finish_reason
-                        elif hasattr(chunk.choices[0], 'delta') and hasattr(chunk.choices[0].delta, 'finish_reason'):
-                            chunk_finish_reason = chunk.choices[0].delta.finish_reason
-                        
-                        if chunk_finish_reason:
-                            finish_reason = chunk_finish_reason
-                            # 保存finish_reason供后续使用
+                    # ======= Anthropic 序列流解析分支 =======
+                    if self.config.provider == ModelProvider.ANTHROPIC:
+                        if chunk.type == "message_start":
+                            uso = chunk.message.usage
+                            if uso:
+                                self.last_usage = {'prompt_tokens': getattr(uso, 'input_tokens', 0), 'completion_tokens': getattr(uso, 'output_tokens', 0), 'total_tokens': getattr(uso, 'input_tokens', 0) + getattr(uso, 'output_tokens', 0)}
+                        elif chunk.type == "content_block_delta" and chunk.delta.type == "text_delta":
+                            content = chunk.delta.text
+                            if content:
+                                full_content += content
+                                yield content
+                        elif chunk.type == "message_delta":
+                            uso = chunk.usage
+                            if uso and hasattr(uso, 'output_tokens'):
+                                if not self.last_usage: self.last_usage = {'prompt_tokens': 0, 'completion_tokens': 0, 'total_tokens': 0}
+                                self.last_usage['completion_tokens'] += uso.output_tokens
+                                self.last_usage['total_tokens'] += uso.output_tokens
+                            if chunk.delta and hasattr(chunk.delta, "stop_reason"):
+                                finish_reason = chunk.delta.stop_reason
+                                if finish_reason in ["end_turn", "stop_sequence"]:
+                                    finish_reason = "stop"
+                                elif finish_reason == "max_tokens":
+                                    finish_reason = "length"
+                        elif chunk.type == "message_stop":
+                            print(f"\n[信息] Anthropic 流式输出完成，finish_reason: {finish_reason}", flush=True)
                             self._last_finish_reason = finish_reason
-                            print(f"\n[信息] 流式输出完成，finish_reason: {finish_reason}", flush=True)
                             break
+
+                    # ======= OpenAI 序列流解析分支 =======
+                    else:
+                        # 检查是否有usage信息（可能在chunk的多个位置）
+                        chunk_has_usage = False
+                        usage_data = None
+                        
+                        # 方式1: 检查chunk.usage
+                        if hasattr(chunk, 'usage') and chunk.usage:
+                            usage_data = chunk.usage
+                            chunk_has_usage = True
+                            last_chunk_with_usage = chunk
+                        
+                        # 方式2: 检查chunk本身是否有usage属性（某些API格式）
+                        if not chunk_has_usage and hasattr(chunk, 'usage'):
+                            try:
+                                if chunk.usage is not None:
+                                    usage_data = chunk.usage
+                                    chunk_has_usage = True
+                                    last_chunk_with_usage = chunk
+                            except Exception:
+                                pass
+                        
+                        # 方式3: 检查chunk的字典形式（某些SDK版本）
+                        if not chunk_has_usage:
+                            try:
+                                chunk_dict = chunk.model_dump() if hasattr(chunk, 'model_dump') else vars(chunk)
+                                if 'usage' in chunk_dict and chunk_dict['usage']:
+                                    usage_data = chunk_dict['usage']
+                                    chunk_has_usage = True
+                                    last_chunk_with_usage = chunk
+                            except Exception:
+                                pass
+                        
+                        if chunk_has_usage and usage_data:
+                            # 提取token信息
+                            try:
+                                if hasattr(usage_data, 'prompt_tokens'):
+                                    usage_info = {
+                                        'prompt_tokens': getattr(usage_data, 'prompt_tokens', 0),
+                                        'completion_tokens': getattr(usage_data, 'completion_tokens', 0),
+                                        'total_tokens': getattr(usage_data, 'total_tokens', 0)
+                                    }
+                                elif isinstance(usage_data, dict):
+                                    usage_info = {
+                                        'prompt_tokens': usage_data.get('prompt_tokens', 0),
+                                        'completion_tokens': usage_data.get('completion_tokens', 0),
+                                        'total_tokens': usage_data.get('total_tokens', 0)
+                                    }
+                                else:
+                                    usage_info = {
+                                        'prompt_tokens': 0,
+                                        'completion_tokens': 0,
+                                        'total_tokens': 0
+                                    }
+                                
+                                # 只有当token信息不为0时才更新（避免被0覆盖）
+                                if usage_info['total_tokens'] > 0:
+                                    self.last_usage = usage_info
+                            except Exception as e:
+                                print(f"[警告] 提取token信息失败: {e}", flush=True)
+                        
+                        if chunk.choices and len(chunk.choices) > 0:
+                            if chunk.choices[0].delta.content is not None:
+                                content = chunk.choices[0].delta.content
+                                full_content += content
+                                yield content
+                                
+                                # 实时检测完成标记
+                                _main_markers = ["研究报告完", "可行性研究报告完", "总字数统计:", "总行数统计:", "Mermaid图表数量:"]
+                                _main_check = full_content[-1000:] if len(full_content) > 1000 else full_content
+                                if any(m in _main_check for m in _main_markers) and len(full_content) >= 40000:
+                                    print("[实时检测] 初始生成检测到完成标记，停止", flush=True)
+                                    finish_reason = "stop"
+                                    break
+                            
+                            # 检查finish_reason（兼容多种API格式）
+                            chunk_finish_reason = None
+                            if hasattr(chunk.choices[0], 'finish_reason'):
+                                chunk_finish_reason = chunk.choices[0].finish_reason
+                            elif hasattr(chunk.choices[0], 'delta') and hasattr(chunk.choices[0].delta, 'finish_reason'):
+                                chunk_finish_reason = chunk.choices[0].delta.finish_reason
+                            
+                            if chunk_finish_reason:
+                                finish_reason = chunk_finish_reason
+                                # 保存finish_reason供后续使用
+                                self._last_finish_reason = finish_reason
+                                print(f"\n[信息] 流式输出完成，finish_reason: {finish_reason}", flush=True)
+                                break
                 
                 # 确保finish_reason被保存（即使循环正常结束）
                 if finish_reason:

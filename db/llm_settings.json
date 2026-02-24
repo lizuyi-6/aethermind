@@ -1,0 +1,8 @@
+{
+  "provider": "anthropic",
+  "api_key": "sk-sp-be54ade951c84a19a2be9c94b559bd5d",
+  "base_url": "https://coding.dashscope.aliyuncs.com/apps/anthropic",
+  "model_name": "qwen3.5-plus",
+  "temperature": 0.7,
+  "max_tokens": 4096
+}

@@ -1027,8 +1027,175 @@ class FeasibilityReportApp {
     }
 
     escapeRegex(str) {
-        // 转义正则表达式特殊字符
         return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    unescapeHtml(html) {
+        const div = document.createElement('div');
+        div.innerHTML = html;
+        return div.textContent;
+    }
+
+    normalizeMermaidSnippet(code) {
+        const raw = String(code || '').replace(/\r\n/g, '\n').trim();
+        if (!raw) {
+            return '';
+        }
+        const lines = raw.split('\n');
+        let start = 0;
+        while (start < lines.length) {
+            const line = lines[start].trim();
+            if (!line) {
+                start += 1;
+                continue;
+            }
+            if (/^(code\s*block\s*\d+|流程图\s*\d*|图表\s*\d*)[:：-]?$/i.test(line)) {
+                start += 1;
+                continue;
+            }
+            break;
+        }
+        return lines.slice(start).join('\n').trim();
+    }
+
+    sanitizeMermaidCode(rawCode) {
+        if (!rawCode) return rawCode;
+        let code = rawCode.trim();
+        code = code.replace(/：/g, ':').replace(/，/g, ',').replace(/。/g, '.');
+        code = code.replace(/（/g, '(').replace(/）/g, ')');
+        code = code.replace(/[""]/g, '"').replace(/['']/g, "'");
+        code = code.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+$/gm, '');
+        const lines = code.split('\n');
+        if (!lines.length) return code;
+        const firstLine = lines[0].trim();
+        const firstToken = firstLine.toLowerCase().split(/[\s([\-]/)[0];
+        const VALID_TYPES = new Set([
+            'xychart-beta', 'pie', 'flowchart', 'graph', 'gantt',
+            'sequencediagram', 'classdiagram', 'statediagram', 'erdiagram',
+            'gitgraph', 'journey', 'quadrantchart', 'mindmap', 'timeline',
+            'c4context', 'c4container', 'c4component', 'requirementdiagram', '%%{init',
+        ]);
+        if (firstToken && !VALID_TYPES.has(firstToken)) {
+            const label = firstLine.replace(/"/g, "'");
+            return `flowchart LR\n    A["${label}（图表类型不支持直接渲染）"]`;
+        }
+        if (firstToken === 'xychart-beta') {
+            return lines.map(line => {
+                const t = line.trim().toLowerCase();
+                if (t.startsWith('x-axis') && line.includes('[') && !line.includes('"')) {
+                    return line.replace(/\[([^\]]+)\]/, (_, inner) => {
+                        const parts = inner.split(',').map(v => {
+                            const val = v.trim();
+                            return /^[\d.]+$/.test(val) ? val : `"${val}"`;
+                        });
+                        return `[${parts.join(', ')}]`;
+                    });
+                }
+                if (/^\s*scatter\s/.test(line)) return line.replace('scatter', 'line');
+                if (/^\s*area\s/.test(line)) return line.replace('area', 'bar');
+                if (/^\s*y-axis\s/.test(line)) {
+                    if (!line.includes('"') && /[^\d\s\-.,]/.test(line)) {
+                        return line.replace(/y-axis\s+/i, 'y-axis "').replace(/$/, '"');
+                    }
+                }
+                if (/^\s*title\s/.test(line)) {
+                    const titleMatch = line.match(/^(\s*title\s+)(.+)$/i);
+                    if (titleMatch && !titleMatch[2].startsWith('"')) {
+                        return `${titleMatch[1]}"${titleMatch[2].trim()}"`;
+                    }
+                }
+                return line;
+            }).join('\n');
+        }
+        if (firstToken === 'gantt') {
+            let hasDateFormat = false;
+            const fixedLines = lines.map((line, idx) => {
+                const t = line.trim().toLowerCase();
+                if (t.startsWith('dateformat')) {
+                    hasDateFormat = true;
+                    let formatMatch = line.match(/dateFormat\s+(\S+)/i);
+                    if (formatMatch) {
+                        let format = formatMatch[1];
+                        format = format.replace(/YYYY/g, 'YYYY').replace(/YY/g, 'YY');
+                        format = format.replace(/MM/g, 'MM').replace(/DD/g, 'DD');
+                        return `dateFormat ${format}`;
+                    }
+                }
+                if (t.includes('axisformat')) {
+                    let formatMatch = line.match(/axisFormat\s+(\S+)/i);
+                    if (formatMatch) {
+                        let format = formatMatch[1];
+                        return `axisFormat ${format}`;
+                    }
+                }
+                return line;
+            });
+            if (!hasDateFormat) {
+                fixedLines.splice(1, 0, 'dateFormat YYYY-MM-DD');
+            }
+            return fixedLines.join('\n');
+        }
+        if (firstToken === 'pie') {
+            const fixedLines = [];
+            let hasTitle = false;
+            lines.forEach((line, idx) => {
+                const t = line.trim().toLowerCase();
+                if (t === 'pie') {
+                    fixedLines.push(line);
+                    return;
+                }
+                if (t.startsWith('title') && idx === 1) {
+                    hasTitle = true;
+                    let titleMatch = line.match(/^(\s*title\s+)(.+)$/i);
+                    if (titleMatch) {
+                        let title = titleMatch[2].trim();
+                        if (!title.startsWith('"') && !title.startsWith("'")) {
+                            fixedLines.push(`${titleMatch[1]}"${title}"`);
+                        } else {
+                            fixedLines.push(line);
+                        }
+                    } else {
+                        fixedLines.push(line);
+                    }
+                    return;
+                }
+                if (t.includes(':') && !t.startsWith('title')) {
+                    let colonMatch = line.match(/^(\s*)([^:]+)\s*:\s*(.+)$/);
+                    if (colonMatch) {
+                        let key = colonMatch[2].trim();
+                        let value = colonMatch[3].trim();
+                        if (!key.startsWith('"') && !key.startsWith("'")) {
+                            key = `"${key}"`;
+                        }
+                        let numValue = parseFloat(value);
+                        if (isNaN(numValue)) {
+                            numValue = 0;
+                        }
+                        fixedLines.push(`${colonMatch[1]}${key} : ${numValue}`);
+                        return;
+                    }
+                }
+                fixedLines.push(line);
+            });
+            return fixedLines.join('\n');
+        }
+        return code;
+    }
+
+    isLikelyMermaidSnippet(code, language = '') {
+        const lang = String(language || '').toLowerCase().trim();
+        const normalized = this.normalizeMermaidSnippet(code);
+        if (!normalized) {
+            return false;
+        }
+        const knownLangs = ['mermaid', 'graph', 'flowchart', 'gantt', 'pie', 'sequencediagram',
+            'classdiagram', 'statediagram', 'erdiagram', 'gitgraph', 'journey', 'xychart',
+            'xychart-beta', 'quadrantchart', 'mindmap', 'timeline'];
+        if (knownLangs.includes(lang)) {
+            return true;
+        }
+        const head = normalized.split('\n').slice(0, 4).join('\n');
+        return /(%%\{init\}|^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|gitgraph|mindmap|timeline|xychart-beta)\b)/im.test(head);
     }
 
     processMarkdown(markdown) {
@@ -1042,33 +1209,21 @@ class FeasibilityReportApp {
         const codeBlocks = [];
         
         // 先处理完整的代码块（包含换行的标准格式）
-        html = html.replace(/```(\w+)?\s*\n([\s\S]*?)```/g, (match, lang, code) => {
+        html = html.replace(/```([^\n`]*)\s*\n([\s\S]*?)```/g, (match, lang, code) => {
             if (match.includes('CODE_BLOCK_')) {
                 return match;
             }
             const id = `CODE_BLOCK_${codeBlocks.length}`;
             const language = (lang || '').toLowerCase().trim();
-            // 增强Mermaid检测：即使语言标记不是mermaid，如果代码内容包含Mermaid语法，也识别为Mermaid
-            const codeContent = code.trim();
-            const isMermaidContent = codeContent.includes('xychart-beta') || 
-                                     codeContent.includes('pie title') || 
-                                     codeContent.includes('flowchart') || 
-                                     codeContent.includes('graph TD') || 
-                                     codeContent.includes('graph LR') ||
-                                     codeContent.includes('gantt') ||
-                                     codeContent.includes('sequenceDiagram') ||
-                                     codeContent.includes('classDiagram') ||
-                                     codeContent.includes('stateDiagram') ||
-                                     codeContent.includes('erDiagram') ||
-                                     codeContent.includes('gitgraph') ||
-                                     codeContent.includes('journey');
-            
+            const codeContent = this.normalizeMermaidSnippet(code.trim());
+            const isMermaid = this.isLikelyMermaidSnippet(codeContent, language);
+
             codeBlocks.push({
                 id: id,
                 lang: language,
                 code: codeContent,
-                isMermaid: language === 'mermaid' || isMermaidContent,
-                isChart: ['mermaid', 'graph', 'chart'].includes(language) || isMermaidContent
+                isMermaid: isMermaid,
+                isChart: isMermaid || ['chart'].includes(language)
             });
             return id;
         });
@@ -1090,7 +1245,7 @@ class FeasibilityReportApp {
         });
         
         // 处理流式输出时未完成的代码块
-        const incompletePattern = /```(\w+)?\s*\n([\s\S]*?)$/;
+        const incompletePattern = /```([^\n`]*)\s*\n([\s\S]*?)$/;
         const lastCodeBlockMatch = html.match(incompletePattern);
         if (lastCodeBlockMatch && 
             !lastCodeBlockMatch[0].includes('CODE_BLOCK_') && 
@@ -1098,27 +1253,15 @@ class FeasibilityReportApp {
             lastCodeBlockMatch[2].trim().length > 0) {
             const id = `CODE_BLOCK_${codeBlocks.length}`;
             const language = (lastCodeBlockMatch[1] || '').toLowerCase().trim();
-            const incompleteCode = lastCodeBlockMatch[2].trim();
-            // 增强Mermaid检测：即使语言标记不是mermaid，如果代码内容包含Mermaid语法，也识别为Mermaid
-            const isMermaidContent = incompleteCode.includes('xychart-beta') || 
-                                     incompleteCode.includes('pie title') || 
-                                     incompleteCode.includes('flowchart') || 
-                                     incompleteCode.includes('graph TD') || 
-                                     incompleteCode.includes('graph LR') ||
-                                     incompleteCode.includes('gantt') ||
-                                     incompleteCode.includes('sequenceDiagram') ||
-                                     incompleteCode.includes('classDiagram') ||
-                                     incompleteCode.includes('stateDiagram') ||
-                                     incompleteCode.includes('erDiagram') ||
-                                     incompleteCode.includes('gitgraph') ||
-                                     incompleteCode.includes('journey');
-            
+            const incompleteCode = this.normalizeMermaidSnippet(lastCodeBlockMatch[2].trim());
+            const isMermaid = this.isLikelyMermaidSnippet(incompleteCode, language);
+
             codeBlocks.push({
                 id: id,
                 lang: language,
                 code: incompleteCode,
-                isMermaid: language === 'mermaid' || isMermaidContent,
-                isChart: ['mermaid', 'graph', 'chart'].includes(language) || isMermaidContent,
+                isMermaid: isMermaid,
+                isChart: isMermaid || ['chart'].includes(language),
                 incomplete: true
             });
             html = html.replace(incompletePattern, id);
@@ -1295,18 +1438,26 @@ class FeasibilityReportApp {
 
         // 恢复代码块（支持图表渲染）
         codeBlocks.forEach(item => {
-            let replacement = '';
-            if (item.isMermaid) {
-                // Mermaid 图表
-                const mermaidId = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                replacement = `<div class="mermaid-container" id="${mermaidId}">${this.escapeHtml(item.code)}</div>`;
-            } else {
-                // 普通代码块
-                const langClass = item.lang ? ` class="language-${item.lang}"` : '';
-                replacement = `<pre><code${langClass}>${this.escapeHtml(item.code)}</code></pre>`;
+            let replacement = item._replacement || '';
+            if (!replacement) {
+                if (item.isMermaid) {
+                    const sanitizedCode = this.sanitizeMermaidCode(item.code);
+                    replacement = `<div class="mermaid-container" data-mermaid-code="${this.escapeHtml(sanitizedCode).replace(/"/g, '&quot;')}"><pre class="mermaid-code-preview">${this.escapeHtml(sanitizedCode)}</pre></div>`;
+                } else if (item.isChart && item.lang === 'graph') {
+                    const langClass = item.lang ? ` class="language-${item.lang}"` : '';
+                    replacement = `<pre><code${langClass}>${this.escapeHtml(item.code)}</code></pre>`;
+                } else {
+                    const langClass = item.lang ? ` class="language-${item.lang}"` : '';
+                    replacement = `<pre><code${langClass}>${this.escapeHtml(item.code)}</code></pre>`;
+                }
+                item._replacement = replacement;
             }
             const regex = new RegExp(this.escapeRegex(item.id), 'g');
+            const beforeReplace = html;
             html = html.replace(regex, replacement);
+            if (html === beforeReplace && html.includes(item.id)) {
+                console.warn('代码块占位符未替换:', item.id, '在内容中:', html.substring(html.indexOf(item.id) - 50, html.indexOf(item.id) + 50));
+            }
         });
 
         // 段落处理
@@ -1359,13 +1510,9 @@ class FeasibilityReportApp {
 
         // 后处理：确保所有代码块占位符都被替换
         codeBlocks.forEach(item => {
-            let replacement = '';
-            if (item.isMermaid) {
-                const mermaidId = `mermaid-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-                replacement = `<div class="mermaid-container" id="${mermaidId}">${this.escapeHtml(item.code)}</div>`;
-            } else {
-                const langClass = item.lang ? ` class="language-${item.lang}"` : '';
-                replacement = `<pre><code${langClass}>${this.escapeHtml(item.code)}</code></pre>`;
+            const replacement = item._replacement || '';
+            if (!replacement) {
+                return;
             }
             const regex = new RegExp(this.escapeRegex(item.id), 'g');
             html = html.replace(regex, replacement);
@@ -1379,10 +1526,8 @@ class FeasibilityReportApp {
     }
 
     renderMermaidCharts(container) {
-        // 渲染 Mermaid 图表
         if (typeof mermaid === 'undefined') {
-            console.warn('Mermaid 库未加载');
-            // 延迟重试
+            console.warn('[图表渲染] Mermaid 库未加载');
             setTimeout(() => {
                 if (typeof mermaid !== 'undefined') {
                     this.renderMermaidCharts(container);
@@ -1391,7 +1536,6 @@ class FeasibilityReportApp {
             return;
         }
         
-        // 确保 Mermaid 已初始化
         if (typeof mermaid.initialize === 'function') {
             try {
                 mermaid.initialize({ 
@@ -1401,20 +1545,17 @@ class FeasibilityReportApp {
                     securityLevel: 'strict'
                 });
             } catch (e) {
-                console.warn('Mermaid 初始化警告:', e);
+                console.warn('[图表渲染] Mermaid 初始化警告:', e);
             }
         }
         
-        const mermaidContainers = container.querySelectorAll('.mermaid-container');
+        let mermaidContainers = container.querySelectorAll('.mermaid-container');
         console.log(`[图表渲染] 找到 ${mermaidContainers.length} 个图表容器`);
         
         if (mermaidContainers.length === 0) {
-            console.warn('[图表渲染] 未找到图表容器，检查是否有未处理的代码块...');
-            // 检查是否有未处理的 mermaid 代码块
             const codeBlocks = container.querySelectorAll('pre code');
             codeBlocks.forEach(block => {
                 const code = block.textContent.trim();
-                // 检查是否是 mermaid 代码（增强检测，支持所有Mermaid图表类型）
                 if (code && (
                     code.includes('graph') || 
                     code.includes('pie') || 
@@ -1426,23 +1567,8 @@ class FeasibilityReportApp {
                     code.includes('stateDiagram') ||
                     code.includes('erDiagram') ||
                     code.includes('gitgraph') ||
-                    code.includes('journey') ||
-                    code.includes('requirement') ||
-                    code.includes('quadrantChart') ||
-                    code.includes('mindmap') ||
-                    code.includes('timeline') ||
-                    code.includes('C4Context') ||
-                    code.includes('C4Container') ||
-                    code.includes('C4Component') ||
-                    code.includes('pie chart') ||
-                    code.includes('bar chart') ||
-                    code.includes('line chart') ||
-                    code.includes('柱形图') ||
-                    code.includes('折线图') ||
-                    code.includes('饼图') ||
                     (code.startsWith('%%') && code.includes('init'))
                 )) {
-                    // 创建 mermaid 容器
                     const mermaidContainer = document.createElement('div');
                     mermaidContainer.className = 'mermaid-container';
                     mermaidContainer.textContent = code;
@@ -1451,91 +1577,106 @@ class FeasibilityReportApp {
                     }
                 }
             });
-            // 重新查找容器
             mermaidContainers = container.querySelectorAll('.mermaid-container');
             console.log(`[图表渲染] 重新查找后找到 ${mermaidContainers.length} 个图表容器`);
-            if (mermaidContainers.length === 0) {
-                return;
-            }
         }
         
-        mermaidContainers.forEach((container, index) => {
-            // 跳过已经渲染过的图表
-            if (container.classList.contains('mermaid-rendered')) {
+        const directMermaidElements = container.querySelectorAll('.mermaid:not(.mermaid-rendered)');
+        if (directMermaidElements.length > 0) {
+            console.log(`[图表渲染] 找到 ${directMermaidElements.length} 个直接 mermaid 元素`);
+            directMermaidElements.forEach((el, index) => {
+                try {
+                    if (typeof mermaid.run === 'function') {
+                        mermaid.run({
+                            nodes: [el],
+                            suppressErrors: true
+                        }).then(() => {
+                            console.log(`[图表渲染] 直接 mermaid 元素 ${index + 1} 渲染成功`);
+                            el.classList.add('mermaid-rendered');
+                        }).catch((error) => {
+                            console.error(`[图表渲染] 直接 mermaid 元素 ${index + 1} 渲染失败:`, error);
+                        });
+                    }
+                } catch (error) {
+                    console.error('[图表渲染] 直接 mermaid 元素渲染错误:', error);
+                }
+            });
+        }
+        
+        const allContainers = container.querySelectorAll('.mermaid-container');
+        allContainers.forEach((mermaidContainer, index) => {
+            if (mermaidContainer.classList.contains('mermaid-rendered') || mermaidContainer.classList.contains('mermaid-rendering')) {
                 return;
             }
             
-            const code = container.textContent.trim();
+            let code = mermaidContainer.getAttribute('data-mermaid-code');
+            if (!code) {
+                const previewEl = mermaidContainer.querySelector('.mermaid-code-preview');
+                if (previewEl) {
+                    code = previewEl.textContent.trim();
+                }
+            }
+            if (!code) {
+                code = mermaidContainer.textContent.trim();
+            }
+            
             if (!code) {
                 console.warn(`[图表渲染] 容器 ${index} 为空`);
                 return;
             }
             
-            // 验证代码是否包含有效的 mermaid 语法（增强检测，支持所有Mermaid图表类型）
-            if (!code.match(/(graph|pie|xychart|flowchart|gantt|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gitgraph|journey|requirement|quadrantChart|mindmap|timeline|C4Context|C4Container|C4Component|%%{init)/i)) {
-                // 如果代码块标记为mermaid但语法不匹配，仍然尝试渲染（可能是新类型或特殊格式）
-                if (container.classList.contains('mermaid-container')) {
-                    console.log(`[图表渲染] 容器 ${index} 标记为mermaid，尝试渲染（可能包含新类型图表）`);
-                } else {
-                    console.warn(`[图表渲染] 容器 ${index} 不包含有效的 mermaid 语法，跳过`);
-                    return;
-                }
-            }
+            code = this.unescapeHtml(code);
             
-            // 标记为正在渲染
-            container.classList.add('mermaid-rendering');
-            
-            console.log(`[图表渲染] 渲染图表 ${index + 1}:`, code.substring(0, 100) + '...');
-            
-            // 创建新的 div 用于 mermaid 渲染
-            const mermaidDiv = document.createElement('div');
-            mermaidDiv.className = 'mermaid';
-            mermaidDiv.textContent = code;
-            mermaidDiv.style.minHeight = '200px'; // 确保有足够空间显示图表
-            mermaidDiv.style.width = '100%';
-            
-            // 替换原容器
-            if (container.parentNode) {
-                container.parentNode.replaceChild(mermaidDiv, container);
-            } else {
-                console.error(`[图表渲染] 容器 ${index} 没有父节点，无法替换`);
+            if (!code.match(/(graph|pie|xychart|flowchart|gantt|sequenceDiagram|classDiagram|stateDiagram|erDiagram|gitgraph|%%{init)/i)) {
+                console.warn(`[图表渲染] 容器 ${index} 不包含有效的 mermaid 语法，跳过`);
                 return;
             }
             
-            // 渲染图表
+            mermaidContainer.classList.add('mermaid-rendering');
+            
+            console.log(`[图表渲染] 渲染图表 ${index + 1}:`, code.substring(0, 100) + '...');
+            
+            const mermaidDiv = document.createElement('div');
+            mermaidDiv.className = 'mermaid';
+            mermaidDiv.textContent = this.sanitizeMermaidCode(code);
+            mermaidDiv.style.minHeight = '200px';
+            mermaidDiv.style.width = '100%';
+            
+            const previewEl = mermaidContainer.querySelector('.mermaid-code-preview');
+            if (previewEl) {
+                previewEl.style.display = 'none';
+            }
+            mermaidContainer.appendChild(mermaidDiv);
+            
             try {
-                mermaid.run({
-                    nodes: [mermaidDiv],
-                    suppressErrors: true
-                }).then(() => {
-                    console.log(`[图表渲染] 图表 ${index + 1} 渲染成功`);
-                    mermaidDiv.classList.add('mermaid-rendered');
+                if (typeof mermaid.run === 'function') {
+                    mermaid.run({
+                        nodes: [mermaidDiv],
+                        suppressErrors: true
+                    }).then(() => {
+                        console.log(`[图表渲染] 图表 ${index + 1} 渲染成功`);
+                        mermaidContainer.classList.remove('mermaid-rendering');
+                        mermaidContainer.classList.add('mermaid-rendered');
+                        mermaidDiv.classList.add('mermaid-rendered');
                     }).catch((error) => {
                         console.error(`[图表渲染] 图表 ${index + 1} 渲染失败:`, error);
-                        // 如果渲染失败，显示原始代码
-                        const errorDiv = document.createElement('div');
-                        errorDiv.className = 'mermaid-error';
-                        errorDiv.style.padding = '20px';
-                        errorDiv.style.border = '1px solid #dc3545';
-                        errorDiv.style.borderRadius = '4px';
-                        errorDiv.style.backgroundColor = '#fff5f5';
-                        errorDiv.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;"><code>${this.escapeHtml(code)}</code></pre><p style="color: #dc3545; font-size: 12px; margin-top: 10px;">图表渲染失败，显示原始代码</p>`;
-                        if (mermaidDiv.parentNode) {
-                            mermaidDiv.parentNode.replaceChild(errorDiv, mermaidDiv);
-                        }
+                        mermaidContainer.classList.remove('mermaid-rendering');
+                        mermaidContainer.classList.add('mermaid-render-failed');
+                        mermaidDiv.innerHTML = `<div class="mermaid-error" style="padding: 15px; border: 1px solid #ffc107; border-radius: 4px; background-color: #fff8e1;"><p style="color: #856404; font-size: 13px; margin: 0 0 10px 0;">图表渲染失败</p><pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-size: 12px;">${this.escapeHtml(code)}</pre></div>`;
                     });
-            } catch (error) {
-                console.error('Mermaid 渲染错误:', error);
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'mermaid-error';
-                errorDiv.style.padding = '20px';
-                errorDiv.style.border = '1px solid #dc3545';
-                errorDiv.style.borderRadius = '4px';
-                errorDiv.style.backgroundColor = '#fff5f5';
-                errorDiv.innerHTML = `<pre style="white-space: pre-wrap; word-wrap: break-word;"><code>${this.escapeHtml(code)}</code></pre><p style="color: #dc3545; font-size: 12px; margin-top: 10px;">图表渲染失败，显示原始代码</p>`;
-                if (mermaidDiv.parentNode) {
-                    mermaidDiv.parentNode.replaceChild(errorDiv, mermaidDiv);
+                } else if (typeof mermaid.init === 'function') {
+                    mermaid.init(undefined, [mermaidDiv]);
+                    mermaidDiv.classList.add('mermaid-rendered');
+                    mermaidContainer.classList.add('mermaid-rendered');
+                } else {
+                    console.error('[图表渲染] Mermaid API 不可用');
+                    mermaidContainer.classList.add('mermaid-render-failed');
                 }
+            } catch (error) {
+                console.error('[图表渲染] Mermaid 渲染错误:', error);
+                mermaidContainer.classList.remove('mermaid-rendering');
+                mermaidContainer.classList.add('mermaid-render-failed');
+                mermaidDiv.innerHTML = `<div class="mermaid-error" style="padding: 15px; border: 1px solid #ffc107; border-radius: 4px; background-color: #fff8e1;"><p style="color: #856404; font-size: 13px; margin: 0 0 10px 0;">图表渲染失败</p><pre style="white-space: pre-wrap; word-wrap: break-word; margin: 0; font-size: 12px;">${this.escapeHtml(code)}</pre></div>`;
             }
         });
     }
