@@ -9,12 +9,12 @@
     <link rel="shortcut icon" type="image/jpeg" href="/static/logo.jpg?v=10" />
     <link rel="apple-touch-icon" href="/static/logo.jpg?v=10" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.googleapis.cn" />
+    <link rel="preconnect" href="https://fonts.gstatic.cn" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.cn/css2?family=Space+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;600;700&display=swap"
         rel="stylesheet" />
-    <link rel="stylesheet" href="/static/style_workspace.css?v=3" />
+    <link rel="stylesheet" href="/static/style_workspace.css?v=4" />
     <!-- 全局主题加载器 -->
     <script src="/static/theme-loader.js?v=4"></script>
 </head>
@@ -23,7 +23,9 @@
     <div class="h-full flex flex-col">
         <header class="h-10 ws-header flex items-center justify-between px-3 shrink-0">
             <div class="flex items-center gap-3 min-w-0">
-                <button class="ws-menu-btn" id="menuBtn" title="菜单">☰</button>
+                <button class="ws-menu-btn" id="menuBtn" title="菜单">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
                 <div class="ws-brand">AetherMind工作台</div>
                 <div class="ws-split"></div>
                 <div class="ws-breadcrumb truncate" id="wsBreadcrumb">项目 &gt; 会话</div>
@@ -179,7 +181,7 @@
 
         <footer class="h-6 ws-footer px-3 text-[10px] ws-mono flex items-center justify-between shrink-0">
             <div class="flex items-center gap-3">
-                <span class="text-emerald-500">● 在线</span>
+                <span style="color: #6B7C3B;">● 在线</span>
                 <span>环境: Production-V3</span>
                 <span>连接: 安全 (TLS 1.3)</span>
             </div>
@@ -187,27 +189,29 @@
         </footer>
     </div>
 
-    <button class="sidebar-toggle" id="sidebarToggle" title="切换侧边栏">☰</button>
+    <button class="sidebar-toggle" id="sidebarToggle" title="切换侧边栏">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
 
     <div class="modal-overlay" id="verifyCodeModal"
-        style="display:none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center;">
+        style="display:none; position: fixed; top:0; left:0; right:0; bottom:0; background: rgba(45,74,62,.25); z-index:1000; align-items:center; justify-content:center;">
         <div class="modal-content"
-            style="background:white; border-radius:12px; padding:24px; max-width:400px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.3);">
+            style="background:#FAF8F3; border-radius:2px; padding:24px; max-width:400px; width:90%; border:1px solid #D8D0C4;">
             <div class="modal-header"
                 style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2 style="margin:0; font-size:20px;">输入验证码</h2>
+                <h2 style="margin:0; font-size:18px; font-family:'Space Mono', monospace; color:#2D4A3E;">输入验证码</h2>
                 <button class="modal-close" onclick="hideVerifyCodeModal()"
-                    style="background:none; border:none; font-size:24px; cursor:pointer; color:#666;">&times;</button>
+                    style="background:none; border:none; font-size:24px; cursor:pointer; color:#7A8B7E;">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="color:#666; margin-bottom:16px;">请输入您的验证码以获得使用次数</p>
+                <p style="color:#7A8B7E; margin-bottom:16px; font-family:'Instrument Serif', 'Noto Serif SC', serif;">请输入您的验证码以获得使用次数</p>
                 <input type="text" id="verifyCodeInput" class="verify-code-input"
                     placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX" maxlength="27"
-                    style="width:100%; padding:12px; border:2px solid #e0e0e0; border-radius:8px; font-size:16px; font-family:monospace; margin-bottom:12px;">
+                    style="width:100%; padding:12px; border:1px solid #D8D0C4; border-radius:2px; font-size:16px; font-family:'Space Mono', monospace; background:#FAF8F3; color:#2D4A3E; margin-bottom:12px; outline:none;">
                 <div class="modal-error" id="verifyCodeError"
-                    style="display:none; color:#dc3545; font-size:14px; margin-bottom:12px;"></div>
+                    style="display:none; color:#A0522D; font-size:14px; margin-bottom:12px; font-family:'Instrument Serif', 'Noto Serif SC', serif;"></div>
                 <button class="modal-submit-btn" onclick="submitVerifyCode()"
-                    style="width:100%; padding:12px; background:#2f9d8f; color:white; border:none; border-radius:8px; font-size:16px; cursor:pointer; font-weight:600;">验证</button>
+                    style="width:100%; padding:12px; background:#2D4A3E; color:#F5F0E8; border:none; border-radius:2px; font-size:14px; cursor:pointer; font-family:'Space Mono', monospace; transition:background 0.15s;">验证</button>
             </div>
         </div>
     </div>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -14,132 +14,91 @@
 
     <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
     <link rel="shortcut icon" type="image/jpeg" href="/static/logo.jpg">
-    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
-
-        /* ================================================
-           主题变量 - 通过 theme-loader.js 动态切换
-        ================================================ */
         :root {
-            --ds-bg: 3 7 18;
-            --ds-bg-2: 15 23 42;
-            --ds-bg-3: 30 41 59;
-            --ds-text: 226 232 240;
-            --ds-text-muted: 100 116 139;
-            --ds-accent: 99 102 241;
-            --ds-accent-2: 56 189 248;
-            --ds-scrollbar: 51 65 85;
-        }
-
-        [data-theme="cashmere-chestnut"] {
-            --ds-bg: 35 25 20;
-            --ds-bg-2: 50 35 28;
-            --ds-bg-3: 70 50 40;
-            --ds-text: 240 230 220;
-            --ds-text-muted: 180 160 145;
-            --ds-accent: 160 80 55;
-            --ds-accent-2: 200 120 80;
-            --ds-scrollbar: 100 70 55;
-        }
-
-        [data-theme="default"] {
-            --ds-bg: 15 23 42;
-            --ds-bg-2: 30 41 59;
-            --ds-bg-3: 51 65 85;
-            --ds-text: 226 232 240;
-            --ds-text-muted: 148 163 184;
-            --ds-accent: 37 99 235;
-            --ds-accent-2: 96 165 250;
-            --ds-scrollbar: 100 116 139;
-        }
-
-        [data-theme="deep-space"] {
-            --ds-bg: 3 7 18;
-            --ds-bg-2: 15 23 42;
-            --ds-bg-3: 30 41 59;
-            --ds-text: 226 232 240;
-            --ds-text-muted: 100 116 139;
-            --ds-accent: 99 102 241;
-            --ds-accent-2: 56 189 248;
-            --ds-scrollbar: 51 65 85;
+            --ds-bg: 245 240 232;
+            --ds-bg-2: 250 248 243;
+            --ds-bg-3: 255 255 255;
+            --ds-text: 45 74 62;
+            --ds-text-muted: 122 139 126;
+            --ds-accent: 45 74 62;
+            --ds-accent-2: 31 58 48;
+            --ds-scrollbar: 216 208 196;
         }
 
         body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background-color: rgb(var(--ds-bg));
-            color: rgb(var(--ds-text));
+            font-family: 'Space Mono', 'Noto Serif SC', monospace;
+            background: #F5F0E8;
+            color: #2D4A3E;
         }
 
-        /* Custom Scrollbar */
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.035;
+            pointer-events: none;
+            z-index: 9999;
+        }
+
+        /* Custom Scrollbar - light */
         ::-webkit-scrollbar {
             width: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: rgb(var(--ds-bg-2));
+            background: #FAF8F3;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: rgb(var(--ds-scrollbar));
+            background: #D8D0C4;
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: rgb(var(--ds-accent) / 0.6);
+            background: #2D4A3E;
         }
 
-        /* Glass Panel */
+        /* Panel */
         .glass-panel {
-            background: rgb(var(--ds-bg-2) / 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: #FAF8F3;
+            border: 1px solid #D8D0C4;
         }
 
         .glass-card {
-            background: linear-gradient(180deg, rgb(var(--ds-bg-3) / 0.4) 0%, rgb(var(--ds-bg-2) / 0.4) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: #FAF8F3;
+            border: 1px solid #D8D0C4;
+            border-radius: 2px;
             transition: all 0.3s ease;
         }
 
         .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.15);
-            transform: translateY(-2px);
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
-        }
-
-        /* 专门为海岸微风 (Coastal Chic) 添加的亮色玻璃卡片样式 */
-        [data-theme="default"] .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            border-color: rgba(0, 0, 0, 0.08);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
-        }
-
-        [data-theme="default"] .glass-card:hover {
-            border-color: rgba(0, 0, 0, 0.15);
-            box-shadow: 0 12px 48px -10px rgba(0, 0, 0, 0.08);
-        }
-
-        .text-glow {
-            text-shadow: 0 0 20px rgb(var(--ds-accent-2) / 0.3);
+            border-color: #2D4A3E;
+            transform: none;
+            box-shadow: none;
         }
 
         .hero-glow {
-            background: radial-gradient(circle at center, rgb(var(--ds-accent-2) / 0.15) 0%, rgb(var(--ds-bg) / 0) 70%);
+            background: radial-gradient(circle at center, rgba(45, 74, 62, 0.04) 0%, transparent 70%);
         }
 
         /* Input Styles */
         .input-field {
-            background: rgb(var(--ds-bg-2) / 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: rgb(var(--ds-text));
+            background: #FAF8F3;
+            border: 1px solid #D8D0C4;
+            color: #2D4A3E;
+            border-radius: 2px;
+            font-family: 'Instrument Serif', 'Noto Serif SC', serif;
             transition: all 0.3s ease;
         }
 
         .input-field:focus {
             outline: none;
-            border-color: rgb(var(--ds-accent) / 0.5);
-            box-shadow: 0 0 0 3px rgb(var(--ds-accent) / 0.1);
+            border-color: #2D4A3E;
+            box-shadow: none;
         }
 
         .input-field::placeholder {
@@ -170,34 +129,34 @@
         }
 
         .step-indicator.active {
-            background: linear-gradient(135deg, rgb(var(--ds-accent)) 0%, rgb(var(--ds-accent-2)) 100%);
-            color: white;
+            background: #2D4A3E;
+            color: #F5F0E8;
         }
 
         .step-indicator.completed {
-            background: #10b981;
-            color: white;
+            background: #6B7C3B;
+            color: #F5F0E8;
         }
     </style>
 </head>
 
-<body class="antialiased selection:bg-[rgb(var(--ds-accent))]/30 selection:text-[rgb(var(--ds-accent-2))] min-h-screen">
+<body class="antialiased selection:bg-[rgb(var(--ds-accent))]/30 selection:text-[#1F3A30] min-h-screen">
 
     <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 glass-panel border-b border-[rgb(var(--ds-text))/0.05]">
+    <nav class="fixed top-0 w-full z-50 glass-panel border-b border-[#D8D0C4]">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <div
-                    class="w-6 h-6 rounded-full bg-gradient-to-tr from-[rgb(var(--ds-accent))] to-[rgb(var(--ds-accent-2))] flex items-center justify-center">
+                    class="w-6 h-6 rounded-full bg-[#2D4A3E] flex items-center justify-center">
                     <div class="w-2 h-2 rounded-full bg-white"></div>
                 </div>
-                <span class="text-lg font-medium tracking-tight text-[rgb(var(--ds-text))]">AetherMind</span>
+                <span class="text-lg font-medium tracking-tight text-[#2D4A3E]">AetherMind</span>
             </div>
 
             <div class="flex items-center gap-4">
                 <a href="/"
-                    class="text-sm font-medium text-[rgb(var(--ds-text-muted))] hover:text-[rgb(var(--ds-text))] transition-colors">
-                    <iconify-icon icon="solar:alt-arrow-left-linear" width="16" class="inline mr-1"></iconify-icon>
+                    class="text-sm font-medium text-[#7A8B7E] hover:text-[#2D4A3E] transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                     返回首页
                 </a>
             </div>
@@ -212,16 +171,16 @@
             <!-- Header -->
             <div class="text-center mb-12 fade-in-up">
                 <div
-                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[rgb(var(--ds-accent))]/10 border border-[rgb(var(--ds-accent))]/20 text-[rgb(var(--ds-accent))] text-xs font-medium mb-6">
-                    <iconify-icon icon="solar:document-text-linear" width="16"></iconify-icon>
+                    class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#2D4A3E]/10 border border-[#2D4A3E]/20 text-[#2D4A3E] text-xs font-medium mb-6">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                     第一步：填写项目信息
                 </div>
-                <h1 class="text-4xl md:text-5xl font-medium tracking-tight text-[rgb(var(--ds-text))] mb-4">
+                <h1 class="text-4xl md:text-5xl font-medium tracking-tight text-[#2D4A3E] mb-4">
                     告诉我们您的<br />
                     <span
-                        class="text-transparent bg-clip-text bg-gradient-to-r from-[rgb(var(--ds-accent))] to-[rgb(var(--ds-accent-2))] text-glow">项目需求</span>
+                        class="text-[#2D4A3E]">项目需求</span>
                 </h1>
-                <p class="text-base text-[rgb(var(--ds-text-muted))] font-light max-w-2xl mx-auto">
+                <p class="text-base text-[#7A8B7E] font-light max-w-2xl mx-auto">
                     请填写以下信息，AI将基于您的需求生成专业的可行性研究报告。所有信息仅用于报告生成，不会对外泄露。
                 </p>
             </div>
@@ -229,52 +188,50 @@
             <!-- Progress Steps -->
             <div class="flex items-center justify-center gap-4 mb-12 fade-in-up" style="animation-delay: 0.1s;">
                 <div
-                    class="step-indicator active w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[rgb(var(--ds-accent))]/30">
+                    class="step-indicator active w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[#2D4A3E]/30">
                     1
                 </div>
-                <div class="w-16 h-0.5 bg-[rgb(var(--ds-bg-3))]"></div>
+                <div class="w-16 h-0.5 bg-[#FFFFFF]"></div>
                 <div
-                    class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[rgb(var(--ds-text))/0.1] bg-[rgb(var(--ds-bg-3))/0.5] text-[rgb(var(--ds-text-muted))]">
+                    class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[#D8D0C4] bg-[#FFFFFF]/50 text-[#7A8B7E]">
                     2
                 </div>
-                <div class="w-16 h-0.5 bg-[rgb(var(--ds-bg-3))]"></div>
+                <div class="w-16 h-0.5 bg-[#FFFFFF]"></div>
                 <div
-                    class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[rgb(var(--ds-text))/0.1] bg-[rgb(var(--ds-bg-3))/0.5] text-[rgb(var(--ds-text-muted))]">
+                    class="step-indicator w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium border-2 border-[#D8D0C4] bg-[#FFFFFF]/50 text-[#7A8B7E]">
                     3
                 </div>
             </div>
 
             <!-- Form Card -->
-            <div class="glass-card rounded-2xl p-8 md:p-12 fade-in-up" style="animation-delay: 0.2s;">
+            <div class="glass-card rounded-sm p-8 md:p-12 fade-in-up" style="animation-delay: 0.2s;">
                 <form id="productForm" class="space-y-8">
                     <!-- Report Type Selection -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:document-text-linear" width="18"></iconify-icon>
-                            选择文档类型 <span class="text-red-400">*</span>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
+                            选择文档类型 <span class="text-[#A0522D]">*</span>
                         </label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <label class="cursor-pointer">
                                 <input type="radio" name="reportType" value="feasibility" class="peer sr-only" required
                                     checked>
                                 <div
-                                    class="relative input-field px-6 py-5 rounded-lg peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    class="relative input-field px-6 py-5 rounded-sm peer-checked:border-[#2D4A3E] peer-checked:bg-[#2D4A3E]/10 transition-all hover:border-[#2D4A3E]/30">
                                     <div class="flex items-start gap-4">
                                         <div
-                                            class="w-12 h-12 rounded-lg bg-[rgb(var(--ds-accent))]/20 flex items-center justify-center flex-shrink-0">
-                                            <iconify-icon icon="solar:file-text-linear" width="24"
-                                                class="text-[rgb(var(--ds-accent-2))]"></iconify-icon>
+                                            class="w-12 h-12 rounded-sm bg-[#2D4A3E]/20 flex items-center justify-center flex-shrink-0">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                                         </div>
                                         <div class="flex-1">
-                                            <h4 class="text-base font-medium text-[rgb(var(--ds-text))] mb-1">可行性研究报告
+                                            <h4 class="text-base font-medium text-[#2D4A3E] mb-1">可行性研究报告
                                             </h4>
-                                            <p class="text-xs text-[rgb(var(--ds-text-muted))] leading-relaxed">
+                                            <p class="text-xs text-[#7A8B7E] leading-relaxed">
                                                 包含市场分析、技术方案、财务预测、风险评估等，适用于项目立项、融资申请</p>
                                         </div>
                                         <div
-                                            class="w-6 h-6 rounded-full border-2 border-[rgb(var(--ds-text))/0.2] peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))] flex items-center justify-center flex-shrink-0 transition-all">
-                                            <iconify-icon icon="solar:check-circle-linear" width="14"
-                                                class="text-[rgb(var(--ds-text))] opacity-0 peer-checked:opacity-100"></iconify-icon>
+                                            class="w-6 h-6 rounded-full border-2 border-[rgb(var(--ds-text))/0.2] peer-checked:border-[#2D4A3E] peer-checked:bg-[#2D4A3E] flex items-center justify-center flex-shrink-0 transition-all">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                                         </div>
                                     </div>
                                 </div>
@@ -282,22 +239,20 @@
                             <label class="cursor-pointer">
                                 <input type="radio" name="reportType" value="business" class="peer sr-only">
                                 <div
-                                    class="relative input-field px-6 py-5 rounded-lg peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    class="relative input-field px-6 py-5 rounded-sm peer-checked:border-[#2D4A3E] peer-checked:bg-[#2D4A3E]/10 transition-all hover:border-[#2D4A3E]/30">
                                     <div class="flex items-start gap-4">
                                         <div
-                                            class="w-12 h-12 rounded-lg bg-[rgb(var(--ds-accent-2))]/20 flex items-center justify-center flex-shrink-0">
-                                            <iconify-icon icon="solar:chart-linear" width="24"
-                                                class="text-[rgb(var(--ds-accent-2))]"></iconify-icon>
+                                            class="w-12 h-12 rounded-sm bg-[rgb(var(--ds-accent-2))]/20 flex items-center justify-center flex-shrink-0">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                                         </div>
                                         <div class="flex-1">
-                                            <h4 class="text-base font-medium text-[rgb(var(--ds-text))] mb-1">商业计划书</h4>
-                                            <p class="text-xs text-[rgb(var(--ds-text-muted))] leading-relaxed">
+                                            <h4 class="text-base font-medium text-[#2D4A3E] mb-1">商业计划书</h4>
+                                            <p class="text-xs text-[#7A8B7E] leading-relaxed">
                                                 包含商业模式、竞争分析、营销策略、团队介绍等，适用于创业路演、招商引资</p>
                                         </div>
                                         <div
-                                            class="w-6 h-6 rounded-full border-2 border-[rgb(var(--ds-text))/0.2] peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))] flex items-center justify-center flex-shrink-0 transition-all">
-                                            <iconify-icon icon="solar:check-circle-linear" width="14"
-                                                class="text-[rgb(var(--ds-text))] opacity-0 peer-checked:opacity-100"></iconify-icon>
+                                            class="w-6 h-6 rounded-full border-2 border-[rgb(var(--ds-text))/0.2] peer-checked:border-[#2D4A3E] peer-checked:bg-[#2D4A3E] flex items-center justify-center flex-shrink-0 transition-all">
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                                         </div>
                                     </div>
                                 </div>
@@ -307,23 +262,23 @@
 
                     <!-- Project Name -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:folder-with-files-linear" width="18"></iconify-icon>
-                            项目名称 <span class="text-red-400">*</span>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
+                            项目名称 <span class="text-[#A0522D]">*</span>
                         </label>
                         <input type="text" id="projectName" name="projectName" required
-                            class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="例如：智能工厂自动化改造项目">
-                        <p class="text-xs text-[rgb(var(--ds-text-muted))]">为您的项目起一个清晰的名称</p>
+                            class="input-field w-full px-4 py-3 rounded-sm text-sm" placeholder="例如：智能工厂自动化改造项目">
+                        <p class="text-xs text-[#7A8B7E]">为您的项目起一个清晰的名称</p>
                     </div>
 
                     <!-- Industry -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:building-2-linear" width="18"></iconify-icon>
-                            所属行业 <span class="text-red-400">*</span>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
+                            所属行业 <span class="text-[#A0522D]">*</span>
                         </label>
                         <select id="industry" name="industry" required
-                            class="input-field w-full px-4 py-3 rounded-lg text-sm">
+                            class="input-field w-full px-4 py-3 rounded-sm text-sm">
                             <option value="">请选择行业</option>
                             <option value="制造业">制造业</option>
                             <option value="信息技术">信息技术</option>
@@ -341,36 +296,36 @@
 
                     <!-- Project Type -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:widget-linear" width="18"></iconify-icon>
-                            项目类型 <span class="text-red-400">*</span>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
+                            项目类型 <span class="text-[#A0522D]">*</span>
                         </label>
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <label class="cursor-pointer">
                                 <input type="radio" name="projectType" value="新建项目" class="peer sr-only" required>
                                 <div
-                                    class="input-field px-4 py-3 rounded-lg text-sm text-center peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    class="input-field px-4 py-3 rounded-sm text-sm text-center peer-checked:border-[#2D4A3E] peer-checked:bg-[#2D4A3E]/10 transition-all hover:border-[#2D4A3E]/30">
                                     新建项目
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="projectType" value="技术改造" class="peer sr-only">
                                 <div
-                                    class="input-field px-4 py-3 rounded-lg text-sm text-center peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    class="input-field px-4 py-3 rounded-sm text-sm text-center peer-checked:border-[#2D4A3E] peer-checked:bg-[#2D4A3E]/10 transition-all hover:border-[#2D4A3E]/30">
                                     技术改造
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="projectType" value="扩建项目" class="peer sr-only">
                                 <div
-                                    class="input-field px-4 py-3 rounded-lg text-sm text-center peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    class="input-field px-4 py-3 rounded-sm text-sm text-center peer-checked:border-[#2D4A3E] peer-checked:bg-[#2D4A3E]/10 transition-all hover:border-[#2D4A3E]/30">
                                     扩建项目
                                 </div>
                             </label>
                             <label class="cursor-pointer">
                                 <input type="radio" name="projectType" value="研发项目" class="peer sr-only">
                                 <div
-                                    class="input-field px-4 py-3 rounded-lg text-sm text-center peer-checked:border-[rgb(var(--ds-accent))] peer-checked:bg-[rgb(var(--ds-accent))]/10 transition-all hover:border-[rgb(var(--ds-accent))]/30">
+                                    class="input-field px-4 py-3 rounded-sm text-sm text-center peer-checked:border-[#2D4A3E] peer-checked:bg-[#2D4A3E]/10 transition-all hover:border-[#2D4A3E]/30">
                                     研发项目
                                 </div>
                             </label>
@@ -379,69 +334,69 @@
 
                     <!-- Investment Scale -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:wallet-money-linear" width="18"></iconify-icon>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                             投资规模（万元）
                         </label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <input type="number" id="investmentMin" name="investmentMin"
-                                    class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="最小投资额" min="0">
+                                    class="input-field w-full px-4 py-3 rounded-sm text-sm" placeholder="最小投资额" min="0">
                             </div>
                             <div>
                                 <input type="number" id="investmentMax" name="investmentMax"
-                                    class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="最大投资额" min="0">
+                                    class="input-field w-full px-4 py-3 rounded-sm text-sm" placeholder="最大投资额" min="0">
                             </div>
                         </div>
                     </div>
 
                     <!-- Project Description -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:document-text-linear" width="18"></iconify-icon>
-                            项目描述 <span class="text-red-400">*</span>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
+                            项目描述 <span class="text-[#A0522D]">*</span>
                         </label>
                         <textarea id="projectDesc" name="projectDesc" required
-                            class="input-field w-full px-4 py-3 rounded-lg text-sm"
+                            class="input-field w-full px-4 py-3 rounded-sm text-sm"
                             placeholder="请详细描述您的项目背景、目标、主要内容等..."></textarea>
-                        <p class="text-xs text-[rgb(var(--ds-text-muted))]">至少50个字符，描述越详细，生成的报告质量越高</p>
+                        <p class="text-xs text-[#7A8B7E]">至少50个字符，描述越详细，生成的报告质量越高</p>
                     </div>
 
                     <!-- Key Requirements -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:checklist-linear" width="18"></iconify-icon>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                             核心需求（可选）
                         </label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-sm">
                                 <input type="checkbox" name="requirements" value="市场分析"
-                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[#FFFFFF] text-[#2D4A3E] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
                                 <span class="text-sm">市场分析</span>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-sm">
                                 <input type="checkbox" name="requirements" value="技术方案"
-                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[#FFFFFF] text-[#2D4A3E] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
                                 <span class="text-sm">技术方案</span>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-sm">
                                 <input type="checkbox" name="requirements" value="财务分析"
-                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[#FFFFFF] text-[#2D4A3E] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
                                 <span class="text-sm">财务分析</span>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-sm">
                                 <input type="checkbox" name="requirements" value="风险评估"
-                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[#FFFFFF] text-[#2D4A3E] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
                                 <span class="text-sm">风险评估</span>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-sm">
                                 <input type="checkbox" name="requirements" value="经济效益"
-                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[#FFFFFF] text-[#2D4A3E] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
                                 <span class="text-sm">经济效益</span>
                             </label>
-                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-lg">
+                            <label class="flex items-center gap-3 cursor-pointer input-field px-4 py-3 rounded-sm">
                                 <input type="checkbox" name="requirements" value="实施计划"
-                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[rgb(var(--ds-bg-3))] text-[rgb(var(--ds-accent))] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
+                                    class="w-4 h-4 rounded border-[rgb(var(--ds-text))/0.2] bg-[#FFFFFF] text-[#2D4A3E] focus:ring-[rgb(var(--ds-accent))] focus:ring-offset-0">
                                 <span class="text-sm">实施计划</span>
                             </label>
                         </div>
@@ -449,55 +404,55 @@
 
                     <!-- Contact Information -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:letter-linear" width="18"></iconify-icon>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                             联系方式（可选）
                         </label>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <input type="text" id="contactName" name="contactName"
-                                    class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="您的姓名">
+                                    class="input-field w-full px-4 py-3 rounded-sm text-sm" placeholder="您的姓名">
                             </div>
                             <div>
                                 <input type="tel" id="contactPhone" name="contactPhone"
-                                    class="input-field w-full px-4 py-3 rounded-lg text-sm" placeholder="联系电话"
+                                    class="input-field w-full px-4 py-3 rounded-sm text-sm" placeholder="联系电话"
                                     pattern="[0-9]{11}">
                             </div>
                         </div>
-                        <p class="text-xs text-[rgb(var(--ds-text-muted))]">如需我们跟进服务，请留下联系方式</p>
+                        <p class="text-xs text-[#7A8B7E]">如需我们跟进服务，请留下联系方式</p>
                     </div>
 
                     <!-- Verification Code -->
                     <div class="space-y-3">
-                        <label class="flex items-center gap-2 text-sm font-medium text-[rgb(var(--ds-text-muted))]">
-                            <iconify-icon icon="solar:lock-keyhole-linear" width="18"></iconify-icon>
-                            验证码 <span class="text-red-400">*</span>
+                        <label class="flex items-center gap-2 text-sm font-medium text-[#7A8B7E]">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
+                            验证码 <span class="text-[#A0522D]">*</span>
                         </label>
                         <div class="flex gap-3">
                             <input type="text" id="verifyCode" name="verifyCode" required
-                                class="input-field flex-1 px-4 py-3 rounded-lg text-sm font-mono tracking-wider"
+                                class="input-field flex-1 px-4 py-3 rounded-sm text-sm font-mono tracking-wider"
                                 placeholder="请输入验证码：XXXXXX-XXXXXX-XXXXXX-XXXXXX" maxlength="27">
                             <button type="button" id="checkCodeBtn" onclick="checkVerificationCode()"
-                                class="px-6 py-3 bg-[rgb(var(--ds-bg-3))] hover:bg-[rgb(var(--ds-bg-3))/0.8] text-[rgb(var(--ds-text))] rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap">
-                                <iconify-icon icon="solar:check-circle-linear" width="18"></iconify-icon>
+                                class="px-6 py-3 bg-[#FFFFFF] hover:bg-[rgb(var(--ds-bg-3))/0.8] text-[#2D4A3E] rounded-sm text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                                 验证
                             </button>
                         </div>
                         <div id="codeStatus" class="text-xs"></div>
-                        <p class="text-xs text-[rgb(var(--ds-text-muted))]">
+                        <p class="text-xs text-[#7A8B7E]">
                             请先验证兑换码以获取使用次数。验证码格式：XXXXXX-XXXXXX-XXXXXX-XXXXXX</p>
                     </div>
 
                     <!-- Submit Button -->
-                    <div class="pt-6 border-t border-[rgb(var(--ds-text))/0.1]/50">
+                    <div class="pt-6 border-t border-[#D8D0C4]/50">
                         <button type="submit"
-                            class="w-full bg-gradient-to-r from-[rgb(var(--ds-accent))] to-[rgb(var(--ds-accent-2))] hover:from-[rgb(var(--ds-accent))] hover:to-[rgb(var(--ds-accent-2))]/80 text-[rgb(var(--ds-text))] px-8 py-4 rounded-lg text-sm font-medium transition-all shadow-lg shadow-[rgb(var(--ds-accent))]/20 flex items-center justify-center gap-2 group">
-                            <iconify-icon icon="solar:magic-linear" width="20"></iconify-icon>
+                            class="w-full bg-[#2D4A3E] hover:bg-[#1F3A30] text-[#F5F0E8] px-8 py-4 rounded-sm text-sm font-medium transition-all flex items-center justify-center gap-2 group"
+                            style="font-family: 'Space Mono', monospace;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
                             生成可行性报告
-                            <iconify-icon icon="solar:arrow-right-linear" width="16"
-                                class="group-hover:translate-x-1 transition-transform"></iconify-icon>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                         </button>
-                        <p class="text-xs text-[rgb(var(--ds-text-muted))] text-center mt-3">
+                        <p class="text-xs text-[#7A8B7E] text-center mt-3">
                             点击按钮后，系统将自动跳转至 AI 报告生成界面
                         </p>
                     </div>
@@ -505,16 +460,15 @@
             </div>
 
             <!-- Info Card -->
-            <div class="mt-8 glass-panel rounded-xl p-6 fade-in-up" style="animation-delay: 0.3s;">
+            <div class="mt-8 glass-panel p-6 fade-in-up" style="animation-delay: 0.3s;">
                 <div class="flex items-start gap-4">
                     <div
-                        class="w-10 h-10 rounded-lg bg-[rgb(var(--ds-accent))]/10 flex items-center justify-center flex-shrink-0">
-                        <iconify-icon icon="solar:info-circle-linear" width="20"
-                            class="text-[rgb(var(--ds-accent-2))]"></iconify-icon>
+                        class="w-10 h-10 rounded-sm bg-[#2D4A3E]/10 flex items-center justify-center flex-shrink-0">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/></svg>
                     </div>
                     <div>
-                        <h4 class="text-sm font-medium text-[rgb(var(--ds-text))] mb-2">关于报告生成</h4>
-                        <p class="text-xs text-[rgb(var(--ds-text-muted))] leading-relaxed">
+                        <h4 class="text-sm font-medium text-[#2D4A3E] mb-2">关于报告生成</h4>
+                        <p class="text-xs text-[#7A8B7E] leading-relaxed">
                             AI 将根据您提供的信息，自动生成一份包含市场分析、技术方案、财务预测、风险评估等专业章节的可行性研究报告。报告生成约需 1-2 分钟，生成完成后可下载 PDF 格式。
                         </p>
                     </div>
@@ -524,14 +478,14 @@
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-[rgb(var(--ds-text))/0.05] py-8">
+    <footer class="border-t border-[#D8D0C4]/50 py-8">
         <div class="max-w-7xl mx-auto px-6">
             <div
-                class="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[rgb(var(--ds-text-muted))]">
+                class="flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[#7A8B7E]">
                 <p>&copy; 2025 AetherMind. All rights reserved.</p>
                 <div class="flex items-center gap-4">
-                    <a href="#" class="hover:text-[rgb(var(--ds-text-muted))] transition-colors">隐私政策</a>
-                    <a href="#" class="hover:text-[rgb(var(--ds-text-muted))] transition-colors">使用条款</a>
+                    <a href="#" class="hover:text-[#2D4A3E] transition-colors">隐私政策</a>
+                    <a href="#" class="hover:text-[#2D4A3E] transition-colors">使用条款</a>
                 </div>
             </div>
         </div>
@@ -595,7 +549,7 @@
 
             // Show loading state
             checkBtn.disabled = true;
-            checkBtn.innerHTML = '<iconify-icon icon="solar:configs-round-moving-linear" width="18" class="animate-spin"></iconify-icon> 验证中...';
+            checkBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg> 验证中...';
             showCodeStatus('正在验证...', 'info');
 
             try {
@@ -612,21 +566,21 @@
                 if (response.ok && data.success) {
                     isCodeVerified = true;
                     showCodeStatus(`✓ 验证成功！剩余使用次数：${data.remaining_uses}`, 'success');
-                    checkBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear" width="18"></iconify-icon> 已验证';
-                    checkBtn.classList.remove('bg-[rgb(var(--ds-bg-3))]', 'hover:bg-[rgb(var(--ds-bg-3))/0.8]');
-                    checkBtn.classList.add('bg-green-600');
+                    checkBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 已验证';
+                    checkBtn.classList.remove('bg-[#FFFFFF]', 'hover:bg-[rgb(var(--ds-bg-3))/0.8]');
+                    checkBtn.classList.add('bg-[#6B7C3B]');
                     codeInput.disabled = true;
                 } else {
                     isCodeVerified = false;
                     showCodeStatus(`验证失败：${data.error || '未知错误'}`, 'error');
                     checkBtn.disabled = false;
-                    checkBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear" width="18"></iconify-icon> 验证';
+                    checkBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 验证';
                 }
             } catch (error) {
                 isCodeVerified = false;
                 showCodeStatus('验证请求失败，请稍后重试', 'error');
                 checkBtn.disabled = false;
-                checkBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear" width="18"></iconify-icon> 验证';
+                checkBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 验证';
             }
         }
 
@@ -635,21 +589,21 @@
             codeStatus.textContent = message;
 
             // Reset classes
-            codeStatus.classList.remove('text-green-500', 'text-red-500', 'text-blue-500', 'text-[rgb(var(--ds-text-muted))]');
+            codeStatus.classList.remove('text-[#6B7C3B]', 'text-red-500', 'text-[#7A8B7E]', 'text-[#7A8B7E]');
 
             // Apply type-specific styling
             switch (type) {
                 case 'success':
-                    codeStatus.classList.add('text-green-500');
+                    codeStatus.classList.add('text-[#6B7C3B]');
                     break;
                 case 'error':
                     codeStatus.classList.add('text-red-500');
                     break;
                 case 'info':
-                    codeStatus.classList.add('text-blue-500');
+                    codeStatus.classList.add('text-[#7A8B7E]');
                     break;
                 default:
-                    codeStatus.classList.add('text-[rgb(var(--ds-text-muted))]');
+                    codeStatus.classList.add('text-[#7A8B7E]');
             }
         }
 
@@ -660,9 +614,9 @@
                 const reportType = this.value;
 
                 if (reportType === 'feasibility') {
-                    submitBtn.innerHTML = '<iconify-icon icon="solar:magic-linear" width="20"></iconify-icon> 生成可行性报告 <iconify-icon icon="solar:arrow-right-linear" width="16" class="group-hover:translate-x-1 transition-transform"></iconify-icon>';
+                    submitBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg> 生成可行性报告 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
                 } else if (reportType === 'business') {
-                    submitBtn.innerHTML = '<iconify-icon icon="solar:magic-linear" width="20"></iconify-icon> 生成商业计划书 <iconify-icon icon="solar:arrow-right-linear" width="16" class="group-hover:translate-x-1 transition-transform"></iconify-icon>';
+                    submitBtn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg> 生成商业计划书 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>';
                 }
             });
         });
@@ -717,9 +671,9 @@
 项目名称：${data.projectName}
 所属行业：${data.industry}
 项目类型：${data.projectType}
-投资规模：${data.investmentMin || '未填写'} - ${data.investmentMax || '未填写'} 万元
+投资规模：${data.investmentMin || '未填写} - ${data.investmentMax || '未填写} 万元
 
-项目描述：
+项目描述：?
 ${data.projectDesc}
 
 核心需求：${Array.isArray(data.requirements) ? data.requirements.join('、') : data.requirements || '全面分析'}
@@ -730,11 +684,11 @@ ${data.projectDesc}
 3. 市场分析
 4. 建设方案与技术路线
 5. 环境影响与节能措施
-6. 项目组织与管理
+6. 项目管理
 7. 项目实施进度
 8. 投资估算与资金筹措
 9. 财务分析与经济效益评价
-10. 风险分析及对策
+10. 风险分析与对策
 11. 结论与建议
 
 请使用专业、严谨的语言，确保数据准确、分析深入、论证充分。`;
@@ -745,9 +699,9 @@ ${data.projectDesc}
 项目名称：${data.projectName}
 所属行业：${data.industry}
 项目类型：${data.projectType}
-投资规模：${data.investmentMin || '未填写'} - ${data.investmentMax || '未填写'} 万元
+投资规模：${data.investmentMin || '未填写} - ${data.investmentMax || '未填写} 万元
 
-项目描述：
+项目描述：?
 ${data.projectDesc}
 
 核心需求：${Array.isArray(data.requirements) ? data.requirements.join('、') : data.requirements || '全面分析'}
@@ -755,7 +709,7 @@ ${data.projectDesc}
 请按照以下结构生成商业计划书（约4万字）：
 
 第一章 执行摘要
-1.1 项目背景与机遇
+1.1 项目背景与机会
 1.2 产品/服务概述
 1.3 商业模式亮点
 1.4 市场前景与竞争优势
@@ -796,7 +750,7 @@ ${data.projectDesc}
 
 第七章 营销策略
 7.1 品牌定位与传播策略
-7.2 线上营销方案（SEO、社交媒体、内容营销）
+7.2 线上营销方案（SEO、社交媒体、内容营销）?
 7.3 线下推广策略（展会、地推、渠道合作）
 7.4 销售漏斗与转化策略
 7.5 客户获取与留存策略
@@ -812,7 +766,7 @@ ${data.projectDesc}
 9.1 核心成员介绍（背景、经验、成就）
 9.2 组织架构与团队配置
 9.3 人力资源规划
-9.4 股权激励与期权池
+9.4 股权激励与期权计划
 9.5 顾问团队与外部支持
 
 第十章 财务预测
@@ -825,7 +779,7 @@ ${data.projectDesc}
 
 第十一章 融资需求与资金使用
 11.1 融资额度与估值
-11.2 资金用途分配
+11.2 资金用途分析
 11.3 融资方式与工具选择
 11.4 投资回报分析（ROI、IRR）
 11.5 退出机制设计（IPO、并购等）
@@ -840,9 +794,9 @@ ${data.projectDesc}
 
 第十三章 附录
 13.1 市场调研数据
-13.2 技术专利证书
+13.2 技术专利证明
 13.3 财务报表
-13.4 核心团队成员简历
+13.4 核心团队成员简介
 13.5 重要合同与协议
 13.6 媒体报道与荣誉
 
@@ -865,9 +819,9 @@ ${data.projectDesc}
             const submitBtn = this.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             const reportTypeName = reportType === 'feasibility' ? '可行性报告' : '商业计划书';
-            submitBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear" width="20"></iconify-icon> 信息已保存，正在跳转...';
+            submitBtn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> 信息已保存，正在跳转...';
             submitBtn.classList.remove('from-[rgb(var(--ds-accent))]', 'to-[rgb(var(--ds-accent-2))]');
-            submitBtn.classList.add('bg-green-600');
+            submitBtn.classList.add('bg-[#6B7C3B]');
 
             console.log('[ProductForm] Redirecting to /workspace in 800ms...');
 

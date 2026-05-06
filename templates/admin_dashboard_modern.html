@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 
 <head>
@@ -9,58 +9,22 @@
     <!-- 全局主题加载器 -->
     <script src="/static/theme-loader.js?v=4"></script>
 
-    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <link href="https://fonts.googleapis.cn/css2?family=Space+Mono:wght@400;700&family=Instrument+Serif:ital@0;1&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/jpeg" href="/static/logo.jpg">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
-
         /* ================================================
-           主题变量 - 通过 theme-loader.js 动态切换
+           主题变量 - 奶白 + 墨绿
         ================================================ */
         :root {
-            --ds-bg: 3 7 18;
-            --ds-bg-2: 15 23 42;
-            --ds-bg-3: 30 41 59;
-            --ds-text: 226 232 240;
-            --ds-text-muted: 100 116 139;
-            --ds-accent: 99 102 241;
-            --ds-accent-2: 56 189 248;
-            --ds-scrollbar: 51 65 85;
+            --ds-bg: 245 240 232;
+            --ds-bg-2: 255 255 252;
+            --ds-bg-3: 235 228 216;
+            --ds-text: 45 74 62;
+            --ds-text-muted: 120 140 128;
+            --ds-accent: 45 74 62;
+            --ds-accent-2: 70 110 90;
+            --ds-scrollbar: 200 190 175;
         }
-
-        [data-theme="cashmere-chestnut"] {
-            --ds-bg: 35 25 20;
-            --ds-bg-2: 50 35 28;
-            --ds-bg-3: 70 50 40;
-            --ds-text: 240 230 220;
-            --ds-text-muted: 180 160 145;
-            --ds-accent: 160 80 55;
-            --ds-accent-2: 200 120 80;
-            --ds-scrollbar: 100 70 55;
-        }
-
-        [data-theme="default"] {
-            --ds-bg: 15 23 42;
-            --ds-bg-2: 30 41 59;
-            --ds-bg-3: 51 65 85;
-            --ds-text: 226 232 240;
-            --ds-text-muted: 148 163 184;
-            --ds-accent: 37 99 235;
-            --ds-accent-2: 96 165 250;
-            --ds-scrollbar: 100 116 139;
-        }
-
-        [data-theme="deep-space"] {
-            --ds-bg: 3 7 18;
-            --ds-bg-2: 15 23 42;
-            --ds-bg-3: 30 41 59;
-            --ds-text: 226 232 240;
-            --ds-text-muted: 100 116 139;
-            --ds-accent: 99 102 241;
-            --ds-accent-2: 56 189 248;
-            --ds-scrollbar: 51 65 85;
-        }
-
 
         * {
             margin: 0;
@@ -69,18 +33,34 @@
         }
 
         body {
-            font-family: 'Inter', 'Noto Sans SC', sans-serif;
-            background: rgb(var(--ds-bg));
-            color: rgb(var(--ds-text));
+            font-family: 'Noto Serif SC', 'Instrument Serif', serif;
+            background: #F5F0E8;
+            color: #2D4A3E;
         }
 
-        /* Custom Scrollbar */
+        /* Noise texture overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+            background-repeat: repeat;
+            background-size: 256px 256px;
+        }
+
+        /* Custom Scrollbar - light */
         ::-webkit-scrollbar {
             width: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: rgb(var(--ds-bg-2));
+            background: #F5F0E8;
         }
 
         ::-webkit-scrollbar-thumb {
@@ -92,29 +72,27 @@
             background: rgb(var(--ds-scrollbar) / 0.8);
         }
 
-        /* Glass Panel */
+        /* Panel (replaces glass-panel) */
         .glass-panel {
-            background: rgba(var(--ds-bg-2), 0.6);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgb(var(--ds-bg-2));
+            border: 1px solid rgba(45, 74, 62, 0.12);
         }
 
-        /* Glass Card */
+        /* Card */
         .glass-card {
-            background: linear-gradient(180deg, rgb(var(--ds-bg-3) / 0.4) 0%, rgb(var(--ds-bg-2) / 0.4) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgb(var(--ds-bg-2));
+            border: 1px solid rgba(45, 74, 62, 0.1);
             transition: all 0.3s ease;
         }
 
         .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(45, 74, 62, 0.2);
         }
 
         /* Top Header */
         .header {
-            background: rgba(var(--ds-bg-2), 0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            background: #2D4A3E;
+            border-bottom: 1px solid rgba(45, 74, 62, 0.15);
             padding: 0 30px;
             height: 60px;
             display: flex;
@@ -130,7 +108,8 @@
         .header h1 {
             font-size: 20px;
             font-weight: 600;
-            color: white;
+            color: #F5F0E8;
+            font-family: 'Noto Serif SC', serif;
         }
 
         /* Main Container */
@@ -140,12 +119,11 @@
             min-height: calc(100vh - 60px);
         }
 
-        /* Sidebar */
+        /* Sidebar - ink green bg + cream text */
         .sidebar {
             width: 240px;
-            background: rgba(var(--ds-bg-2), 0.6);
-            backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            background: #2D4A3E;
+            border-right: 1px solid rgba(45, 74, 62, 0.15);
             padding: 20px 0;
             position: fixed;
             left: 0;
@@ -159,7 +137,7 @@
             cursor: pointer;
             transition: all 0.3s;
             border-left: 3px solid transparent;
-            color: #94a3b8;
+            color: rgba(245, 240, 232, 0.7);
             font-size: 14px;
             display: flex;
             align-items: center;
@@ -167,14 +145,14 @@
         }
 
         .nav-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            color: #e2e8f0;
+            background: rgba(245, 240, 232, 0.08);
+            color: #F5F0E8;
         }
 
         .nav-item.active {
-            background: rgba(99, 102, 241, 0.1);
-            border-left-color: #6366f1;
-            color: #818cf8;
+            background: rgba(245, 240, 232, 0.12);
+            border-left-color: #F5F0E8;
+            color: #F5F0E8;
             font-weight: 500;
         }
 
@@ -187,9 +165,9 @@
 
         /* Card */
         .card {
-            background: linear-gradient(180deg, rgb(var(--ds-bg-3) / 0.4) 0%, rgb(var(--ds-bg-2) / 0.4) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
+            background: rgb(var(--ds-bg-2));
+            border: 1px solid rgba(45, 74, 62, 0.1);
+            border-radius: 2px;
             padding: 24px;
             margin-bottom: 24px;
         }
@@ -198,7 +176,8 @@
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 20px;
-            color: #f1f5f9;
+            color: #2D4A3E;
+            font-family: 'Noto Serif SC', serif;
         }
 
         /* Stats Grid */
@@ -210,70 +189,81 @@
         }
 
         .stat-card {
-            background: linear-gradient(180deg, rgb(var(--ds-bg-3) / 0.4) 0%, rgb(var(--ds-bg-2) / 0.4) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgb(var(--ds-bg-2));
+            border: 1px solid rgba(45, 74, 62, 0.15);
             padding: 20px;
-            border-radius: 12px;
-            border-left: 4px solid #6366f1;
+            border-radius: 2px;
+            border-left: 3px solid #2D4A3E;
         }
 
         .stat-label {
             font-size: 13px;
-            color: #94a3b8;
+            color: rgb(var(--ds-text-muted));
             margin-bottom: 8px;
+            font-family: 'Space Mono', monospace;
         }
 
         .stat-value {
             font-size: 28px;
             font-weight: bold;
-            color: #f1f5f9;
+            color: #2D4A3E;
+            font-family: 'Space Mono', monospace;
         }
 
-        /* Buttons */
+        /* Buttons - ink green solid, 2px radius */
         .btn {
             padding: 8px 16px;
             border: none;
-            border-radius: 6px;
+            border-radius: 2px;
             cursor: pointer;
             font-size: 14px;
             transition: all 0.3s;
             text-decoration: none;
             display: inline-block;
+            font-family: 'Noto Serif SC', serif;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
-            color: white;
+            background: #2D4A3E;
+            color: #F5F0E8;
         }
 
         .btn-primary:hover {
-            background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
-            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            background: #1f362c;
         }
 
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #e2e8f0;
+            background: transparent;
+            border: 1px solid rgba(45, 74, 62, 0.3);
+            color: #2D4A3E;
         }
 
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(45, 74, 62, 0.05);
+            border-color: rgba(45, 74, 62, 0.5);
         }
 
         .btn-danger {
-            background: rgba(239, 68, 68, 0.2);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #fca5a5;
+            background: rgba(180, 60, 60, 0.1);
+            border: 1px solid rgba(180, 60, 60, 0.3);
+            color: #b43c3c;
         }
 
         .btn-danger:hover {
-            background: rgba(239, 68, 68, 0.3);
-            border-color: rgba(239, 68, 68, 0.4);
+            background: rgba(180, 60, 60, 0.2);
+            border-color: rgba(180, 60, 60, 0.5);
         }
 
-        /* Table */
+        .btn-success {
+            background: #2D4A3E;
+            color: #F5F0E8;
+        }
+
+        .btn-success:hover {
+            background: #1f362c;
+        }
+
+        /* Table - minimal lines */
         table {
             width: 100%;
             border-collapse: collapse;
@@ -283,55 +273,57 @@
         td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(45, 74, 62, 0.1);
         }
 
         th {
-            background: rgba(var(--ds-bg-2), 0.6);
+            background: rgb(var(--ds-bg-3) / 0.3);
             font-weight: 600;
             font-size: 13px;
-            color: #94a3b8;
+            color: rgb(var(--ds-text-muted));
+            font-family: 'Space Mono', monospace;
         }
 
         td {
             font-size: 14px;
-            color: #cbd5e1;
+            color: #2D4A3E;
         }
 
         tr:hover {
-            background: rgba(255, 255, 255, 0.02);
+            background: rgba(45, 74, 62, 0.03);
         }
 
         /* Badge */
         .badge {
             padding: 4px 12px;
-            border-radius: 4px;
+            border-radius: 2px;
             font-size: 12px;
             font-weight: 500;
+            font-family: 'Space Mono', monospace;
         }
 
         .badge-success {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
+            background: rgba(45, 74, 62, 0.1);
+            color: #2D4A3E;
+            border: 1px solid rgba(45, 74, 62, 0.2);
         }
 
         .badge-warning {
-            background: rgba(245, 158, 11, 0.2);
-            color: #fbbf24;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            background: rgba(180, 140, 60, 0.1);
+            color: #8a6d1f;
+            border: 1px solid rgba(180, 140, 60, 0.2);
         }
 
         .badge-danger {
-            background: rgba(239, 68, 68, 0.2);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(180, 60, 60, 0.1);
+            color: #b43c3c;
+            border: 1px solid rgba(180, 60, 60, 0.2);
         }
 
         .badge-info {
-            background: rgba(59, 130, 246, 0.2);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: rgba(60, 100, 140, 0.1);
+            color: #3c648c;
+            border: 1px solid rgba(60, 100, 140, 0.2);
         }
 
         /* Form */
@@ -343,25 +335,26 @@
             display: block;
             margin-bottom: 6px;
             font-size: 14px;
-            color: #cbd5e1;
+            color: #2D4A3E;
             font-weight: 500;
         }
 
         .form-control {
             width: 100%;
             padding: 10px 14px;
-            background: rgba(20, 20, 22, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
+            background: rgb(var(--ds-bg-2));
+            border: 1px solid rgba(45, 74, 62, 0.2);
+            border-radius: 2px;
             font-size: 14px;
-            color: #f1f5f9;
+            color: #2D4A3E;
             transition: all 0.3s;
+            font-family: 'Noto Serif SC', serif;
         }
 
         .form-control:focus {
             outline: none;
-            border-color: rgba(99, 102, 241, 0.5);
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            border-color: #2D4A3E;
+            box-shadow: 0 0 0 3px rgba(45, 74, 62, 0.1);
         }
 
         /* Page Toggle */
@@ -377,12 +370,12 @@
         .loading {
             text-align: center;
             padding: 40px;
-            color: #94a3b8;
+            color: rgb(var(--ds-text-muted));
         }
 
         .spinner {
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top-color: #6366f1;
+            border: 3px solid rgba(45, 74, 62, 0.1);
+            border-top-color: #2D4A3E;
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -404,8 +397,7 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(4px);
+            background: rgba(245, 240, 232, 0.85);
             z-index: 2000;
             align-items: center;
             justify-content: center;
@@ -416,13 +408,13 @@
         }
 
         .modal-content {
-            background: linear-gradient(180deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            background: rgb(var(--ds-bg-2));
+            border: 1px solid rgba(45, 74, 62, 0.15);
+            border-radius: 2px;
             padding: 24px;
             max-width: 500px;
             width: 90%;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 25px 50px -12px rgba(45, 74, 62, 0.15);
         }
 
         .modal-header {
@@ -435,20 +427,42 @@
         .modal-header h3 {
             font-size: 18px;
             font-weight: 600;
-            color: #f1f5f9;
+            color: #2D4A3E;
+            font-family: 'Noto Serif SC', serif;
         }
 
         .modal-close {
             background: none;
             border: none;
-            color: #94a3b8;
+            color: rgb(var(--ds-text-muted));
             font-size: 24px;
             cursor: pointer;
             line-height: 1;
         }
 
         .modal-close:hover {
-            color: #f1f5f9;
+            color: #2D4A3E;
+        }
+
+        /* Alert */
+        .alert {
+            padding: 12px 16px;
+            border-radius: 2px;
+            margin-bottom: 16px;
+            display: none;
+            font-family: 'Noto Serif SC', serif;
+        }
+
+        .alert-success {
+            background: rgba(45, 74, 62, 0.08);
+            border: 1px solid rgba(45, 74, 62, 0.2);
+            color: #2D4A3E;
+        }
+
+        .alert-error {
+            background: rgba(180, 60, 60, 0.08);
+            border: 1px solid rgba(180, 60, 60, 0.2);
+            color: #b43c3c;
         }
     </style>
 </head>
@@ -456,10 +470,10 @@
 <body>
     <!-- 顶部导航栏 -->
     <div class="header">
-        <h1>🚀 AetherMind 管理后台</h1>
+        <h1>AetherMind 管理后台</h1>
         <div class="header-actions">
-            <a href="/" class="btn btn-primary" style="background: rgba(255,255,255,0.2);">返回首页</a>
-            <button onclick="logout()" class="btn btn-danger">退出登录</button>
+            <a href="/" class="btn btn-secondary" style="color:#F5F0E8;border-color:rgba(245,240,232,0.3);">返回首页</a>
+            <button onclick="logout()" class="btn btn-danger" style="background:rgba(180,60,60,0.2);color:#F5F0E8;border-color:rgba(245,240,232,0.2);">退出登录</button>
         </div>
     </div>
 
@@ -468,25 +482,32 @@
         <!-- 侧边栏 -->
         <div class="sidebar">
             <div class="nav-item active" data-page="overview">
-                📊 系统概览
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                系统概览
             </div>
             <div class="nav-item" data-page="verification">
-                🔐 验证码管理
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                验证码管理
             </div>
             <div class="nav-item" data-page="sessions">
-                💬 会话管理
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                会话管理
             </div>
             <div class="nav-item" data-page="rag">
-                📚 知识库管理
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                知识库管理
             </div>
             <div class="nav-item" data-page="files">
-                📁 文件管理
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                文件管理
             </div>
             <div class="nav-item" data-page="logs">
-                📝 系统日志
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                系统日志
             </div>
             <div class="nav-item" data-page="llm-config">
-                🤖 大模型设置
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                大模型设置
             </div>
         </div>
 
@@ -517,17 +538,17 @@
                 </div>
 
                 <div class="card">
-                    <h3 class="card-title">📈 系统状态</h3>
+                    <h3 class="card-title">系统状态</h3>
                     <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
-                        <div class="stat-card" style="border-left-color: #27ae60;">
+                        <div class="stat-card" style="border-left-color: #2D4A3E;">
                             <div class="stat-label">验证码总数</div>
                             <div class="stat-value" id="totalCodes">-</div>
                         </div>
-                        <div class="stat-card" style="border-left-color: #f39c12;">
+                        <div class="stat-card" style="border-left-color: #8a6d1f;">
                             <div class="stat-label">知识库文档</div>
                             <div class="stat-value" id="kbDocuments">-</div>
                         </div>
-                        <div class="stat-card" style="border-left-color: #e74c3c;">
+                        <div class="stat-card" style="border-left-color: #b43c3c;">
                             <div class="stat-label">已处理文件</div>
                             <div class="stat-value" id="processedFiles">-</div>
                         </div>
@@ -577,7 +598,10 @@
             <div id="page-sessions" class="page">
                 <div class="card">
                     <h3 class="card-title">用户会话列表</h3>
-                    <button onclick="loadSessions()" class="btn btn-primary" style="margin-bottom: 16px;">🔄 刷新</button>
+                    <button onclick="loadSessions()" class="btn btn-primary" style="margin-bottom: 16px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        刷新
+                    </button>
                     <div id="sessionList" class="table-container">
                         <div class="loading">加载中...</div>
                     </div>
@@ -607,9 +631,14 @@
                         <label>文档内容</label>
                         <textarea id="ragContent" class="form-control" rows="4" placeholder="输入要添加的文档内容"></textarea>
                     </div>
-                    <button onclick="addDocument()" class="btn btn-success">➕ 添加文档</button>
-                    <button onclick="clearKnowledgeBase()" class="btn btn-danger" style="margin-left: 10px;">🗑️
-                        清空知识库</button>
+                    <button onclick="addDocument()" class="btn btn-success">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        添加文档
+                    </button>
+                    <button onclick="clearKnowledgeBase()" class="btn btn-danger" style="margin-left: 10px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        清空知识库
+                    </button>
                 </div>
 
                 <div class="card">
@@ -632,7 +661,10 @@
             <div id="page-logs" class="page">
                 <div class="card">
                     <h3 class="card-title">系统日志</h3>
-                    <button onclick="loadLogs()" class="btn btn-primary" style="margin-bottom: 16px;">🔄 刷新日志</button>
+                    <button onclick="loadLogs()" class="btn btn-primary" style="margin-bottom: 16px;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        刷新日志
+                    </button>
                     <div id="logContainer" class="log-container">
                         <div class="loading">加载中...</div>
                     </div>
@@ -643,7 +675,10 @@
             <div id="page-llm-config" class="page">
                 <!-- 当前配置状态卡片 -->
                 <div class="card" id="llm-status-card">
-                    <h3 class="card-title">⚡ 当前生效配置</h3>
+                    <h3 class="card-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        当前生效配置
+                    </h3>
                     <div id="llm-current-config" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                         <div class="loading">加载中...</div>
                     </div>
@@ -679,8 +714,10 @@
                             <input type="password" id="llm-api-key" class="form-control"
                                 placeholder="输入新 Key（留空则保持原有 Key 不变）" style="padding-right:80px">
                             <button type="button" onclick="toggleApiKeyVisibility()"
-                                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;"
-                                title="显示/隐藏 Key">👁</button>
+                                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:18px;color:#2D4A3E;"
+                                title="显示/隐藏 Key">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </button>
                         </div>
                         <small style="color:rgb(var(--ds-text-muted));font-size:12px;margin-top:4px;display:block">
                             留空表示不修改当前已保存的 Key；仅显示末四位脱敏预览。
@@ -707,8 +744,14 @@
                     </div>
 
                     <div style="display:flex;gap:12px;margin-top:8px;">
-                        <button onclick="saveLlmConfig()" class="btn btn-primary">💾 保存并立即生效</button>
-                        <button onclick="loadLlmConfig()" class="btn btn-secondary">🔄 重新加载当前配置</button>
+                        <button onclick="saveLlmConfig()" class="btn btn-primary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            保存并立即生效
+                        </button>
+                        <button onclick="loadLlmConfig()" class="btn btn-secondary">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            重新加载当前配置
+                        </button>
                     </div>
                 </div>
             </div>
